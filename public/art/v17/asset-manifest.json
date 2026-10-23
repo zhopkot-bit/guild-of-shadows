@@ -1,0 +1,297 @@
+{
+  "source_pack": "Guild_of_Shadows_Dark_Fantasy_Rebaseline_Pack_v1.1",
+  "assets": [
+    {
+      "file": "heroes/bran/sprite.webp",
+      "source": "Guild_of_Shadows_Fantasy_Heroes_v1.1.png",
+      "crop": [
+        20,
+        0,
+        430,
+        815
+      ],
+      "size": [
+        393,
+        780
+      ],
+      "alpha": true
+    },
+    {
+      "file": "heroes/bran/portrait.webp",
+      "source": "Guild_of_Shadows_Fantasy_Heroes_v1.1.png",
+      "crop": [
+        138,
+        30,
+        318,
+        255
+      ],
+      "size": [
+        256,
+        320
+      ],
+      "alpha": false
+    },
+    {
+      "file": "heroes/mira/sprite.webp",
+      "source": "Guild_of_Shadows_Fantasy_Heroes_v1.1.png",
+      "crop": [
+        430,
+        0,
+        790,
+        815
+      ],
+      "size": [
+        331,
+        756
+      ],
+      "alpha": true
+    },
+    {
+      "file": "heroes/mira/portrait.webp",
+      "source": "Guild_of_Shadows_Fantasy_Heroes_v1.1.png",
+      "crop": [
+        522,
+        46,
+        672,
+        234
+      ],
+      "size": [
+        256,
+        320
+      ],
+      "alpha": false
+    },
+    {
+      "file": "heroes/rook/sprite.webp",
+      "source": "Guild_of_Shadows_Fantasy_Heroes_v1.1.png",
+      "crop": [
+        770,
+        0,
+        1160,
+        815
+      ],
+      "size": [
+        375,
+        777
+      ],
+      "alpha": true
+    },
+    {
+      "file": "heroes/rook/portrait.webp",
+      "source": "Guild_of_Shadows_Fantasy_Heroes_v1.1.png",
+      "crop": [
+        826,
+        30,
+        986,
+        230
+      ],
+      "size": [
+        256,
+        320
+      ],
+      "alpha": false
+    },
+    {
+      "file": "heroes/nora/sprite.webp",
+      "source": "Guild_of_Shadows_Fantasy_Heroes_v1.1.png",
+      "crop": [
+        1150,
+        0,
+        1520,
+        815
+      ],
+      "size": [
+        333,
+        777
+      ],
+      "alpha": true
+    },
+    {
+      "file": "heroes/nora/portrait.webp",
+      "source": "Guild_of_Shadows_Fantasy_Heroes_v1.1.png",
+      "crop": [
+        1219,
+        32,
+        1367,
+        217
+      ],
+      "size": [
+        256,
+        320
+      ],
+      "alpha": false
+    },
+    {
+      "file": "enemies/goblin_raider/sprite.webp",
+      "source": "Guild_of_Shadows_Fantasy_Enemies_Boss_v1.1.png",
+      "crop": [
+        0,
+        0,
+        415,
+        410
+      ],
+      "size": [
+        355,
+        400
+      ],
+      "alpha": true
+    },
+    {
+      "file": "enemies/goblin_raider/portrait.webp",
+      "source": "Guild_of_Shadows_Fantasy_Enemies_Boss_v1.1.png",
+      "crop": [
+        165,
+        40,
+        335,
+        210
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "alpha": false
+    },
+    {
+      "file": "enemies/ash_wolf/sprite.webp",
+      "source": "Guild_of_Shadows_Fantasy_Enemies_Boss_v1.1.png",
+      "crop": [
+        418,
+        0,
+        835,
+        410
+      ],
+      "size": [
+        407,
+        393
+      ],
+      "alpha": true
+    },
+    {
+      "file": "enemies/ash_wolf/portrait.webp",
+      "source": "Guild_of_Shadows_Fantasy_Enemies_Boss_v1.1.png",
+      "crop": [
+        545,
+        100,
+        735,
+        290
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "alpha": false
+    },
+    {
+      "file": "enemies/bone_guard/sprite.webp",
+      "source": "Guild_of_Shadows_Fantasy_Enemies_Boss_v1.1.png",
+      "crop": [
+        838,
+        0,
+        1252,
+        410
+      ],
+      "size": [
+        390,
+        400
+      ],
+      "alpha": true
+    },
+    {
+      "file": "enemies/bone_guard/portrait.webp",
+      "source": "Guild_of_Shadows_Fantasy_Enemies_Boss_v1.1.png",
+      "crop": [
+        965,
+        8,
+        1115,
+        158
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "alpha": false
+    },
+    {
+      "file": "enemies/ash_mage/sprite.webp",
+      "source": "Guild_of_Shadows_Fantasy_Enemies_Boss_v1.1.png",
+      "crop": [
+        1255,
+        0,
+        1672,
+        410
+      ],
+      "size": [
+        356,
+        400
+      ],
+      "alpha": true
+    },
+    {
+      "file": "enemies/ash_mage/portrait.webp",
+      "source": "Guild_of_Shadows_Fantasy_Enemies_Boss_v1.1.png",
+      "crop": [
+        1383,
+        4,
+        1533,
+        154
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "alpha": false
+    },
+    {
+      "file": "boss/bone_king/sprite.webp",
+      "source": "Guild_of_Shadows_Fantasy_Enemies_Boss_v1.1.png",
+      "crop": [
+        95,
+        415,
+        705,
+        941
+      ],
+      "size": [
+        576,
+        501
+      ],
+      "alpha": true
+    },
+    {
+      "file": "boss/bone_king/emissive.webp",
+      "source": "derived from bone_king/sprite",
+      "alpha": true
+    },
+    {
+      "file": "boss/bone_king/portrait.webp",
+      "source": "Guild_of_Shadows_Fantasy_Enemies_Boss_v1.1.png",
+      "crop": [
+        347,
+        432,
+        477,
+        562
+      ],
+      "size": [
+        256,
+        256
+      ],
+      "alpha": false
+    },
+    {
+      "file": "arena/crypt.webp",
+      "source": "crypt.webp",
+      "inpaint": [],
+      "size": [
+        1920,
+        1080
+      ]
+    },
+    {
+      "file": "arena/crypt_boss.webp",
+      "source": "derived from arena/crypt (cold grade)",
+      "size": [
+        1920,
+        1080
+      ]
+    }
+  ]
+}

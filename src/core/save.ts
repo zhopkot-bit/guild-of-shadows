@@ -1,7 +1,10 @@
 import { MAX_HERO_LEVEL, MAX_TICKETS, MAX_TIER, PARTY_SIZE } from './config';
-import { SAVE_VERSION, dayKey, newGame } from './state';
+import { ROSTER } from '../content/roster';
+import { migrateRunJsonV1 } from '../expedition/migrate';
+import { SAVE_VERSION, createCanonHero, dayKey, newGame } from './state';
 import {
   HERO_CLASSES,
+  HERO_IDENTITIES,
   POST_IDS,
   RARITIES,
   type GameState,
@@ -24,7 +27,34 @@ type Raw = Record<string, unknown>;
  *   1: (s) => ({ ...s, newField: 0 }),
  * Старые сейвы игроков при этом продолжают работать.
  */
-const MIGRATIONS: Record<number, (save: Raw) => Raw> = {};
+/** Роли v1 → канонические роли. mage (дальний урон) ближе всего к Стрелку. */
+export const LEGACY_ROLE: Record<string, string> = { warrior: 'defender', mage: 'shooter', rogue: 'scout', priest: 'healer' };
+/** Канонический стартовый ростер v1: имя + старый класс однозначно задают личность. */
+const LEGACY_CANON: Record<string, { cls: string; identity: string; role: string }> = {
+  'Бран': { cls: 'warrior', identity: 'bran', role: 'defender' },
+  'Мира': { cls: 'mage', identity: 'mira', role: 'scout' },
+  'Рук': { cls: 'rogue', identity: 'rook', role: 'shooter' },
+  'Нора': { cls: 'priest', identity: 'nora', role: 'healer' },
+};
+
+function migrateHeroV1(raw: unknown): unknown {
+  if (!isObject(raw)) return raw;
+  const name = typeof raw.name === 'string' ? raw.name : '';
+  const canon = LEGACY_CANON[name];
+  if (canon && raw.cls === canon.cls) return { ...raw, cls: canon.role, identity: canon.identity };
+  const cls = typeof raw.cls === 'string' ? LEGACY_ROLE[raw.cls] ?? raw.cls : raw.cls;
+  return { ...raw, cls, identity: null };
+}
+
+const MIGRATIONS: Record<number, (save: Raw) => Raw> = {
+  // v1 → v2: канонические роли/личности героев; активный забег переводится вместе с боем.
+  1: (s) => ({
+    ...s,
+    version: 2,
+    heroes: Array.isArray(s.heroes) ? s.heroes.map(migrateHeroV1) : s.heroes,
+    activeRun: typeof s.activeRun === 'string' ? migrateRunJsonV1(s.activeRun, migrateHeroV1) : s.activeRun,
+  }),
+};
 
 export function serialize(state: GameState): string {
   return JSON.stringify(state);
@@ -52,7 +82,8 @@ function normalizeHero(raw: unknown, seen: Set<string>, nowMs: number): Hero | n
   return {
     id: raw.id,
     name: typeof raw.name === 'string' && raw.name.length > 0 ? raw.name.slice(0, 24) : 'Герой',
-    cls: oneOf(raw.cls, HERO_CLASSES, 'warrior'),
+    cls: oneOf(raw.cls, HERO_CLASSES, 'defender'),
+    identity: typeof raw.identity === 'string' && (HERO_IDENTITIES as readonly string[]).includes(raw.identity) ? (raw.identity as Hero['identity']) : null,
     rarity: oneOf(raw.rarity, RARITIES, 'common'),
     level: int(raw.level, 1, 1, MAX_HERO_LEVEL),
     status: raw.status === 'lost' ? 'wounded' : oneOf<HeroStatus>(raw.status, ['ready', 'wounded', 'lost'], 'ready'),
@@ -79,6 +110,13 @@ function normalize(raw: Raw, nowMs: number): GameState {
       if (hero) heroes.push(hero);
     }
   }
+  // Одна личность — один герой: повторный «Бран» в испорченном сейве становится безымянным бойцом.
+  const claimed = new Set<string>();
+  for (const hero of heroes) {
+    if (!hero.identity) continue;
+    if (claimed.has(hero.identity)) hero.identity = null;
+    else claimed.add(hero.identity);
+  }
   const finalHeroes = heroes.length > 0 ? heroes : base.heroes;
   const alive = new Set(finalHeroes.filter((h) => h.status !== 'lost').map((h) => h.id));
   const party = (Array.isArray(raw.party) ? raw.party : [])
@@ -89,7 +127,7 @@ function normalize(raw: Raw, nowMs: number): GameState {
   const stats = isObject(raw.stats) ? raw.stats : {};
   const createdAt = num(raw.createdAt, nowMs, 0);
 
-  return {
+  const state: GameState = {
     version: SAVE_VERSION,
     createdAt,
     lastSeen: num(raw.lastSeen, nowMs, 0),
@@ -99,7 +137,11 @@ function normalize(raw: Raw, nowMs: number): GameState {
     relicarium: int(raw.relicarium, 0, 0, 10_000),
     heroes: finalHeroes,
     party: party.length > 0 ? party : finalHeroes.filter((h) => h.status !== 'lost').slice(0, PARTY_SIZE).map((h) => h.id),
-    nextHeroId: int(raw.nextHeroId, finalHeroes.length + 1, finalHeroes.length + 1, 1_000_000),
+    // Новый id не должен совпасть с уже существующим (иначе добавленный герой затрёт чужой прогресс).
+    nextHeroId: Math.max(
+      int(raw.nextHeroId, finalHeroes.length + 1, finalHeroes.length + 1, 1_000_000),
+      1 + finalHeroes.reduce((m, h) => Math.max(m, Number(/^h(\d+)$/.exec(h.id)?.[1] ?? 0)), 0),
+    ),
     recruitsBought: int(raw.recruitsBought, 0, 0, 10_000),
     tickets: {
       count: int(t.count, MAX_TICKETS, 0, 99),
@@ -117,6 +159,13 @@ function normalize(raw: Raw, nowMs: number): GameState {
     },
     activeRun: typeof raw.activeRun === 'string' ? raw.activeRun : null,
   };
+  // Гарантия ростера: все четыре канонических героя присутствуют, прогресс существующих не трогаем.
+  if (finalHeroes !== base.heroes) {
+    for (const def of ROSTER) {
+      if (!state.heroes.some((h) => h.identity === def.identity)) createCanonHero(state, def.identity);
+    }
+  }
+  return state;
 }
 
 export function deserialize(json: string | null, nowMs: number): LoadResult {

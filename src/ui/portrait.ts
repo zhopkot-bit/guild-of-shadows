@@ -1,49 +1,57 @@
-import { ART } from '../core/config';
-import type { Rarity } from '../core/types';
+import { ENEMY_ART, LEGACY_ENEMY_KIND, heroArt, isEnemyKind, type EnemyKind } from '../content/roster';
+import type { Hero, HeroClass } from '../core/types';
 import { h } from './dom';
+import { glyph } from './glyphs';
 
-/** Растровые портреты — кропы утверждённого концепт-пака. Не найденные сущности используют старый SVG/монограмму. */
-const RASTER_ART: Record<string, string> = {
-  warrior: 'warrior.webp', mage: 'mage.webp', rogue: 'rogue.webp', priest: 'priest.webp',
-  skeleton: 'skeleton.webp', guardian: 'guardian.webp', goblin: 'goblin.webp', troll: 'troll.webp', shaman: 'shaman.webp',
-};
-
-const FACE_ART: Record<string, string> = {
-  warrior: 'warrior_face.webp', mage: 'mage_face.webp', rogue: 'rogue_face.webp', priest: 'priest_face.webp',
-  skeleton: 'skeleton_face.webp', guardian: 'guardian_face.webp', goblin: 'goblin_face.webp', troll: 'troll_face.webp', shaman: 'shaman_face.webp', hunter: 'hunter_face.webp',
-};
+/**
+ * Портрет — только лицо и плечи конкретного персонажа (отдельный ресурс 256×320 / 256×256),
+ * никогда не полнофигурный спрайт. Источник выбирается по личности героя (content/roster.ts).
+ * Размеры: 48, 64, 96, 128 px; кадр фиксирован (aspect-ratio), изображение не растягивается.
+ */
+export type PortraitSize = 48 | 64 | 96 | 128;
 
 export interface PortraitOpts {
-  kind: string;
-  name: string;
-  size: 'xs' | 'sm' | 'md' | 'lg';
-  rarity?: Rarity;
-  foe?: boolean;
+  size: PortraitSize;
+  /** Подпись для скринридеров; на миниатюрах имя дублируется текстом рядом. */
+  label: string;
   boss?: boolean;
+  foe?: boolean;
 }
 
-export function portrait(o: PortraitOpts): HTMLElement {
-  const cls = ['portrait', `portrait--${o.size}`];
-  if (o.foe) cls.push('foe');
-  else {
-    cls.push(`cls-${o.kind}`);
-    if (o.rarity) cls.push(`rar-${o.rarity}`);
-  }
-  if (o.boss) cls.push('boss');
-  const el = h('div', { class: cls.join(' ') });
-  if (ART.portraits && RASTER_ART[o.kind]) {
-    const img = h('img', { src: FACE_ART[o.kind] ? `./art/faces/${FACE_ART[o.kind]}` : `${ART.basePath}${RASTER_ART[o.kind]}`, alt: '', draggable: 'false', loading: 'lazy' });
-    img.addEventListener('error', () => {
-      img.remove();
-      if (o.kind === 'priest' || o.kind === 'warrior' || o.kind === 'mage' || o.kind === 'rogue') {
-        el.append(h('img', { src: `${ART.basePath}${o.kind}.svg`, alt: '', draggable: 'false' }));
-      } else {
-        el.append(h('span', { class: 'portrait__mono' }, o.name.slice(0, 1)));
-      }
-    }, { once: true });
-    el.append(img);
-  } else {
-    el.append(h('span', { class: 'portrait__mono' }, o.name.slice(0, 1)));
-  }
+function frame(o: PortraitOpts, extra: string): HTMLElement {
+  return h('div', { class: `portrait portrait--${o.size}${o.foe ? ' portrait--foe' : ''}${o.boss ? ' portrait--boss' : ''} ${extra}`, role: 'img', 'aria-label': o.label });
+}
+
+function image(el: HTMLElement, src: string, fallback: () => void): void {
+  const img = h('img', { src, alt: '', draggable: 'false', decoding: 'async' });
+  img.addEventListener('error', () => {
+    // Ошибка ресурса не превращается в «битую картинку»: остаётся эмблема роли.
+    console.error(`Портрет не загрузился: ${src}`);
+    img.remove();
+    fallback();
+  }, { once: true });
+  el.append(img);
+}
+
+function emblem(el: HTMLElement, role: HeroClass): void {
+  el.classList.add('portrait--emblem');
+  el.append(glyph(role, 28, 1.6));
+}
+
+export function heroPortrait(hero: Pick<Hero, 'identity' | 'cls' | 'name'>, size: PortraitSize): HTMLElement {
+  const art = heroArt(hero);
+  const el = frame({ size, label: hero.name }, `portrait--role-${art.emblem}${hero.identity ? ` portrait--${hero.identity}` : ''}`);
+  el.dataset.identity = hero.identity ?? 'recruit';
+  if (art.portrait) image(el, art.portrait, () => emblem(el, art.emblem));
+  else emblem(el, art.emblem);
+  return el;
+}
+
+export function enemyPortrait(kind: string, label: string, size: PortraitSize): HTMLElement {
+  const k: EnemyKind | undefined = isEnemyKind(kind) ? kind : LEGACY_ENEMY_KIND[kind];
+  const el = frame({ size, label, foe: true, boss: k === 'boneKing' }, '');
+  el.dataset.kind = k ?? kind;
+  if (k) image(el, ENEMY_ART[k].portrait, () => el.append(glyph('skull', 28)));
+  else el.append(glyph('skull', 28));
   return el;
 }

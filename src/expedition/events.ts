@@ -1,14 +1,20 @@
 import type { RNG } from '../core/rng';
-import type { HeroClass } from '../core/types';
+import type { HeroIdentity } from '../core/types';
 
+/**
+ * События экспедиции — Content Bible v1.1, листы Events / Event_Choices (EV01–EV06).
+ * Все исходы детерминированы и показываются игроку до выбора; скрытых бросков нет.
+ */
 export type Effect =
   | { k: 'essence'; v: number }
-  /** Доля макс. HP каждого живого героя: плюс — лечение, минус — урон (но не ниже 5%). */
+  | { k: 'gold'; v: number }
+  /** Абсолютное изменение HP каждого живого героя (в единицах Content Bible, до HP_SCALE). Минимум 1 HP. */
+  | { k: 'hp'; v: number }
+  /** Доля макс. HP (наследие v1; используется сундуками/лагерем). */
   | { k: 'partyHp'; v: number }
   | { k: 'relic' }
   | { k: 'ambush' }
-  | { k: 'atkBuff'; v: number }
-  | { k: 'recruit' };
+  | { k: 'atkBuff'; v: number };
 
 export interface Outcome {
   weight: number;
@@ -20,106 +26,83 @@ export interface Choice {
   id: string;
   label: string;
   outcomes: Outcome[];
-  /** Если в живом отряде есть этот класс — используются эти исходы вместо обычных. */
-  ifClass?: { cls: HeroClass; outcomes: Outcome[]; hint: string };
+  /** Вариант доступен, только если этот канонический герой жив в отряде (например, разведка Миры). */
+  requires?: { identity: HeroIdentity; hint: string };
 }
 
 export interface EventDef {
   id: string;
   title: string;
-  icon: string;
   text: string;
   choices: Choice[];
 }
 
+const one = (text: string, effects: Effect[]): Outcome[] => [{ weight: 1, text, effects }];
+
 export const EVENTS: readonly EventDef[] = [
   {
-    id: 'trap',
-    title: 'Ловушка в коридоре',
-    icon: '🕸',
-    text: 'Узкий проход перекрыт нажимными плитами. За ними блестит тайник.',
+    id: 'EV01',
+    title: 'Заваленный проход',
+    text: 'Обрушившиеся каменные плиты перекрыли короткий путь. Мира присматривается к трещинам в стене.',
     choices: [
-      {
-        id: 'disarm',
-        label: 'Обезвредить',
-        outcomes: [
-          { weight: 1, text: 'Механизм заклинило, отряд задело осколками.', effects: [{ k: 'partyHp', v: -0.15 }] },
-          { weight: 1, text: 'Получилось! В тайнике лежит эссенция.', effects: [{ k: 'essence', v: 3 }] },
-        ],
-        ifClass: {
-          cls: 'rogue',
-          hint: 'Плут справится наверняка',
-          outcomes: [{ weight: 1, text: 'Плут щёлкает механизм одним движением и забирает тайник.', effects: [{ k: 'essence', v: 3 }] }],
-        },
-      },
-      {
-        id: 'dash',
-        label: 'Пробежать',
-        outcomes: [{ weight: 1, text: 'Пробежали, но поцарапались. Зато подобрали осколки.', effects: [{ k: 'partyHp', v: -0.1 }, { k: 'essence', v: 2 }] }],
-      },
-      { id: 'skip', label: 'Обойти стороной', outcomes: [{ weight: 1, text: 'Обход занимает время, но ничего не происходит.', effects: [] }] },
+      { id: 'A', label: 'Мира находит безопасный проход', requires: { identity: 'mira', hint: 'Нужна Мира в отряде' }, outcomes: one('Мира находит лаз между плитами — отряд проходит без потерь.', []) },
+      { id: 'B', label: 'Расчистить плиты силой (+20 золота, −15 HP каждому)', outcomes: one('Плиты поддаются, но отряд изрядно побит. За завалом — брошенный кошель.', [{ k: 'gold', v: 20 }, { k: 'hp', v: -15 }]) },
+      { id: 'C', label: 'Отступить и обойти', outcomes: one('Обход занимает время, но маршрут продолжается.', []) },
     ],
   },
   {
-    id: 'altar',
-    title: 'Алтарь теней',
-    icon: '🗿',
-    text: 'Чёрный камень шепчет. Он ждёт дара.',
+    id: 'EV02',
+    title: 'Заброшенная кузница',
+    text: 'В руинах кузницы остались припасы. У остывшего горна дремлет пепельный чародей.',
     choices: [
-      {
-        id: 'sacrifice',
-        label: 'Пожертвовать кровь (−20% HP отряда)',
-        outcomes: [{ weight: 1, text: 'Алтарь принимает дар и открывает реликвию.', effects: [{ k: 'partyHp', v: -0.2 }, { k: 'relic' }] }],
-      },
-      {
-        id: 'pray',
-        label: 'Помолиться',
-        outcomes: [
-          { weight: 1, text: 'Тёплый свет исцеляет отряд.', effects: [{ k: 'partyHp', v: 0.25 }] },
-          { weight: 1, text: 'Тени отвечают болью.', effects: [{ k: 'partyHp', v: -0.1 }] },
-        ],
-      },
-      { id: 'leave', label: 'Уйти', outcomes: [{ weight: 1, text: 'Вы уходите, не оглядываясь.', effects: [] }] },
+      { id: 'A', label: 'Одолеть чародея (+30 золота, +2 эссенции, −12 HP каждому)', outcomes: one('Чародей повержен, но пепельный заряд успел обжечь отряд.', [{ k: 'gold', v: 30 }, { k: 'essence', v: 2 }, { k: 'hp', v: -12 }]) },
+      { id: 'B', label: 'Забрать только припасы (+10 золота)', outcomes: one('Тихо собираете припасы и уходите.', [{ k: 'gold', v: 10 }]) },
     ],
   },
   {
-    id: 'camp',
-    title: 'Заброшенный лагерь',
-    icon: '⛺',
-    text: 'Остывший костёр, брошенные вещи. Кто-то ушёл в спешке.',
+    id: 'EV03',
+    title: 'Раненый странник',
+    text: 'У ступеней склепа лежит раненый исследователь с картой следующего участка.',
     choices: [
-      {
-        id: 'search',
-        label: 'Обыскать',
-        outcomes: [
-          { weight: 7, text: 'Находите припасы и эссенцию.', effects: [{ k: 'essence', v: 2 }] },
-          { weight: 3, text: 'Это была приманка. Засада!', effects: [{ k: 'ambush' }] },
-        ],
-      },
-      { id: 'rest', label: 'Отдохнуть', outcomes: [{ weight: 1, text: 'Короткий привал возвращает силы.', effects: [{ k: 'partyHp', v: 0.2 }] }] },
+      { id: 'A', label: 'Помочь и исцелить (+18 HP каждому)', outcomes: one('Странник делится травами и укромным местом для отдыха.', [{ k: 'hp', v: 18 }]) },
+      { id: 'B', label: 'Обменять сведения (+1 эссенция)', outcomes: one('Странник отдаёт осколок древней реликвии за пару советов.', [{ k: 'essence', v: 1 }]) },
+      { id: 'C', label: 'Пройти мимо', outcomes: one('Вы идёте дальше.', []) },
     ],
   },
   {
-    id: 'traveler',
-    title: 'Раненый путник',
-    icon: '🧳',
-    text: 'У стены сидит человек. Он прижимает руку к боку и просит воды.',
+    id: 'EV04',
+    title: 'Обвал катакомб',
+    text: 'Каменная арка перекрыла основной путь; сбоку видна опасная лазейка.',
     choices: [
-      {
-        id: 'help',
-        label: 'Помочь',
-        outcomes: [
-          { weight: 9, text: 'Путник благодарит и делится находкой.', effects: [{ k: 'essence', v: 3 }] },
-          { weight: 1, text: 'Путник оказался бывалым бойцом и просится в гильдию.', effects: [{ k: 'recruit' }] },
-        ],
-      },
-      { id: 'pass', label: 'Пройти мимо', outcomes: [{ weight: 1, text: 'Вы идёте дальше.', effects: [] }] },
+      { id: 'A', label: 'Обойти безопасно (+10 золота, +1 эссенция)', outcomes: one('Обходной коридор приводит к старому тайнику.', [{ k: 'gold', v: 10 }, { k: 'essence', v: 1 }]) },
+      { id: 'B', label: 'Пробить проход (+30 золота, +2 эссенции, −12 HP каждому)', outcomes: one('Проход пробит, по пути — богатая находка и ушибы.', [{ k: 'gold', v: 30 }, { k: 'essence', v: 2 }, { k: 'hp', v: -12 }]) },
+    ],
+  },
+  {
+    id: 'EV05',
+    title: 'Спор следопытов',
+    text: 'Два проводника спорят о повороте; на земле различимы следы и старые отметки маршрута.',
+    choices: [
+      { id: 'A', label: 'Выбрать безопасный маршрут (+10 золота)', outcomes: one('Надёжная тропа выводит к следующему залу.', [{ k: 'gold', v: 10 }]) },
+      { id: 'B', label: 'Использовать разведданные (+2 эссенции)', requires: { identity: 'mira', hint: 'Нужна Мира в отряде' }, outcomes: one('Мира читает следы и находит короткий путь к тайнику.', [{ k: 'essence', v: 2 }]) },
+    ],
+  },
+  {
+    id: 'EV06',
+    title: 'Повреждённый голем',
+    text: 'Древний голем охраняет осколки реликвии; его ядро нестабильно.',
+    choices: [
+      { id: 'A', label: 'Осторожно отключить (+15 золота, +1 эссенция)', outcomes: one('Голем замирает, осколок ваш.', [{ k: 'gold', v: 15 }, { k: 'essence', v: 1 }]) },
+      { id: 'B', label: 'Разобрать ядро (+10 золота, +3 эссенции, −10 HP каждому)', outcomes: one('Ядро вспыхивает при разборке, но добыча того стоила.', [{ k: 'gold', v: 10 }, { k: 'essence', v: 3 }, { k: 'hp', v: -10 }]) },
     ],
   },
 ];
 
+/** id событий v1.4 из сохранённых забегов. */
+const LEGACY_EVENT: Record<string, string> = { trap: 'EV04', altar: 'EV06', camp: 'EV03', traveler: 'EV03' };
+
 export function eventDef(id: string): EventDef {
-  const def = EVENTS.find((e) => e.id === id);
+  const def = EVENTS.find((e) => e.id === (LEGACY_EVENT[id] ?? id));
   if (!def) throw new Error(`Неизвестное событие: ${id}`);
   return def;
 }
@@ -130,7 +113,6 @@ export function pickEvent(rng: RNG, used: readonly string[]): EventDef {
   return rng.pick(fresh.length > 0 ? fresh : EVENTS);
 }
 
-export function outcomesFor(choice: Choice, partyHasClass: (cls: HeroClass) => boolean): Outcome[] {
-  if (choice.ifClass && partyHasClass(choice.ifClass.cls)) return choice.ifClass.outcomes;
+export function outcomesFor(choice: Choice): Outcome[] {
   return choice.outcomes;
 }

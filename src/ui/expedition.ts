@@ -1,4 +1,3 @@
-import { CLASSES } from '../combat/data';
 import { MAX_TIER, PARTY_SIZE } from '../core/config';
 import { fmt } from '../core/num';
 import type { Hero } from '../core/types';
@@ -27,11 +26,11 @@ import { battleScreen, stopBattleView } from './battleView';
 import type { Ctx } from './ctx';
 import { h } from './dom';
 import { NODE_NAME, nodeIcon } from './icons';
-import { portrait } from './portrait';
+import { heroPortrait } from './portrait';
+import { roleName } from '../content/roster';
 
 let selectedTier = 1;
 let summary: RunSummary | null = null;
-let summaryDoubled = false;
 
 function btn(label: string, onClick: () => void, cls = 'btn'): HTMLButtonElement {
   const b = h('button', { class: cls }, label);
@@ -96,7 +95,7 @@ function lobby(ctx: Ctx): HTMLElement {
     const hero: Hero | undefined = party[i];
     slots.append(
       hero
-        ? h('div', { class: 'slot' }, portrait({ kind: hero.cls, name: hero.name, size: 'md', rarity: hero.rarity }), h('div', { class: 'slot__name' }, hero.name))
+        ? h('div', { class: 'slot' }, heroPortrait(hero, 96), h('div', { class: 'slot__name' }, hero.name), h('div', { class: 'slot__role' }, roleName(hero)))
         : h('div', { class: 'slot' }, h('div', { class: 'slot__empty' }), h('div', { class: 'slot__name' }, 'Пусто')),
     );
   }
@@ -125,7 +124,6 @@ function lobby(ctx: Ctx): HTMLElement {
     }
     ctx.run = startRun(state, ctx.now(), selectedTier);
     summary = null;
-    summaryDoubled = false;
     ctx.platform.gameplayStart();
     ctx.platform.track('run_start', { tier: selectedTier });
     ctx.save();
@@ -156,7 +154,7 @@ function runHead(ctx: Ctx, run: Run): HTMLElement {
       h(
         'div',
         { class: m.alive ? 'member' : 'member is-dead' },
-        portrait({ kind: hero.cls, name: hero.name, size: 'sm', rarity: hero.rarity }),
+        heroPortrait(hero, 48),
         h(
           'div',
           { class: 'member__info' },
@@ -198,7 +196,7 @@ function mapView(ctx: Ctx, run: Run): HTMLElement {
   for (const n of run.map) layers.set(n.layer, [...(layers.get(n.layer) ?? []), n]);
   const maxLayer = Math.max(...layers.keys());
 
-  const map = h('div', { class: 'map' });
+  const map = h('div', { class: 'map', style: "background-image: linear-gradient(180deg, rgba(6, 9, 14, 0.72), rgba(6, 9, 14, 0.88)), url('./art/v17/arena/crypt.webp'); background-size: cover; background-position: center;" });
   const svgNS = 'http://www.w3.org/2000/svg';
   const lines = document.createElementNS(svgNS, 'svg');
   lines.setAttribute('class', 'map__lines');
@@ -220,7 +218,7 @@ function mapView(ctx: Ctx, run: Run): HTMLElement {
         ctx.render();
       });
       nodeEls.set(node.id, b);
-      row.append(h('div', { class: 'node-wrap' }, b, h('span', { class: 'node-label' }, node.type === 'boss' ? 'Страж гробницы' : NODE_NAME[node.type])));
+      row.append(h('div', { class: 'node-wrap' }, b, h('span', { class: 'node-label' }, node.type === 'boss' ? 'Костяной король' : NODE_NAME[node.type])));
     }
     map.append(row);
   }
@@ -264,7 +262,7 @@ function mapView(ctx: Ctx, run: Run): HTMLElement {
 }
 
 function abandon(ctx: Ctx, run: Run): void {
-  ctx.modal('Покинуть подземелье?', ['Жетон не вернётся, награда будет меньше. Павшие герои могут не выжить.'], [
+  ctx.modal('Покинуть подземелье?', ['Экспедиция завершится поражением: награда будет меньше, павшие герои получат временную травму.'], [
     { label: 'Остаться', ghost: true },
     {
       label: 'Уйти',
@@ -283,9 +281,11 @@ function eventView(ctx: Ctx, run: Run): HTMLElement {
   const ev = run.event;
   if (!ev) return h('div');
   const list = h('div', { class: 'choice-list' });
-  for (const { choice, hint } of eventChoices(run)) {
+  for (const { choice, hint, available } of eventChoices(run)) {
     const b = h('button', { class: 'btn btn--ghost' }, choice.label, hint ? h('small', null, hint) : null);
+    if (!available) (b as HTMLButtonElement).disabled = true;
     b.addEventListener('click', () => {
+      if (!available) return;
       chooseEventOption(run, choice.id);
       ctx.render();
     });
@@ -372,7 +372,6 @@ function summaryView(ctx: Ctx, run: Run): HTMLElement {
   const list = h('ul', { class: 'summary__list' });
   const goldLine = h('li', null, 'Золото: ', h('b', { class: 'num' }, `+${fmt(s.gold)}`));
   list.append(goldLine, h('li', null, 'Эссенция: ', h('b', { class: 'num' }, `+${s.essence}`)), h('li', null, `Пройдено узлов: ${s.nodesCleared}`));
-  for (const hero of s.recruits) list.append(h('li', null, `Новый боец: ${hero.name}, ${CLASSES[hero.cls].name.toLowerCase()}`));
   if (s.safe) list.append(h('li', null, 'Защитное благословение первых экспедиций: павшие герои возвращаются без травм.'));
   for (const hero of s.survivors) {
     if (!s.safe) list.append(h('li', null, h('span', { class: 'tag tag--warn' }, 'Ранен'), ` ${hero.name} выжил и отдыхает 30 минут`));
@@ -381,11 +380,12 @@ function summaryView(ctx: Ctx, run: Run): HTMLElement {
   if (s.unlockedTier) list.append(h('li', null, `Открыто подземелье ${s.unlockedTier}. Герои могут расти выше.`));
 
   const actions = h('div', { class: 'btn-row' });
-  if (s.gold > 0 && !summaryDoubled) {
+  // Флаг удвоения хранится в самих итогах забега: перезагрузка страницы не даёт удвоить повторно.
+  if (s.gold > 0 && !s.doubled) {
     const dbl = btn('Удвоить золото за рекламу', async () => {
       const ok = await ctx.platform.showRewarded('double_gold');
-      if (!ok || summaryDoubled) return;
-      summaryDoubled = true;
+      if (!ok || s.doubled) return;
+      s.doubled = true;
       ctx.state.gold += s.gold;
       ctx.save();
       goldLine.replaceChildren('Золото: ', h('b', { class: 'num' }, `+${fmt(s.gold * 2)}`));

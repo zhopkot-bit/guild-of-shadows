@@ -14,9 +14,8 @@ import {
   type PostEffectKind,
 } from './config';
 import type { Num } from './num';
-import { RNG } from './rng';
-import { createHero, dayKey, nextSeed } from './state';
-import { HERO_CLASSES, type GameState, type Hero, type PostId } from './types';
+import { dayKey } from './state';
+import type { GameState, Hero, PostId } from './types';
 
 // ---------- Посты ----------
 
@@ -104,20 +103,6 @@ export function upgradeHero(state: GameState, heroId: string): boolean {
   state.gold -= cost;
   hero.level += 1;
   return true;
-}
-
-export function recruitCost(state: GameState): Num {
-  return Math.ceil(150 * Math.pow(1.6, state.recruitsBought));
-}
-
-/** Найм новобранца (обычный герой случайного класса). Он же страховка от тупика, когда героев не хватает. */
-export function recruitHero(state: GameState): Hero | null {
-  const cost = recruitCost(state);
-  if (state.gold < cost) return null;
-  state.gold -= cost;
-  state.recruitsBought += 1;
-  const cls = new RNG(nextSeed(state)).pick(HERO_CLASSES);
-  return createHero(state, cls, 'common');
 }
 
 /** Снимает статус «ранен» с героев, у которых таймер вышел. */

@@ -75,9 +75,13 @@ describe('сохранения', () => {
     const r = deserialize(json, T0);
     expect(r.ok).toBe(true);
     if (r.ok) {
-      expect(r.state.heroes).toHaveLength(2);
+      // Два валидных героя сохраняются, недостающие канонические (Мира, Рук, Нора) восстанавливаются.
+      expect(r.state.heroes).toHaveLength(5);
+      expect(r.state.heroes.map((h) => h.identity).filter(Boolean).sort()).toEqual(['bran', 'mira', 'nora', 'rook']);
+      expect(new Set(r.state.heroes.map((h) => h.id)).size).toBe(5);
       const odd = r.state.heroes.find((h) => h.id === 'x1')!;
-      expect(odd.cls).toBe('warrior');
+      expect(odd.cls).toBe('defender');
+      expect(odd.identity).toBeNull();
       expect(odd.rarity).toBe('common');
       expect(odd.level).toBe(20);
       expect(odd.status).toBe('ready');

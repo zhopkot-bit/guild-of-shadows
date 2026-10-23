@@ -1,11 +1,13 @@
 import { advance as advanceBattle } from '../combat/battle';
 import { createBattle } from '../combat/battle';
 import { enemyUnit, heroStats, heroUnit, type HeroBonus } from '../combat/data';
+import type { EnemyKind } from '../content/roster';
 import type { Battle, Stats, Unit } from '../combat/types';
 import {
   FATE_BASE,
   FATE_MAX,
   FIRST_RUN_SEED,
+  HP_SCALE,
   MAX_TIER,
   PARTY_SIZE,
   SAFE_EXPEDITIONS,
@@ -14,8 +16,8 @@ import {
 } from '../core/config';
 import { postEffect, refreshHeroes, totalIncome } from '../core/economy';
 import { RNG } from '../core/rng';
-import { createHero, nextSeed } from '../core/state';
-import { HERO_CLASSES, type GameState, type Hero, type HeroClass } from '../core/types';
+import { nextSeed } from '../core/state';
+import type { GameState, Hero, HeroIdentity } from '../core/types';
 import { eventDef, outcomesFor, pickEvent, type Choice, type Effect, type EventDef } from './events';
 import { generateMap, type MapNode } from './map';
 import { relicDef, relicEffects, rollRelics, type RelicId } from './relics';
@@ -48,6 +50,8 @@ export interface Run {
   atkBuff: number;
   postBonus: { hpPct: number; atkPct: number; campHeal: number };
   essenceEarned: number;
+  /** Золото из событий забега (начисляется в итогах). Optional для сейвов v1. */
+  goldEarned?: number;
   stage: RunStage;
   battle: Battle | null;
   battleKind: BattleKind | null;
@@ -125,6 +129,8 @@ export interface RunSummary {
   survivors: Hero[];
   lost: Hero[];
   unlockedTier: number | null;
+  /** Золото уже удвоено за rewarded-рекламу (сохраняется вместе с забегом). */
+  doubled?: boolean;
 }
 
 // ---------- Запуск ----------
@@ -173,6 +179,7 @@ export function startRun(state: GameState, nowMs: number, tier: number): Run {
       campHeal: postEffect(state, 'campHeal'),
     },
     essenceEarned: 0,
+    goldEarned: 0,
     stage: 'map',
     battle: null,
     battleKind: null,
@@ -220,8 +227,17 @@ export function liveMembers(run: Run): RunMember[] {
   return run.members.filter((m) => m.alive);
 }
 
-function partyHasClass(run: Run, cls: HeroClass): boolean {
-  return liveMembers(run).some((m) => (run.heroes[m.heroId] as Hero).cls === cls);
+export function partyHasIdentity(run: Run, identity: HeroIdentity): boolean {
+  return liveMembers(run).some((m) => (run.heroes[m.heroId] as Hero).identity === identity);
+}
+
+/** Абсолютное изменение HP каждого живого героя; урон событий оставляет минимум 1 HP. */
+function shiftPartyHp(run: Run, v: number): void {
+  for (const m of liveMembers(run)) {
+    const max = memberStats(run, m).maxHp;
+    const hp = Math.round(m.frac * max) + Math.round(v * HP_SCALE);
+    m.frac = Math.min(1, Math.max(1, hp) / max);
+  }
 }
 
 function healParty(run: Run, pct: number): void {
@@ -247,39 +263,41 @@ export function availableNodes(run: Run): MapNode[] {
   return nodeById(run, run.currentNodeId).next.map((id) => nodeById(run, id));
 }
 
-const ENEMY_POOL: Array<{ id: string; w: number }> = [
-  { id: 'skeleton', w: 3 },
-  { id: 'goblin', w: 3 },
-  { id: 'troll', w: 2 },
-  { id: 'shaman', w: 2 },
-];
+/**
+ * Составы встреч — Combat Spec v0.3, «Составы»:
+ * слои 1–2 — 2 врага, без двух Костяных стражей; слои 3–6 — 2–3 врага, не больше одного волка
+ * и одного врага с телеграфируемой атакой; элита — усиленный страж + 1 обычный; босс — один.
+ */
+const TELEGRAPHERS: readonly EnemyKind[] = ['boneGuard', 'ashMage'];
 
-function rollEnemyIds(rng: RNG, count: number): string[] {
-  const ids: string[] = [];
-  while (ids.length < count) {
-    const id = rng.weighted(ENEMY_POOL, (e) => e.w).id;
-    if (id === 'shaman' && ids.includes('shaman')) continue; // двух знахарей в бою не бывает
+function allowedKinds(layer: number): EnemyKind[] {
+  return layer <= 1 ? ['goblinRaider'] : ['goblinRaider', 'ashWolf', 'boneGuard', 'ashMage'];
+}
+
+function rollEnemyIds(rng: RNG, count: number, layer: number, preset: EnemyKind[] = []): EnemyKind[] {
+  const ids: EnemyKind[] = [...preset];
+  const weights: Record<EnemyKind, number> = { goblinRaider: 4, ashWolf: 2, boneGuard: 2, ashMage: 2, boneKing: 0 };
+  let guard = 0;
+  while (ids.length < count && guard++ < 100) {
+    const id = rng.weighted(allowedKinds(layer), (k) => weights[k]);
+    if (id === 'ashWolf' && ids.includes('ashWolf')) continue;
+    if (TELEGRAPHERS.includes(id) && ids.some((x) => TELEGRAPHERS.includes(x))) continue;
     ids.push(id);
   }
-  return ids;
+  while (ids.length < count) ids.push('goblinRaider');
+  return ids.slice(preset.length);
 }
 
 function buildEnemies(run: Run, kind: BattleKind, layer: number): Unit[] {
   const ramp = (layer - 1) * 0.06;
   const scale = { tier: run.tier, ramp, mult: run.enemyMult };
-  if (kind === 'boss') {
-    return [enemyUnit('guardian', 'e1', scale), enemyUnit('goblin', 'e2', scale)];
-  }
+  if (kind === 'boss') return [enemyUnit('boneKing', 'e1', scale)];
   if (kind === 'elite') {
-    const eliteId = run.rng.pick(['skeleton', 'troll', 'goblin']);
-    const rest = rollEnemyIds(run.rng, 2);
-    return [
-      enemyUnit(eliteId, 'e1', { ...scale, elite: true }),
-      ...rest.map((id, i) => enemyUnit(id, `e${i + 2}`, scale)),
-    ];
+    const [rest] = rollEnemyIds(run.rng, 2, Math.max(2, layer), ['boneGuard']);
+    return [enemyUnit('boneGuard', 'e1', { ...scale, elite: true }), enemyUnit(rest ?? 'goblinRaider', 'e2', scale)];
   }
-  const count = layer <= 2 ? 2 : 3;
-  return rollEnemyIds(run.rng, count).map((id, i) => enemyUnit(id, `e${i + 1}`, scale));
+  const count = layer <= 2 ? 2 : run.rng.int(2, 3);
+  return rollEnemyIds(run.rng, count, layer).map((id, i) => enemyUnit(id, `e${i + 1}`, scale));
 }
 
 function startBattle(run: Run, kind: BattleKind, layer: number): void {
@@ -418,7 +436,7 @@ export function chooseCamp(run: Run, option: 'rest' | 'train'): string {
   return text;
 }
 
-function describeEffect(e: Effect, run: Run, gainedRelic: RelicId | null): string | null {
+function describeEffect(e: Effect, gainedRelic: RelicId | null): string | null {
   switch (e.k) {
     case 'essence':
       return `${e.v >= 0 ? '+' : ''}${e.v} Эссенции`;
@@ -430,24 +448,27 @@ function describeEffect(e: Effect, run: Run, gainedRelic: RelicId | null): strin
       return 'Засада!';
     case 'atkBuff':
       return `+${Math.round(e.v * 100)}% АТК`;
-    case 'recruit':
-      return run.pendingRecruits > 0 ? 'В гильдию придёт новый боец' : null;
+    case 'gold':
+      return `+${e.v} золота`;
+    case 'hp':
+      return e.v >= 0 ? `Каждый герой восстанавливает ${Math.round(e.v * HP_SCALE)} HP` : `Каждый герой теряет ${Math.round(-e.v * HP_SCALE)} HP`;
   }
 }
 
-export function eventChoices(run: Run): Array<{ choice: Choice; hint: string | null }> {
+export function eventChoices(run: Run): Array<{ choice: Choice; available: boolean; hint: string | null }> {
   if (!run.event) return [];
-  return run.event.choices.map((choice) => ({
-    choice,
-    hint: choice.ifClass && partyHasClass(run, choice.ifClass.cls) ? choice.ifClass.hint : null,
-  }));
+  return eventDef(run.event.id).choices.map((choice) => {
+    const available = !choice.requires || partyHasIdentity(run, choice.requires.identity);
+    return { choice, available, hint: available ? null : choice.requires?.hint ?? null };
+  });
 }
 
 export function chooseEventOption(run: Run, choiceId: string): void {
   if (run.stage !== 'event' || !run.event) throw new Error('Событие не активно');
   const choice = eventDef(run.event.id).choices.find((c) => c.id === choiceId);
   if (!choice) throw new Error(`Нет варианта ${choiceId}`);
-  const outcomes = outcomesFor(choice, (cls) => partyHasClass(run, cls));
+  if (choice.requires && !partyHasIdentity(run, choice.requires.identity)) throw new Error(`Вариант ${choiceId} недоступен`);
+  const outcomes = outcomesFor(choice);
   const outcome = run.rng.weighted(outcomes, (o) => o.weight);
   const lines: string[] = [];
   for (const e of outcome.effects) {
@@ -455,6 +476,12 @@ export function chooseEventOption(run: Run, choiceId: string): void {
     switch (e.k) {
       case 'essence':
         run.essenceEarned += e.v;
+        break;
+      case 'gold':
+        run.goldEarned = (run.goldEarned ?? 0) + e.v;
+        break;
+      case 'hp':
+        shiftPartyHp(run, e.v);
         break;
       case 'partyHp':
         if (e.v >= 0) healParty(run, e.v);
@@ -476,11 +503,8 @@ export function chooseEventOption(run: Run, choiceId: string): void {
       case 'atkBuff':
         run.atkBuff += e.v;
         break;
-      case 'recruit':
-        run.pendingRecruits += 1;
-        break;
     }
-    const line = describeEffect(e, run, gained);
+    const line = describeEffect(e, gained);
     if (line) lines.push(line);
   }
   run.eventResult = { text: outcome.text, lines };
@@ -533,18 +557,16 @@ export function finishRun(run: Run, state: GameState, nowMs: number): RunSummary
   const tier = run.tier;
   const effects = relicEffects(run.relics);
 
-  const gold = Math.floor(totalIncome(state) * 120 * (1 + 0.5 * (tier - 1)) * (victory ? 1 : 0.4));
+  const gold = Math.floor(totalIncome(state) * 120 * (1 + 0.5 * (tier - 1)) * (victory ? 1 : 0.4)) + (run.goldEarned ?? 0);
   const baseEssence = 3 + 2 * tier + 2 * run.elitesCleared + (victory ? 5 : 0);
   const essence = Math.floor(((victory ? baseEssence : baseEssence * 0.25) + run.essenceEarned) * effects.essenceMult);
   state.gold += gold;
   state.essence += essence;
 
-  // Новобранцы: события и 30% за победу над боссом.
-  const recruitRng = new RNG(nextSeed(state));
-  let recruitCount = run.pendingRecruits;
-  if (victory && recruitRng.chance(0.3)) recruitCount += 1;
+  // Случайный найм исключён из MVP (UI/UX Spec v1.1, GDD v1.1): ростер задан вручную.
+  // nextSeed сохраняет прежний расход сидов, чтобы следующие карты не сдвигались относительно v1.4.
+  nextSeed(state);
   const recruits: Hero[] = [];
-  for (let i = 0; i < recruitCount; i++) recruits.push(createHero(state, recruitRng.pick(HERO_CLASSES), 'rare'));
 
   // Поражение не уничтожает коллекцию: павшие в экспедиции герои временно ранены.
   // Это сохраняет цену ошибки, но не создаёт необратимой потери вложенного прогресса.

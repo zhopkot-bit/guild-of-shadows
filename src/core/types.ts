@@ -1,7 +1,13 @@
 import type { Num } from './num';
 
-export type HeroClass = 'warrior' | 'mage' | 'rogue' | 'priest';
-export const HERO_CLASSES: readonly HeroClass[] = ['warrior', 'mage', 'rogue', 'priest'];
+/** Боевые роли по Content Bible v1.1 / Combat Spec v0.3 (ROLE_DEFENDER, ROLE_SCOUT, ROLE_SHOOTER, ROLE_HEALER). */
+export type HeroClass = 'defender' | 'scout' | 'shooter' | 'healer';
+export type HeroRole = HeroClass;
+export const HERO_CLASSES: readonly HeroClass[] = ['defender', 'scout', 'shooter', 'healer'];
+
+/** Личность канонического героя. Портрет и спрайт выбираются по ней, а не по роли. */
+export type HeroIdentity = 'bran' | 'mira' | 'rook' | 'nora';
+export const HERO_IDENTITIES: readonly HeroIdentity[] = ['bran', 'mira', 'rook', 'nora'];
 
 export type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
 export const RARITIES: readonly Rarity[] = ['common', 'rare', 'epic', 'legendary'];
@@ -14,13 +20,16 @@ export type HeroStatus = 'ready' | 'wounded' | 'lost';
 export interface Hero {
   id: string;
   name: string;
+  /** Роль героя (поле сохранило старое имя ради совместимости сейвов). */
   cls: HeroClass;
+  /** Канонический персонаж; null — безымянный новобранец из старых сейвов (без чужого лица). */
+  identity: HeroIdentity | null;
   rarity: Rarity;
   level: number;
   status: HeroStatus;
   /** Метка времени (мс, по часам платформы), до которой герой ранен. */
   woundedUntil: number;
-  /** Номер варианта портрета (для будущего арта: warrior_common_1.webp). */
+  /** Устаревший номер варианта портрета; не влияет на выбор арта (см. content/roster.ts). */
   portrait: number;
 }
 

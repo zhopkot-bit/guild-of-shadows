@@ -30,10 +30,6 @@ export const LEVEL_STAT_GROWTH = 0.12; // +12% характеристик за �
 export const MAX_ROUNDS = 40; // защита боя от зацикливания
 export const FIRST_RUN_SEED = 1337; // фиксированная карта первого забега
 
-// --- Арт ---
-/** Производственные пути к иллюстрациям, выделенным из утверждённого Dark Fantasy concept pack. */
-export const ART = { portraits: true, basePath: './art/portraits/', scenesPath: './art/scenes/', postsPath: './art/posts/' };
-
 // --- Посты ---
 export type PostEffectKind = 'hpPct' | 'atkPct' | 'campHeal' | 'incomePct' | 'ticketRegen' | 'fateBonus';
 

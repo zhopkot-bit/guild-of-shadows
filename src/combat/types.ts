@@ -1,10 +1,12 @@
 import type { RNG } from '../core/rng';
-import type { Rarity } from '../core/types';
+import type { HeroIdentity, Rarity } from '../core/types';
 
 export type Side = 'hero' | 'enemy';
 
 /** Цели умения указаны относительно того, кто его применяет. */
 export type SkillTarget = 'enemy' | 'allEnemies' | 'ally';
+
+export type SkillEffect = 'damage' | 'heal' | 'cover';
 
 export interface Skill {
   id: string;
@@ -12,10 +14,17 @@ export interface Skill {
   /** Сколько своих ходов умение недоступно после применения. */
   cooldown: number;
   target: SkillTarget;
-  /** Множитель урона; 0 — умение не наносит урон (лечение). */
+  effect: SkillEffect;
+  /** Множитель урона; 0 — умение не наносит урон. */
   mult: number;
-  ignoreDef?: boolean;
+  /** Доля DEF цели, которую игнорирует удар (Прицельный выстрел — 0.3). */
+  penetration?: number;
+  /** Лечение: доля maxHP цели. */
   healPctMax?: number;
+  /** Прикрытие: доля снижения следующего входящего удара. */
+  coverPct?: number;
+  /** Устаревшие поля сейвов v1; движок v2 их не использует. */
+  ignoreDef?: boolean;
   healAtkMult?: number;
 }
 
@@ -26,11 +35,24 @@ export interface Stats {
   spd: number;
 }
 
+/**
+ * Телеграф: подготовленный удар, который выполнится на следующем собственном ходу юнита.
+ * Цель фиксируется в момент подготовки и видна игроку; если юнит выбыл — удар отменяется.
+ */
+export interface Intent {
+  id: 'cleaver' | 'heavyBlow' | 'ashBolt' | 'spectralWave';
+  name: string;
+  mult: number;
+  /** true — удар по всем живым героям; targetId не используется. */
+  aoe: boolean;
+  targetId: string | null;
+}
+
 export interface Unit {
   id: string;
   name: string;
   side: Side;
-  /** Класс героя или id врага (для иконки/портрета). */
+  /** Роль героя или вид противника (для ИИ и арта). */
   kind: string;
   stats: Stats;
   hp: number;
@@ -39,26 +61,32 @@ export interface Unit {
   skill: Skill | null;
   alive: boolean;
   heroId?: string;
+  identity?: HeroIdentity | null;
   rarity?: Rarity;
   portrait?: number;
   boss?: boolean;
   /** Текущая фаза босса; optional для совместимости со старыми сохранениями. */
   bossPhase?: 1 | 2;
   elite?: boolean;
+  /** Подготовленный (телеграфированный) удар. */
+  intent?: Intent | null;
+  /** Снижение следующего входящего удара от Прикрытия (0..1). */
+  cover?: number;
+  /** Сколько собственных ходов юнит сделал (циклы особых атак). */
+  turns?: number;
+  /** Счётчик ходов босса с начала текущей фазы. */
+  phaseTurns?: number;
 }
+
+export type ActionKind = 'attack' | 'skill' | 'prepare' | 'release';
 
 export interface Action {
   actorId: string;
-  kind: 'attack' | 'skill';
-  /** Не нужен для умений по всем врагам. */
+  kind: ActionKind;
+  /** Не нужен для умений по всем врагам и для групповых телеграфов. */
   targetId?: string;
-  /**
-   * Результат тайминга игрока: множитель урона героя (0.5..1.5, по умолчанию 1).
-   * Авторежим всегда играет с 1, поэтому баланс считается по нему, а ручная игра только добавляет сверху.
-   */
-  power?: number;
-  /** Доля урона, которую гасит парирование героя (0..0.7, по умолчанию 0). Действует на удары врагов. */
-  guard?: number;
+  /** Для prepare: какой удар готовится. */
+  intent?: Intent;
 }
 
 export interface BattleMods {
@@ -68,12 +96,33 @@ export interface BattleMods {
   phoenix: boolean;
 }
 
+export interface HitInfo {
+  t: 'hit';
+  actor: string;
+  target: string;
+  dmg: number;
+  skill?: string;
+  /** Тип удара для подачи на арене. */
+  via: 'attack' | 'skill' | 'intent';
+  intentId?: Intent['id'];
+  killed: boolean;
+  /** Сколько урона поглотили Прикрытие/Последний заслон. */
+  mitigated?: number;
+  covered?: boolean;
+  lastStand?: boolean;
+}
+
 export type BattleEvent =
   | { t: 'round'; n: number }
-  | { t: 'hit'; actor: string; target: string; dmg: number; skill?: string; killed: boolean }
+  | HitInfo
   | { t: 'heal'; actor: string; target: string; amount: number; skill: string }
+  | { t: 'cover'; actor: string; target: string; pct: number }
+  | { t: 'prepare'; actor: string; intent: Intent }
+  | { t: 'retarget'; actor: string; from: string; to: string }
+  | { t: 'cancel'; actor: string; intent: Intent }
   | { t: 'phoenix'; target: string }
   | { t: 'bossPhase'; unit: string; phase: 2; name: string }
+  | { t: 'aftercare'; actor: string; target: string; amount: number }
   | { t: 'end'; result: 'victory' | 'defeat' };
 
 export type BattleResult = 'ongoing' | 'victory' | 'defeat';
@@ -89,4 +138,8 @@ export interface Battle {
   log: BattleEvent[];
   result: BattleResult;
   mods: BattleMods;
+  /** Пассивка Защитника «Последний заслон» уже сработала в этом бою. */
+  lastStandUsed?: boolean;
+  /** Версия схемы боя (2 — v1.7). */
+  schema?: number;
 }

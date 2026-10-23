@@ -1,14 +1,12 @@
+import { ROSTER, identityDef } from '../content/roster';
 import { MAX_TICKETS } from './config';
-import { RNG } from './rng';
-import type { GameState, Hero, HeroClass, Rarity } from './types';
+import type { GameState, Hero, HeroIdentity } from './types';
 
-export const SAVE_VERSION = 1;
-
-const NAMES = [
-  'Рагнар', 'Мирра', 'Каэль', 'Лиара', 'Торвин', 'Эйла', 'Дрейк', 'Сильвана', 'Горан', 'Нира',
-  'Бран', 'Ясна', 'Вальдер', 'Келла', 'Ормунд', 'Тесса', 'Хальдор', 'Ивара', 'Магнус', 'Рейна',
-  'Скарн', 'Элиса', 'Кроув', 'Далия', 'Фенрис', 'Агата', 'Орвин', 'Лейла', 'Тарн', 'Весна',
-];
+/**
+ * v1 — исходный формат (роли warrior/mage/rogue/priest, без identity).
+ * v2 — канонические роли и личности героев (миграция в save.ts).
+ */
+export const SAVE_VERSION = 2;
 
 export function dayKey(nowMs: number): string {
   return new Date(nowMs).toISOString().slice(0, 10);
@@ -21,23 +19,21 @@ export function nextSeed(state: GameState): number {
   return ((state.createdAt >>> 0) ^ Math.imul(state.seedCounter, 0x9e3779b1)) >>> 0;
 }
 
-export function createHero(state: GameState, cls: HeroClass, rarity: Rarity): Hero {
-  const rng = new RNG(nextSeed(state));
-  const used = new Set(state.heroes.map((h) => h.name));
-  const free = NAMES.filter((n) => !used.has(n));
-  const name = rng.pick(free.length > 0 ? free : NAMES);
-  const id = `h${state.nextHeroId}`;
-  state.nextHeroId += 1;
+/** Добавляет в гильдию канонического героя. Имя, роль и арт берутся из реестра, а не из случайной таблицы. */
+export function createCanonHero(state: GameState, identity: HeroIdentity): Hero {
+  const def = identityDef(identity);
   const hero: Hero = {
-    id,
-    name,
-    cls,
-    rarity,
+    id: `h${state.nextHeroId}`,
+    name: def.name,
+    cls: def.role,
+    identity,
+    rarity: 'common',
     level: 1,
     status: 'ready',
     woundedUntil: 0,
-    portrait: rng.int(1, 3),
+    portrait: 1,
   };
+  state.nextHeroId += 1;
   state.heroes.push(hero);
   return hero;
 }
@@ -62,17 +58,9 @@ export function newGame(nowMs: number): GameState {
     stats: { expeditionsStarted: 0, expeditionsWon: 0, heroesLost: 0 },
     activeRun: null,
   };
-  const warrior = createHero(state, 'warrior', 'common');
-  const mage = createHero(state, 'mage', 'common');
-  createHero(state, 'rogue', 'common');
-  const priest = createHero(state, 'priest', 'common');
-  // Канонический стартовый ростер: фиксированные имена делают обучение и баланс воспроизводимыми.
-  warrior.name = 'Бран';
-  mage.name = 'Мира';
-  const rogue = state.heroes.find((h) => h.cls === 'rogue');
-  const priestHero = state.heroes.find((h) => h.cls === 'priest');
-  if (rogue) rogue.name = 'Рук';
-  if (priestHero) priestHero.name = 'Нора';
-  state.party = [warrior.id, mage.id, priest.id];
+  // Канонический стартовый ростер GDD v1.1 §8.3: Бран, Мира, Рук, Нора; в отряде трое.
+  for (const def of ROSTER) createCanonHero(state, def.identity);
+  // Стартовый отряд закрывает три функции: защита, урон с дистанции, лечение.
+  state.party = state.heroes.filter((h) => h.identity !== 'mira').map((h) => h.id);
   return state;
 }

@@ -1,90 +1,145 @@
-import { autoAction } from '../combat/ai';
-import { advance, applyAction, bossIntent, legalActions, turnOrder, unitById, aliveUnits } from '../combat/battle';
-import type { Action, Battle, BattleEvent, Unit } from '../combat/types';
+import { autoAction, enemyKind, previewEnemyAction } from '../combat/ai';
+import { advance, aliveUnits, applyAction, intentDamage, legalActions, turnOrder, unitById } from '../combat/battle';
+import { ENEMIES } from '../combat/data';
+import type { Action, Battle, BattleEvent, HitInfo, Intent, Unit } from '../combat/types';
+import { ARENAS } from '../content/arenas';
+import { BOSS_EMISSIVE, ENEMY_ART, heroArt, roleName } from '../content/roster';
+import type { HeroClass } from '../core/types';
 import { finishBattle } from '../expedition/run';
+import { ASH, ArenaScene, DANGER, SPECTRAL, type ActorScreen, type ActorSpec, type AttackStyle } from './arena/scene';
+import type { Rgb } from './arena/backend';
 import type { Ctx } from './ctx';
 import { h } from './dom';
-import { portrait } from './portrait';
+import { glyph, type GlyphName } from './glyphs';
+import { enemyPortrait, heroPortrait } from './portrait';
 import { sfx } from './sfx';
 
 /** Настройки боя живут дольше одного боя: выбрали «Авто» — так и останется. */
 export const battlePrefs = { manual: true, speed: 1 as 1 | 2 | 4 };
 
-interface UnitView {
-  el: HTMLElement;
-  portrait: HTMLElement;
-  hp: HTMLElement;
-  fill: HTMLElement;
-  ghost: HTMLElement;
-  bar: HTMLElement;
-  cd: HTMLElement;
-}
-
 interface View {
-  battle: Battle;
   dead: boolean;
   fast: boolean;
-  timers: Set<number>;
-  wakers: Set<() => void>;
+  scene: ArenaScene;
   choice: ((a: Action) => void) | null;
-  pending: { kind: 'attack' | 'skill'; targets: string[] } | null;
-  units: Map<string, UnitView>;
-}
-
-const FIGHTER_ART: Record<string, string> = {
-  warrior: 'warrior.webp', mage: 'mage.webp', rogue: 'rogue.webp', priest: 'priest.webp',
-  skeleton: 'skeleton.webp', guardian: 'guardian.webp', goblin: 'goblin.webp', troll: 'troll.webp', shaman: 'shaman.webp', hunter: 'hunter.webp',
-};
-
-const SKILL_PATHS: Record<string, string> = {
-  attack: 'M5 27L22 10M16 7l8 1 1 8M4 23l5 5M10 18l8 8',
-  powerStrike: 'M4 27L23 8M16 6l9 1 1 9M5 8l5 5M3 15l5 5',
-  fireWave: 'M17 3c1 7-7 8-5 14 1 3 4 3 5 1 2 3-1 7-5 7-6 0-9-7-5-12 2-3 4-4 4-10 3 2 5 5 6 8',
-  backstab: 'M21 4L18 19 12 25 10 18 5 15zM5 26l5-5',
-  heal: 'M12 3v18M3 12h18M20 21l-3-3M4 21l3-3',
-  shamanHeal: 'M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z',
-  groundSlam: 'M6 5l12 12M5 4l5-1 1 5M18 16l4 4M11 20l-2 4M5 18l-2 3M20 6l2 2M17 3l-1 3',
-};
-
-function skillGlyph(id: string): SVGSVGElement {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('viewBox', '0 0 32 32');
-  svg.setAttribute('aria-hidden', 'true');
-  svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', '2');
-  svg.setAttribute('stroke-linecap', 'round');
-  svg.setAttribute('stroke-linejoin', 'round');
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  path.setAttribute('d', SKILL_PATHS[id] ?? SKILL_PATHS.attack ?? 'M4 4L28 28');
-  svg.append(path);
-  return svg;
+  pending: { kind: 'attack' | 'skill'; targets: string[]; actor: string } | null;
+  cleanup: Array<() => void>;
 }
 
 let current: View | null = null;
+
+/** Для QA-скриптов (?qa=1): состояние рендерера и боя без доступа к внутренностям модулей. */
+declare global {
+  interface Window {
+    __gosArena?: { stats: () => ReturnType<ArenaScene['stats']>; battle: () => Battle | null };
+  }
+}
 
 export function stopBattleView(): void {
   const v = current;
   current = null;
   if (!v) return;
   v.dead = true;
-  for (const t of v.timers) window.clearTimeout(t);
-  v.timers.clear();
-  for (const w of [...v.wakers]) w();
-  v.wakers.clear();
+  document.body.classList.remove('is-battle');
+  for (const fn of v.cleanup) fn();
+  v.scene.destroy();
+  if (v.choice) v.choice = null;
+}
+
+const INTENT_COLOR: Record<Intent['id'], Rgb> = { cleaver: DANGER, heavyBlow: DANGER, ashBolt: ASH, spectralWave: SPECTRAL };
+
+const SKILL_GLYPH: Record<string, GlyphName> = { cover: 'cover', lunge: 'lunge', aimedShot: 'aimedShot', healingLight: 'healingLight' };
+const ATTACK_GLYPH: Record<string, GlyphName> = { melee: 'sword', bow: 'bow', crossbow: 'crossbow', staff: 'staff' };
+
+function idleFor(u: Unit): ActorSpec['idle'] {
+  if (u.side === 'hero') {
+    const base: Record<HeroClass, ActorSpec['idle']> = {
+      defender: { breath: 0.012, sway: 0.7, bob: 0.6, hover: 0, speed: 0.9 },
+      scout: { breath: 0.014, sway: 1.1, bob: 0.9, hover: 0, speed: 1.05 },
+      shooter: { breath: 0.012, sway: 1.0, bob: 0.7, hover: 0, speed: 0.95 },
+      healer: { breath: 0.013, sway: 1.3, bob: 0.8, hover: 0, speed: 0.85 },
+    };
+    return base[u.kind as HeroClass] ?? base.defender;
+  }
+  switch (enemyKind(u)) {
+    case 'ashWolf':
+      return { breath: 0.03, sway: 0.5, bob: 1.2, hover: 0, speed: 1.7 };
+    case 'ashMage':
+      return { breath: 0.012, sway: 1.5, bob: 0.8, hover: 3, speed: 0.9 };
+    case 'goblinRaider':
+      return { breath: 0.02, sway: 0.8, bob: 1.4, hover: 0, speed: 1.4 };
+    case 'boneKing':
+      return { breath: 0.01, sway: 0.9, bob: 0.5, hover: 0, speed: 0.7 };
+    default:
+      return { breath: 0.008, sway: 0.6, bob: 0.4, hover: 0, speed: 0.8 };
+  }
+}
+
+function attackStyle(u: Unit): AttackStyle {
+  if (u.side === 'hero') return heroArt({ identity: u.identity ?? null, cls: u.kind as HeroClass }).attackStyle;
+  const k = enemyKind(u);
+  return k ? ENEMY_ART[k].attackStyle : 'melee';
+}
+
+function spriteFor(u: Unit): string {
+  if (u.side === 'hero') {
+    const art = heroArt({ identity: u.identity ?? null, cls: u.kind as HeroClass });
+    // Безымянный новобранец старого сейва: нейтральный силуэт без чужого лица.
+    return art.sprite ?? '';
+  }
+  const k = enemyKind(u);
+  return k ? ENEMY_ART[k].sprite : ENEMY_ART.goblinRaider.sprite;
+}
+
+/** Буквы для одинаковых противников в одном бою: «Гоблин-налётчик А», «… Б». */
+const DUP_LETTERS = ['А', 'Б', 'В', 'Г'];
+const dupSuffix = new WeakMap<Unit, string>();
+
+function labelDuplicates(b: Battle): void {
+  const groups = new Map<string, Unit[]>();
+  for (const u of b.units) {
+    if (u.side !== 'enemy' || u.boss) continue;
+    const list = groups.get(u.kind) ?? [];
+    list.push(u);
+    groups.set(u.kind, list);
+  }
+  for (const list of groups.values()) {
+    if (list.length < 2) continue;
+    list.forEach((u, i) => dupSuffix.set(u, DUP_LETTERS[i] ?? String(i + 1)));
+  }
+}
+
+function displayName(u: Unit): string {
+  const base = u.name.replace(/ \(элита\)$/, '');
+  const suffix = dupSuffix.get(u);
+  return suffix ? `${base} ${suffix}` : base;
+}
+
+function hpText(u: Unit): string {
+  return `${u.hp} / ${u.stats.maxHp}`;
 }
 
 function eventLine(b: Battle, e: BattleEvent): string | null {
-  const name = (id: string) => unitById(b, id).name;
+  const name = (id: string) => displayName(unitById(b, id));
   switch (e.t) {
     case 'hit':
-      return `${name(e.actor)}${e.skill ? `: ${e.skill}` : ''} → ${name(e.target)} −${e.dmg}${e.killed ? ' (пал)' : ''}`;
+      return `${name(e.actor)}${e.skill ? ` · ${e.skill}` : ''} → ${name(e.target)}: −${e.dmg}${e.mitigated ? ` (поглощено ${e.mitigated})` : ''}${e.killed ? ', выбывает' : ''}`;
     case 'heal':
-      return `${name(e.actor)}: ${e.skill} → ${name(e.target)} +${e.amount}`;
+      return `${name(e.actor)} · ${e.skill} → ${name(e.target)}: +${e.amount}`;
+    case 'cover':
+      return `${name(e.actor)} прикрывает: ${name(e.target)} (следующий удар −${Math.round(e.pct * 100)}%)`;
+    case 'prepare':
+      return `${name(e.actor)} готовит «${e.intent.name}»${e.intent.aoe ? ' по всему отряду' : e.intent.targetId ? ` → ${name(e.intent.targetId)}` : ''}`;
+    case 'cancel':
+      return `«${e.intent.name}» отменён: ${name(e.actor)} не успел ударить`;
+    case 'retarget':
+      return `Цель выбыла — удар переходит на ${name(e.to)}`;
     case 'phoenix':
       return `Перо Феникса возвращает в строй: ${name(e.target)}`;
     case 'bossPhase':
-      return `${name(e.unit)} переходит во II фазу: атаки усилились!`;
+      return `${e.name}: доспехи трескаются, начинается II фаза`;
+    case 'aftercare':
+      return `${name(e.actor)}: мягкое восстановление → ${name(e.target)} +${e.amount}`;
     default:
       return null;
   }
@@ -96,517 +151,515 @@ export function battleScreen(ctx: Ctx): HTMLElement {
   const maybeBattle = run?.battle;
   if (!run || !maybeBattle) return h('section', { class: 'stage' });
   const battle: Battle = maybeBattle;
+  const isBoss = run.battleKind === 'boss';
+  labelDuplicates(battle);
 
-  const view: View = { battle, dead: false, fast: false, timers: new Set(), wakers: new Set(), choice: null, pending: null, units: new Map() };
+  // ---------- Каркас ----------
+  const arenaEl = h('div', { class: `arena${isBoss ? ' arena--boss' : ''}` });
+  const hud = h('div', { class: 'hud' });
+  const topBar = h('div', { class: 'hud__top' });
+  const turnsEl = h('div', { class: 'turns', 'aria-label': 'Порядок ходов' });
+  const intentsEl = h('div', { class: 'intents', 'aria-live': 'polite' });
+  const platesEl = h('div', { class: 'plates' });
+  const floatsEl = h('div', { class: 'floats', 'aria-hidden': 'true' });
+  const bannerEl = h('div', { class: 'hud__banner', 'aria-live': 'assertive' });
+  const promptEl = h('div', { class: 'hud__prompt', 'aria-live': 'polite' });
+  const resultEl = h('div', { class: 'hud__result' });
+  resultEl.hidden = true;
+  hud.append(topBar, turnsEl, intentsEl, platesEl, floatsEl, bannerEl, promptEl, resultEl);
+  arenaEl.append(hud);
+
+  const partyEl = h('div', { class: 'party-cards' });
+  const actionsEl = h('div', { class: 'action-bar' });
+  const controlsEl = h('div', { class: 'battle-controls' });
+  const logList = h('ol', { class: 'battle-log__list' });
+  const logEl = h('details', { class: 'battle-log' }, h('summary', null, 'Журнал боя'), logList);
+  const dock = h('div', { class: 'battle-dock' }, partyEl, h('div', { class: 'battle-dock__right' }, actionsEl, controlsEl));
+  const root = h('section', { class: 'stage stage--battle' }, arenaEl, dock, logEl);
+
+  // ---------- Сцена ----------
+  const specs: ActorSpec[] = battle.units.map((u) => {
+    const k = u.side === 'enemy' ? enemyKind(u) : null;
+    return {
+      id: u.id,
+      side: u.side,
+      sprite: spriteFor(u),
+      emissive: u.boss ? BOSS_EMISSIVE : undefined,
+      flip: k === 'goblinRaider',
+      style: attackStyle(u),
+      boss: !!u.boss,
+      wide: k === 'ashWolf',
+      idle: idleFor(u),
+      variant: dupSuffix.has(u) ? DUP_LETTERS.indexOf(dupSuffix.get(u) as string) : 0,
+      dead: !u.alive,
+      phase2: !!u.boss && u.bossPhase === 2,
+    } as ActorSpec;
+  });
+  const scene = new ArenaScene(arenaEl, isBoss ? ARENAS.boss : ARENAS.crypt, specs);
+  scene.speed = battlePrefs.speed;
+
+  const view: View = { dead: false, fast: false, scene, choice: null, pending: null, cleanup: [] };
   current = view;
-
-  const turns = h('div', { class: 'turns', 'aria-label': 'Порядок ходов' });
-  const status = h('div', { class: 'controls__status', 'aria-live': 'polite' });
-  const log = h('ul', { class: 'log battle-log' });
-  const actions = h('div', { class: 'battle-actions' });
-  const banner = h('div', { class: 'banner' });
-  const bossHud = h('div', { class: 'boss-hud', 'aria-live': 'polite' });
-  const fx = h('div', { class: 'fx' });
-  const arena = h('div', { class: run.battleKind === 'boss' ? 'arena arena--boss' : 'arena' });
-  arena.style.setProperty('--arena-art', run.battleKind === 'boss' ? 'url("./art/scenes/boss_phase1.webp")' : 'url("./art/scenes/crypt.webp")');
-
-  // ---------- Построение сцены ----------
-
-  // Фаза босса меняет имя на лету, а элитный суффикс выводим отдельно.
-  const unitName = (u: Unit) => {
-    if (u.boss && u.bossPhase === 2) return u.name;
-    if (u.side === 'enemy' && u.elite) return u.name.replace(/ \(элита\)$/, '');
-    return u.name;
-  };
-  const displayName = (u: Unit) => u.elite ? `${unitName(u)} (элита)` : unitName(u);
-
-  const makeRow = (side: 'enemy' | 'hero') => {
-    const row = h('div', { class: `battle__row battle__row--${side}` });
-    for (const u of battle.units.filter((x) => x.side === side)) {
-      const isFoe = side === 'enemy';
-      const fill = h('i');
-      const ghost = h('b');
-      const bar = h('div', { class: 'bar unit__bar' }, ghost, fill);
-      const hp = h('div', { class: 'unit__hp num' });
-      const cd = h('div', { class: 'unit__cd' });
-      const port = portrait({ kind: u.kind, name: unitName(u), size: 'xs', rarity: u.rarity, foe: isFoe, boss: u.boss });
-      const spriteFile = FIGHTER_ART[u.kind] ?? `${u.kind}.webp`;
-      const figure = h('img', {
-        class: `unit__figure${u.boss ? ' unit__figure--scene-boss' : ''}`,
-        src: `./art/sprites/${spriteFile}`,
-        alt: '', draggable: 'false', loading: 'eager',
-      });
-      figure.addEventListener('error', () => {
-        figure.classList.add('unit__figure--fallback');
-        figure.src = `./art/portraits/${u.kind}.webp`;
-      }, { once: true });
-      const info = h('div', { class: 'unit__info' },
-        h('div', { class: 'unit__name' }, displayName(u)),
-        bar,
-        hp,
-        cd,
-      );
-      const plate = h('div', { class: 'unit__plate' }, port, info);
-      const el = h('div', { class: `unit unit--${side}${u.boss ? ' unit--boss' : ''}`, role: 'button', tabindex: '-1', 'aria-label': displayName(u) }, figure, plate);
-      el.addEventListener('click', () => onUnitClick(u.id));
-      // A boss is already painted into the phase art; this element is its target hit-area.
-      view.units.set(u.id, { el, portrait: u.boss ? el : figure, hp, fill, ghost, bar, cd });
-      row.append(el);
-    }
-    return row;
-  };
-
-  const enemyRow = makeRow('enemy');
-  const heroRow = makeRow('hero');
-  const boss = battle.units.find((u) => u.boss);
-  const combatField = h('div', { class: `battle battle--${run.battleKind === 'boss' ? 'boss' : 'regular'}` }, enemyRow, heroRow);
-  arena.append(bossHud, combatField, fx);
-
-  // ---------- Отрисовка состояния ----------
-
+  document.body.classList.add('is-battle');
+  if (new URLSearchParams(window.location.search).has('qa')) {
+    window.__gosArena = { stats: () => scene.stats(), battle: () => (current === view ? battle : null) };
+  }
   const alive = () => !view.dead && current === view && ctx.run === run && run.battle === battle;
 
-  const paintUnit = (u: Unit) => {
-    const v = view.units.get(u.id);
-    if (!v) return;
-    const pct = `${Math.max(0, (u.hp / u.stats.maxHp) * 100)}%`;
-    v.hp.textContent = `${u.hp} из ${u.stats.maxHp}`;
-    const name = v.el.querySelector('.unit__name');
-    if (name) name.textContent = displayName(u);
-    v.portrait.setAttribute('aria-label', displayName(u));
-    v.fill.style.width = pct;
-    v.ghost.style.width = pct;
-    v.bar.classList.toggle('is-low', u.hp / u.stats.maxHp < 0.3);
-    if (u.alive) v.el.classList.remove('is-dead', 'is-dying');
-    else if (!v.el.classList.contains('is-dying')) v.el.classList.add('is-dead');
-    if (u.side === 'hero') v.cd.textContent = !u.alive || !u.skill ? '' : u.cd === 0 ? `${u.skill.name} готово` : `${u.skill.name} через ${u.cd}`;
-  };
-
-  const paintBossHud = () => {
-    if (!boss) {
-      bossHud.hidden = true;
-      return;
-    }
-    bossHud.hidden = !boss.alive;
-    if (!boss.alive) return;
-    const intent = bossIntent(boss);
-    const phaseArt = intent.phase === 2 ? 'boss_phase2.webp' : 'boss_phase1.webp';
-    arena.style.setProperty('--arena-art', `url("./art/scenes/${phaseArt}")`);
-    bossHud.classList.toggle('is-phase-two', intent.phase === 2);
-    bossHud.replaceChildren(
-      h('div', { class: 'boss-hud__top' },
-        h('strong', null, unitName(boss)),
-        h('span', { class: 'boss-hud__phase' }, `ФАЗА ${intent.phase === 2 ? 'II' : 'I'}`),
-      ),
-      h('div', { class: 'boss-hud__hp-row' },
-        h('div', { class: 'boss-hud__hp-bar' }, h('i', { style: `width:${Math.max(0, boss.hp / boss.stats.maxHp * 100)}%` })),
-        h('span', { class: 'boss-hud__hp num' }, `${boss.hp} / ${boss.stats.maxHp}`),
-      ),
-      h('div', { class: 'boss-hud__intent' },
-        h('span', { class: 'boss-hud__warning', 'aria-hidden': 'true' }, '⚠'),
-        h('span', null, `Готовит: ${intent.label}`),
-      ),
-      h('div', { class: 'boss-hud__detail' }, intent.detail),
+  // ---------- Плашки и позиции ----------
+  const screenPos = new Map<string, ActorScreen>();
+  const plates = new Map<string, { el: HTMLElement; fill: HTMLElement; ghost: HTMLElement; hp: HTMLElement; tags: HTMLElement }>();
+  for (const u of battle.units) {
+    if (u.boss) continue; // у босса — крупная полоса здоровья сверху
+    const fill = h('i');
+    const ghost = h('b');
+    const hp = h('span', { class: 'plate__hp num' });
+    const tags = h('span', { class: 'plate__tags' });
+    const el = h('button', { class: `plate plate--${u.side}${u.elite ? ' plate--elite' : ''}`, type: 'button', tabindex: '-1' },
+      h('span', { class: 'plate__name' }, displayName(u), u.elite ? h('em', null, 'элита') : null),
+      h('span', { class: 'plate__bar' }, ghost, fill),
+      hp,
+      tags,
     );
-  };
-
-  const paintAll = () => {
-    for (const u of battle.units) paintUnit(u);
-    paintBossHud();
-    for (const [id, v] of view.units) {
-      const targetable = view.pending?.targets.includes(id) ?? false;
-      const foe = unitById(battle, id).side === 'enemy';
-      v.el.classList.toggle('is-active', id === battle.current);
-      v.el.classList.toggle('targetable', targetable);
-      v.el.classList.toggle('foe-target', targetable && foe);
-      v.el.classList.toggle('ally-target', targetable && !foe);
-      v.el.setAttribute('tabindex', targetable ? '0' : '-1');
+    el.addEventListener('click', () => onTarget(u.id));
+    el.addEventListener('mouseenter', () => scene.setStatus(u.id, { hovered: true }));
+    el.addEventListener('mouseleave', () => scene.setStatus(u.id, { hovered: false }));
+    plates.set(u.id, { el, fill, ghost, hp, tags });
+    platesEl.append(el);
+  }
+  // Плашки не должны уходить под HUD: если голова бойца оказалась под панелью намерений или
+  // верхней полосой, плашка опускается ниже панели.
+  let frameNo = 0;
+  let blockers: DOMRect[] = [];
+  scene.onFrame((list) => {
+    if (frameNo++ % 15 === 0) {
+      const base = arenaEl.getBoundingClientRect();
+      blockers = [intentsEl, topBar.firstElementChild as HTMLElement | null]
+        .filter((e): e is HTMLElement => !!e && e.offsetParent !== null)
+        .map((e) => {
+          const r = e.getBoundingClientRect();
+          return new DOMRect(r.left - base.left, r.top - base.top, r.width, r.height);
+        });
     }
+    for (const s of list) {
+      screenPos.set(s.id, s);
+      const p = plates.get(s.id);
+      if (!p) continue;
+      const pw = p.el.offsetWidth || 120;
+      const ph = p.el.offsetHeight || 48;
+      let y = s.top;
+      for (const r of blockers) {
+        const overlapX = s.x + pw / 2 > r.left && s.x - pw / 2 < r.right;
+        if (overlapX && y - ph < r.bottom && y > r.top) y = r.bottom + ph + 6;
+      }
+      p.el.style.transform = `translate(${Math.round(s.x)}px, ${Math.round(y)}px) translate(-50%, -100%)`;
+    }
+  });
+
+  const floatText = (id: string, text: string, cls: string) => {
+    if (view.fast) return;
+    const s = screenPos.get(id);
+    if (!s) return;
+    const el = h('span', { class: `float ${cls} num` }, text);
+    el.style.left = `${s.x + (Math.random() - 0.5) * s.w * 0.3}px`;
+    el.style.top = `${s.top + s.h * 0.25}px`;
+    floatsEl.append(el);
+    window.setTimeout(() => el.remove(), 1400);
   };
 
-  const chip = (id: string, now: boolean) => {
-    const u = unitById(battle, id);
-    const isFoe = u.side === 'enemy';
-    return h('div', { class: `turns__chip${isFoe ? ' is-foe' : ''}${now ? ' is-now' : ''}`, title: unitName(u) }, portrait({ kind: u.kind, name: unitName(u), size: 'xs', rarity: u.rarity, foe: isFoe, boss: u.boss }));
+  let bannerTimer = 0;
+  const banner = (text: string, tone: 'foe' | 'hero' | 'phase' | 'info', ms = 1300) => {
+    if (view.fast) return;
+    window.clearTimeout(bannerTimer);
+    bannerEl.className = `hud__banner hud__banner--${tone} is-on`;
+    bannerEl.textContent = text;
+    bannerTimer = window.setTimeout(() => bannerEl.classList.remove('is-on'), ms / battlePrefs.speed);
+  };
+
+  // ---------- Отрисовка состояния ----------
+  const boss = battle.units.find((u) => u.boss);
+  const bossBar = (() => {
+    if (!boss) return null;
+    const fill = h('i');
+    const ghost = h('b');
+    const name = h('strong', { class: 'boss-bar__name' });
+    const phase = h('span', { class: 'boss-bar__phase' });
+    const hp = h('span', { class: 'boss-bar__hp num' });
+    const el = h('div', { class: 'boss-bar' },
+      enemyPortrait(boss.kind, boss.name, 64),
+      h('div', { class: 'boss-bar__body' }, h('div', { class: 'boss-bar__row' }, name, phase), h('div', { class: 'boss-bar__track' }, ghost, fill, h('span', { class: 'boss-bar__mark', title: 'Порог II фазы — 50%' })), hp),
+    );
+    topBar.append(el);
+    return { el, fill, ghost, name, phase, hp };
+  })();
+  if (!boss) {
+    const kindName = run.battleKind === 'elite' ? 'Элитная угроза' : run.battleKind === 'ambush' ? 'Засада' : 'Бой в катакомбах';
+    topBar.append(h('div', { class: 'encounter-bar' }, h('strong', null, kindName), h('span', null, `Глубина ${['I', 'II', 'III'][run.tier - 1] ?? run.tier}`)));
+  }
+
+  const cards = new Map<string, { el: HTMLElement; fill: HTMLElement; hp: HTMLElement; cd: HTMLElement; badge: HTMLElement }>();
+  for (const u of battle.units.filter((x) => x.side === 'hero')) {
+    const fill = h('i');
+    const hp = h('span', { class: 'hero-card__hp num' });
+    const cd = h('span', { class: 'hero-card__cd' });
+    const badge = h('span', { class: 'hero-card__badge' });
+    const el = h('button', { class: 'hero-card', type: 'button', tabindex: '-1' },
+      heroPortrait({ identity: u.identity ?? null, cls: u.kind as HeroClass, name: u.name }, 64),
+      h('span', { class: 'hero-card__body' },
+        h('span', { class: 'hero-card__name' }, u.name),
+        h('span', { class: 'hero-card__role' }, roleName({ cls: u.kind as HeroClass })),
+        h('span', { class: 'hero-card__bar' }, fill),
+        h('span', { class: 'hero-card__meta' }, hp, cd),
+      ),
+      badge,
+    );
+    el.addEventListener('click', () => onTarget(u.id));
+    cards.set(u.id, { el, fill, hp, cd, badge });
+    partyEl.append(el);
+  }
+
+  const paintIntents = () => {
+    intentsEl.replaceChildren();
+    const foes = aliveUnits(battle, 'enemy');
+    if (foes.length === 0) return;
+    intentsEl.append(h('div', { class: 'intents__title' }, glyph('warning', 16), 'Намерения врагов'));
+    for (const f of foes) {
+      const row = h('div', { class: `intent${f.intent ? ' intent--armed' : ''}${f.intent?.aoe ? ' intent--aoe' : ''}` });
+      if (f.intent) {
+        const target = f.intent.targetId ? battle.units.find((u) => u.id === f.intent?.targetId) : null;
+        const victims = f.intent.aoe ? aliveUnits(battle, 'hero') : target ? [target] : [];
+        const dmg = victims.map((v) => Math.round(intentDamage(f, f.intent as Intent, v)));
+        row.append(
+          glyph(f.intent.aoe ? 'wave' : 'target', 18),
+          h('span', { class: 'intent__text' },
+            h('strong', null, `${displayName(f)}: ${f.intent.name}`),
+            h('span', null, f.intent.aoe ? `Весь отряд, ≈${Math.min(...dmg)}–${Math.max(...dmg)} каждому` : `Цель — ${target ? target.name : '—'}, ≈${dmg[0] ?? 0} урона`),
+            h('em', null, f.intent.aoe ? 'Ответ: Прикрытие, лечение заранее' : 'Ответ: Прикрытие на цель или добить врага'),
+          ),
+        );
+      } else {
+        const next = previewEnemyAction(battle, f);
+        let text = '';
+        if (next?.kind === 'prepare' && next.intent) text = next.intent.aoe ? `Следующий ход: готовит «${next.intent.name}» по отряду` : `Следующий ход: готовит «${next.intent.name}»`;
+        else if (next?.kind === 'attack' && next.targetId) text = `Следующий ход: удар → ${unitById(battle, next.targetId).name}`;
+        row.append(glyph(f.boss ? 'crown' : 'sword', 18), h('span', { class: 'intent__text' }, h('strong', null, displayName(f)), h('span', null, text)));
+      }
+      if (f.boss && f.bossPhase === 2 && !f.intent) {
+        const t = (f.phaseTurns ?? 0) % 3;
+        const left = t === 0 ? 1 : t === 1 ? 0 : 2;
+        row.append(h('span', { class: 'intent__cycle' }, left <= 1 ? 'Волна готовится следующим ходом' : `До подготовки волны: ${left} хода`));
+      }
+      intentsEl.append(row);
+    }
   };
 
   const paintTurns = () => {
     const { now, next } = turnOrder(battle);
-    turns.replaceChildren();
-    now.forEach((id, i) => turns.append(chip(id, i === 0 && battle.current === id)));
-    if (next.length > 0) {
-      turns.append(h('div', { class: 'turns__sep' }));
-      for (const id of next.slice(0, Math.max(0, 8 - now.length))) turns.append(chip(id, false));
-    }
-    turns.append(h('div', { class: 'turns__label' }, `Р${Math.max(1, battle.round)}`));
-  };
-
-  // ---------- Время и эффекты ----------
-
-  const sleep = (ms: number): Promise<void> =>
-    new Promise((resolve) => {
-      if (view.fast || view.dead) return resolve();
-      const id = window.setTimeout(() => {
-        view.timers.delete(id);
-        view.wakers.delete(resolve);
-        resolve();
-      }, ms / battlePrefs.speed);
-      view.timers.add(id);
-      view.wakers.add(resolve);
-    });
-
-  /** Относительно сцены: центр, и габариты элемента. */
-  const rel = (el: Element) => {
-    const a = arena.getBoundingClientRect();
-    const r = el.getBoundingClientRect();
-    return { x: r.left - a.left + r.width / 2, y: r.top - a.top + r.height / 2, l: r.left - a.left, t: r.top - a.top, w: r.width, h: r.height };
-  };
-
-  const spawn = (cls: string, x: number, y: number, life: number, style?: Partial<CSSStyleDeclaration>): HTMLElement => {
-    const el = h('div', { class: cls });
-    el.style.left = `${x}px`;
-    el.style.top = `${y}px`;
-    if (style) Object.assign(el.style, style);
-    fx.append(el);
-    window.setTimeout(() => el.remove(), life);
-    return el;
-  };
-
-  const shake = () => {
-    arena.classList.remove('is-shaking');
-    void arena.offsetWidth;
-    arena.classList.add('is-shaking');
-  };
-
-  const floatText = (id: string, text: string, cls: string) => {
-    const v = view.units.get(id);
-    if (!v) return;
-    const f = h('span', { class: `float ${cls} num` }, text);
-    v.el.append(f);
-    window.setTimeout(() => f.remove(), 1200);
-  };
-
-  const banner2 = (text: string, foe: boolean) => {
-    const b = spawn(`skill-banner${foe ? ' is-foe' : ''}`, 0, 0, 1000);
-    b.textContent = text;
-  };
-
-  /** Рывок портрета к цели; onHit вызывается в точке удара. */
-  const lunge = async (actor: Unit, targets: Unit[], onHit: () => void) => {
-    const a = view.units.get(actor.id);
-    const t = targets[0] ? view.units.get(targets[0].id) : undefined;
-    if (view.fast || !a || !t) {
-      onHit();
-      return;
-    }
-    const from = rel(a.portrait);
-    const to = rel(t.portrait);
-    const dx = (to.x - from.x) * 0.62;
-    const dy = (to.y - from.y) * 0.62;
-    a.el.style.zIndex = '5';
-    const fwd = a.portrait.animate(
-      [{ transform: 'translate(0,0) scale(1)' }, { transform: `translate(${dx * -0.08}px,${dy * -0.08}px) scale(1.04)`, offset: 0.25 }, { transform: `translate(${dx}px,${dy}px) scale(1.14)` }],
-      { duration: 190 / battlePrefs.speed, easing: 'cubic-bezier(.5,0,.9,.4)', fill: 'forwards' },
-    );
-    await fwd.finished.catch(() => undefined);
-    onHit();
-    const back = a.portrait.animate([{ transform: `translate(${dx}px,${dy}px) scale(1.14)` }, { transform: 'translate(0,0) scale(1)' }], { duration: 260 / battlePrefs.speed, easing: 'ease-out', fill: 'forwards' });
-    await back.finished.catch(() => undefined);
-    fwd.cancel();
-    back.cancel();
-    a.el.style.zIndex = '';
-  };
-
-  const cast = async (actor: Unit, onHit: () => void) => {
-    const a = view.units.get(actor.id);
-    if (view.fast || !a) {
-      onHit();
-      return;
-    }
-    const pulse = a.portrait.animate([{ transform: 'scale(1)', filter: 'brightness(1)' }, { transform: 'scale(1.22)', filter: 'brightness(1.8)' }, { transform: 'scale(1)', filter: 'brightness(1)' }], { duration: 420 / battlePrefs.speed, easing: 'ease-in-out' });
-    await sleep(210);
-    onHit();
-    await pulse.finished.catch(() => undefined);
-  };
-
-  const vfx = (actor: Unit, skillId: string | null, targets: Unit[], strong: boolean) => {
-    const foe = actor.side === 'enemy';
-    const els = targets.map((t) => view.units.get(t.id)?.portrait).filter((e): e is HTMLElement => e !== undefined);
-    const centers = els.map(rel);
-    const slash = (c: { x: number; y: number }, both: boolean) => {
-      spawn(`fx-slash${foe ? ' fx-slash--foe' : ''}`, c.x, c.y, 400);
-      if (both) spawn(`fx-slash fx-slash--b${foe ? ' fx-slash--foe' : ''}`, c.x, c.y, 500);
+    turnsEl.replaceChildren();
+    const chip = (id: string, isNow: boolean) => {
+      const u = unitById(battle, id);
+      const p = u.side === 'hero' ? heroPortrait({ identity: u.identity ?? null, cls: u.kind as HeroClass, name: u.name }, 48) : enemyPortrait(u.kind, displayName(u), 48);
+      return h('div', { class: `turns__chip${u.side === 'enemy' ? ' is-foe' : ''}${isNow ? ' is-now' : ''}${u.intent ? ' is-armed' : ''}`, title: displayName(u) }, p);
     };
-    switch (skillId) {
-      case 'fireWave': {
-        sfx.fire();
-        const l = Math.min(...centers.map((c) => c.x - 70));
-        const r = Math.max(...centers.map((c) => c.x + 70));
-        const y = centers.reduce((s, c) => s + c.y, 0) / Math.max(1, centers.length);
-        spawn('fx-fire', l, y - 55, 800, { width: `${r - l}px`, height: '110px' });
-        break;
-      }
-      case 'groundSlam': {
-        spawn('fx-flash', 0, 0, 500);
-        for (const c of centers) spawn('fx-wave', c.x, c.y + 30, 600);
-        shake();
-        break;
-      }
-      case 'powerStrike':
-        for (const c of centers) {
-          slash(c, true);
-          spawn('fx-wave', c.x, c.y, 600);
-        }
-        break;
-      case 'backstab':
-        for (const c of centers) slash(c, true);
-        break;
-      case 'heal':
-      case 'shamanHeal':
-        for (const c of centers) {
-          spawn('fx-glow', c.x, c.y, 900);
-          for (let i = 0; i < 6; i++) spawn('fx-spark', c.x - 24 + i * 9, c.y + 10, 1000, { ['--dx' as string]: `${(i - 2.5) * 6}px` } as Partial<CSSStyleDeclaration>);
-        }
-        break;
-      default:
-        for (const c of centers) slash(c, strong);
+    now.forEach((id, i) => turnsEl.append(chip(id, i === 0 && battle.current === id)));
+    if (next.length) {
+      turnsEl.append(h('div', { class: 'turns__sep', title: 'Следующий раунд' }));
+      for (const id of next.slice(0, Math.max(0, 7 - now.length))) turnsEl.append(chip(id, false));
     }
   };
 
-  // ---------- Применение действия ----------
+  const syncScene = () => {
+    const armedSingle = new Set<string>();
+    let aoe = false;
+    for (const f of aliveUnits(battle, 'enemy')) {
+      if (!f.intent) continue;
+      if (f.intent.aoe) aoe = true;
+      else if (f.intent.targetId) armedSingle.add(f.intent.targetId);
+    }
+    for (const u of battle.units) {
+      scene.syncAlive(u.id, u.alive);
+      if (u.boss && u.bossPhase === 2) scene.setPhase2(u.id);
+      scene.setStatus(u.id, {
+        active: battle.current === u.id && battle.result === 'ongoing',
+        cover: (u.cover ?? 0) > 0,
+        charging: u.alive && u.intent ? INTENT_COLOR[u.intent.id] : null,
+        threatened: u.side === 'hero' && u.alive ? (armedSingle.has(u.id) ? 'single' : aoe ? 'aoe' : null) : null,
+        targetable: view.pending?.targets.includes(u.id) ? (u.side === 'enemy' ? 'foe' : 'ally') : null,
+      });
+    }
+  };
+
+  const paintAll = () => {
+    for (const u of battle.units) {
+      const pct = `${Math.max(0, (u.hp / u.stats.maxHp) * 100)}%`;
+      const p = plates.get(u.id);
+      if (p) {
+        p.fill.style.width = pct;
+        window.setTimeout(() => (p.ghost.style.width = pct), 350);
+        p.hp.textContent = hpText(u);
+        p.el.classList.toggle('is-dead', !u.alive);
+        p.el.classList.toggle('is-target', !!view.pending?.targets.includes(u.id));
+        p.el.classList.toggle('is-active', battle.current === u.id);
+        p.el.setAttribute('tabindex', view.pending?.targets.includes(u.id) ? '0' : '-1');
+        p.el.setAttribute('aria-label', `${displayName(u)}${u.elite ? ', элита' : ''}: ${u.alive ? `${u.hp} из ${u.stats.maxHp} HP` : 'выбыл'}`);
+        p.tags.replaceChildren();
+        if ((u.cover ?? 0) > 0) p.tags.append(h('span', { class: 'tag-ico tag-ico--cover', title: 'Прикрыт: следующий удар −30%' }, glyph('shield', 14)));
+        if (u.intent) p.tags.append(h('span', { class: 'tag-ico tag-ico--armed', title: `Готовит: ${u.intent.name}` }, glyph(u.intent.aoe ? 'wave' : 'target', 14)));
+        const threatened = aliveUnits(battle, 'enemy').some((f) => f.intent && (f.intent.aoe || f.intent.targetId === u.id));
+        if (u.side === 'hero' && u.alive && threatened) p.tags.append(h('span', { class: 'tag-ico tag-ico--danger', title: 'Под угрозой подготовленного удара' }, glyph('warning', 14)));
+      }
+      const c = cards.get(u.id);
+      if (c) {
+        c.fill.style.width = pct;
+        c.hp.textContent = u.alive ? hpText(u) : 'Выбыл';
+        c.cd.textContent = !u.alive || !u.skill ? '' : u.cd === 0 ? `${u.skill.name}: готово` : `${u.skill.name}: ${u.cd} ход.`;
+        c.el.classList.toggle('is-active', battle.current === u.id);
+        c.el.classList.toggle('is-dead', !u.alive);
+        c.el.classList.toggle('is-low', u.alive && u.hp / u.stats.maxHp < 0.35);
+        c.el.classList.toggle('is-target', !!view.pending?.targets.includes(u.id));
+        c.el.setAttribute('tabindex', view.pending?.targets.includes(u.id) ? '0' : '-1');
+        c.badge.replaceChildren();
+        if ((u.cover ?? 0) > 0) c.badge.append(h('span', { class: 'tag-ico tag-ico--cover', title: 'Прикрыт' }, glyph('shield', 14)));
+      }
+    }
+    if (bossBar && boss) {
+      const pct = `${Math.max(0, (boss.hp / boss.stats.maxHp) * 100)}%`;
+      bossBar.fill.style.width = pct;
+      window.setTimeout(() => (bossBar.ghost.style.width = pct), 450);
+      bossBar.name.textContent = boss.name;
+      bossBar.phase.textContent = boss.bossPhase === 2 ? 'ФАЗА II · Пробуждение трона' : 'ФАЗА I · Королевские доспехи';
+      bossBar.el.classList.toggle('is-phase-two', boss.bossPhase === 2);
+      bossBar.hp.textContent = `${hpText(boss)} HP`;
+    }
+    paintIntents();
+    syncScene();
+  };
 
   const addLog = (events: BattleEvent[]) => {
     for (const e of events) {
       const line = eventLine(battle, e);
-      if (line) log.append(h('li', null, line));
+      if (line) logList.append(h('li', null, line));
     }
-    while (log.children.length > 3) log.firstElementChild?.remove();
+    while (logList.children.length > 40) logList.firstElementChild?.remove();
   };
 
-  /** Показывает последствия: числа, полоски, смерти. Возвращает true, если удар «тяжёлый» (нужна пауза). */
-  const present = (actor: Unit, base: Action, events: BattleEvent[]): boolean => {
-    const skillId = base.kind === 'skill' ? (actor.skill?.id ?? null) : null;
-    let heavy = false;
-    const hits = events.filter((e): e is Extract<BattleEvent, { t: 'hit' }> => e.t === 'hit');
-    const targets = events.flatMap((e) => (e.t === 'hit' || e.t === 'heal' ? [unitById(battle, e.target)] : []));
-    if (!view.fast) vfx(actor, skillId, targets, false);
-    for (const e of events) {
-      if (e.t === 'hit') {
-        const target = unitById(battle, e.target);
-        const v = view.units.get(e.target);
-        const big = e.dmg >= target.stats.maxHp * 0.25;
-        if (!view.fast && v) {
-          floatText(e.target, `−${e.dmg}`, big && actor.side === 'hero' ? 'float--crit' : 'float--dmg');
-          v.el.classList.remove('is-flash');
-          void v.el.offsetWidth;
-          v.el.classList.add('is-flash');
-          sfx.hit(big);
-        }
-        if (big) heavy = true;
-        if (e.killed && !target.alive && v) {
-          if (view.fast) v.el.classList.add('is-dead');
-          else {
-            v.el.classList.add('is-dying');
-            sfx.die();
-            window.setTimeout(() => {
-              v.el.classList.remove('is-dying');
-              if (!target.alive) v.el.classList.add('is-dead');
-            }, 650);
-          }
-        }
-      } else if (e.t === 'heal') {
-        if (!view.fast) {
+  // ---------- Применение действий с подачей на арене ----------
+  const performAction = async (actor: Unit, action: Action) => {
+    let events: BattleEvent[] = [];
+    let applied = false;
+    const pendingAnims: Array<Promise<void>> = [];
+    let phaseShift = false;
+    const shown = new Set<BattleEvent>();
+    const present = (filter: (e: BattleEvent) => boolean = () => true) => {
+      for (const e of events) {
+        if (shown.has(e) || !filter(e)) continue;
+        shown.add(e);
+        if (e.t === 'hit') presentHit(e);
+        else if (e.t === 'heal') {
           floatText(e.target, `+${e.amount}`, 'float--heal');
           sfx.heal();
-        }
-      } else if (e.t === 'phoenix' && !view.fast) {
-        floatText(e.target, 'Феникс!', 'float--label is-good');
-      } else if (e.t === 'bossPhase' && !view.fast) {
-        banner2('ФАЗА II — ПРОБУЖДЕНИЕ', true);
-        heavy = true;
+        } else if (e.t === 'aftercare') floatText(e.target, `+${e.amount}`, 'float--heal');
+        else if (e.t === 'bossPhase') phaseShift = true;
+        else if (e.t === 'phoenix') {
+          floatText(e.target, 'Феникс!', 'float--label');
+          pendingAnims.push(scene.revive(e.target));
+        } else if (e.t === 'retarget') banner(`Цель выбыла — удар по ${unitById(battle, e.to).name}`, 'foe');
+        else if (e.t === 'cancel') floatText(e.actor, 'Удар сорван', 'float--label');
       }
-    }
-    if (!view.fast && hits.length > 0 && heavy) shake();
-    addLog(events);
-    return heavy;
-  };
-
-  const performAction = async (actor: Unit, base: Action) => {
-    const skill = base.kind === 'skill' ? actor.skill : null;
-    const isHero = actor.side === 'hero';
-    const foes = aliveUnits(battle, isHero ? 'enemy' : 'hero');
-    const targets: Unit[] = base.targetId ? [unitById(battle, base.targetId)] : skill?.target === 'allEnemies' ? foes : [];
-    const damaging = base.kind === 'attack' || (skill !== null && skill.mult > 0);
-
-    const announcedBossIntent = actor.boss ? bossIntent(actor) : null;
-    const bossActionDetail = announcedBossIntent
-      ? targets.length > 1
-        ? `${announcedBossIntent.label}: удар затронет весь отряд.`
-        : targets[0]
-          ? `${announcedBossIntent.label}: цель — ${unitName(targets[0])}.`
-          : `${announcedBossIntent.label}. ${announcedBossIntent.detail}`
-      : '';
-
-    // Tactical turn-based action, matching the concept screens: no timing-ring/QTE minigame.
-    if (!view.fast && actor.side === 'enemy' && damaging) {
-      status.textContent = actor.boss && announcedBossIntent ? `ВНИМАНИЕ: ${bossActionDetail}` : `${unitName(actor)} готовит удар`;
-      if (actor.boss && announcedBossIntent) banner2(announcedBossIntent.label, true);
-      const av = view.units.get(actor.id);
-      av?.portrait.animate(
-        [{ transform: 'translateY(0) scale(1)' }, { transform: 'translateY(-8px) scale(1.06)', filter: 'brightness(1.45)' }, { transform: 'translateY(0) scale(1)' }],
-        { duration: 520 / battlePrefs.speed, easing: 'ease-in-out' },
-      );
-      for (const t of targets) view.units.get(t.id)?.el.classList.add('is-victim');
-      if (targets.length > 1) arena.classList.add('arena--incoming-aoe');
-      await sleep(actor.boss ? 650 : 360);
-    } else if (skill && !view.fast) {
-      banner2(skill.name, !isHero);
-      await sleep(220);
-    }
-
-    status.textContent = '';
-    actions.replaceChildren(finishButton());
-    let events: BattleEvent[] = [];
-    let heavy = false;
-    const apply = () => {
-      events = applyAction(battle, { ...base });
-      heavy = present(actor, base, events);
       paintAll();
     };
-    if (damaging && (base.kind === 'attack' || skill?.target === 'enemy')) await lunge(actor, targets, apply);
-    else await cast(actor, apply);
-    for (const t of targets) view.units.get(t.id)?.el.classList.remove('is-victim');
-    arena.classList.remove('arena--incoming-aoe');
-    if (heavy && !view.fast) await sleep(120);
+    const presentHit = (e: HitInfo) => {
+      const target = unitById(battle, e.target);
+      const attacker = unitById(battle, e.actor);
+      const heavy = e.via === 'intent' || e.dmg >= target.stats.maxHp * 0.22;
+      const magic: Rgb | undefined = e.intentId === 'spectralWave' ? SPECTRAL : e.intentId === 'ashBolt' || enemyKind(attacker) === 'ashMage' ? ASH : undefined;
+      scene.hit(e.target, { heavy, covered: e.covered, magic, color: magic, fromDir: attacker.side === 'hero' ? 1 : -1 });
+      floatText(e.target, `−${e.dmg}`, heavy ? 'float--crit' : 'float--dmg');
+      if (e.mitigated) floatText(e.target, e.covered ? `Прикрытие −${e.mitigated}` : `Заслон −${e.mitigated}`, 'float--block');
+      sfx.hit(heavy);
+      if (e.killed && !target.alive) {
+        sfx.die();
+        pendingAnims.push(scene.die(e.target));
+      }
+    };
+    const apply = () => {
+      if (applied) return;
+      applied = true;
+      events = applyAction(battle, action);
+      addLog(events);
+      ctx.save(); // сохранение после каждого боевого действия (Combat Spec: восстановление без повторной выдачи)
+    };
+    const impact = () => {
+      apply();
+      present();
+    };
+
+    const style = attackStyle(actor);
+    const target = action.targetId ? unitById(battle, action.targetId) : null;
+    if (action.kind === 'attack' && target) {
+      if (style === 'melee') await scene.melee(actor.id, target.id, impact);
+      else if (style === 'pounce') await scene.pounce(actor.id, target.id, impact);
+      else await scene.shoot(actor.id, target.id, style === 'bow' ? 'arrow' : style === 'crossbow' ? 'bolt' : style === 'spell' ? 'ash' : 'light', impact);
+    } else if (action.kind === 'skill' && actor.skill && target) {
+      const skill = actor.skill;
+      banner(`${actor.name}: ${skill.name}`, 'hero');
+      if (skill.effect === 'cover') {
+        await scene.gesture(actor.id, [0.55, 0.75, 1]);
+        await scene.coverFx(actor.id, target.id);
+        impact();
+      } else if (skill.effect === 'heal') {
+        await scene.gesture(actor.id, [0.75, 1, 0.7]);
+        await scene.heal(actor.id, target.id, 0);
+        impact();
+      } else if (skill.id === 'aimedShot') {
+        await scene.shoot(actor.id, target.id, 'bolt', impact, true);
+      } else {
+        await scene.melee(actor.id, target.id, impact, { double: true, color: [1, 0.9, 0.6] });
+      }
+    } else if (action.kind === 'prepare' && action.intent) {
+      apply();
+      const it = action.intent;
+      const victim = it.targetId ? unitById(battle, it.targetId).name : '';
+      banner(it.aoe ? `${displayName(actor)} готовит «${it.name}» — удар по всему отряду!` : `${displayName(actor)} готовит «${it.name}» → ${victim}`, 'foe', 1900);
+      present();
+      await scene.prepare(actor.id, INTENT_COLOR[it.id]);
+    } else if (action.kind === 'release' && actor.intent) {
+      const it = actor.intent;
+      banner(`${displayName(actor)}: ${it.name}!`, 'foe');
+      if (it.aoe) {
+        apply();
+        await scene.wave(actor.id, aliveUnits(battle, 'hero').map((u) => u.id).concat(events.filter((e): e is HitInfo => e.t === 'hit' && e.killed).map((e) => e.target)).filter((v, i, arr) => arr.indexOf(v) === i), (id) => present((e) => e.t === 'hit' && e.target === id));
+        present();
+      } else {
+        const tgt = it.targetId ? battle.units.find((u) => u.id === it.targetId && u.alive) : undefined;
+        const victimId = tgt?.id ?? aliveUnits(battle, 'hero')[0]?.id;
+        if (style === 'spell' && victimId) await scene.shoot(actor.id, victimId, 'ash', impact, true);
+        else if (victimId) await scene.melee(actor.id, victimId, impact, { heavy: true, color: INTENT_COLOR[it.id] });
+        else impact();
+      }
+    } else {
+      impact();
+    }
+    if (!applied) impact();
+    await Promise.all(pendingAnims);
+    if (phaseShift && boss && alive()) {
+      banner('ФАЗА II — Пробуждение трона', 'phase', 2200);
+      await scene.bossPhase2(boss.id);
+      paintAll();
+    }
   };
 
   // ---------- Выбор игрока ----------
-
-  const setPending = (kind: 'attack' | 'skill', targets: string[]) => {
-    view.pending = { kind, targets };
+  const setPending = (p: View['pending']) => {
+    view.pending = p;
+    actionsEl.classList.toggle('is-targeting', !!p);
     paintAll();
   };
 
-  function onUnitClick(id: string): void {
+  function onTarget(id: string): void {
     const p = view.pending;
-    const actor = battle.current;
-    if (!p || !actor || !p.targets.includes(id) || !view.choice) return;
+    if (!p || !p.targets.includes(id) || !view.choice) return;
     const resolve = view.choice;
     view.choice = null;
-    view.pending = null;
-    resolve({ actorId: actor, kind: p.kind, targetId: id });
+    setPending(null);
+    promptEl.classList.remove('is-on');
+    resolve({ actorId: p.actor, kind: p.kind, targetId: id });
   }
+
+  const onCanvasClick = (ev: MouseEvent) => {
+    const id = scene.hitTest(ev.clientX, ev.clientY);
+    if (id) onTarget(id);
+  };
+  let hovered: string | null = null;
+  const onCanvasMove = (ev: MouseEvent) => {
+    const id = scene.hitTest(ev.clientX, ev.clientY);
+    if (id === hovered) return;
+    if (hovered) scene.setStatus(hovered, { hovered: false });
+    hovered = id;
+    if (id) scene.setStatus(id, { hovered: true });
+    scene.canvas.style.cursor = id && view.pending?.targets.includes(id) ? 'pointer' : 'default';
+  };
+  scene.canvas.addEventListener('click', onCanvasClick);
+  scene.canvas.addEventListener('mousemove', onCanvasMove);
+
+  const actionButton = (icon: GlyphName, label: string, sub: string, cls: string, disabled: boolean, onClick: () => void, key: string) => {
+    const b = h('button', { class: `action ${cls}`, type: 'button', 'aria-keyshortcuts': key }, h('span', { class: 'action__icon' }, glyph(icon, 30, 1.6)), h('span', { class: 'action__label' }, label), h('small', { class: 'action__sub' }, sub), h('kbd', null, key));
+    if (disabled) (b as HTMLButtonElement).disabled = true;
+    b.addEventListener('click', onClick);
+    return b;
+  };
+
+  let hotkeys: Record<string, () => void> = {};
+  const onKey = (ev: KeyboardEvent) => {
+    const fn = hotkeys[ev.key];
+    if (fn && !(ev.target instanceof HTMLInputElement)) {
+      ev.preventDefault();
+      fn();
+    }
+  };
+  document.addEventListener('keydown', onKey);
 
   const askPlayer = (actor: Unit): Promise<Action> =>
     new Promise((resolve) => {
       view.choice = resolve;
-      view.pending = null;
-      status.textContent = `Ход героя: ${actor.name}. Выберите действие.`;
       const legal = legalActions(battle, actor);
-      const done = (a: Action) => {
-        view.choice = null;
-        view.pending = null;
-        resolve(a);
-      };
-      const pick = (kind: 'attack' | 'skill', targets: string[], prompt: string) => {
-        if (targets.length === 1) return done({ actorId: actor.id, kind, targetId: targets[0] as string });
-        status.textContent = prompt;
-        setPending(kind, targets);
-      };
-      actions.replaceChildren();
       const attackTargets = legal.filter((a) => a.kind === 'attack').map((a) => a.targetId as string);
-      const attack = h('button', { class: 'action-card action-card--attack', 'aria-label': 'Обычная атака' },
-        h('span', { class: 'action-card__glyph' }, skillGlyph('attack')),
-        h('span', { class: 'action-card__name' }, 'Атака'),
-        h('small', null, 'Выбрать цель'),
-      );
-      attack.addEventListener('click', () => pick('attack', attackTargets, 'Выберите врага на арене'));
-      actions.append(attack);
       const skill = actor.skill;
-      if (skill) {
-        const skillActs = legal.filter((a) => a.kind === 'skill');
-        const ready = actor.cd === 0 && skillActs.length > 0;
-        const labelText = actor.cd > 0 ? `${skill.name} · ${actor.cd}` : skill.name;
-        const btn = h('button', { class: `action-card action-card--skill${ready ? ' is-ready' : ''}`, 'aria-label': labelText },
-          h('span', { class: 'action-card__glyph' }, skillGlyph(skill.id)),
-          h('span', { class: 'action-card__name' }, skill.name),
-          h('small', null, actor.cd === 0 ? (skill.target === 'allEnemies' ? 'Все враги' : skill.target === 'ally' ? 'Союзник' : 'Одна цель') : `Перезарядка: ${actor.cd}`),
-        );
-        if (!ready) (btn as HTMLButtonElement).disabled = true;
-        btn.addEventListener('click', () => {
-          if (skill.target === 'allEnemies') done({ actorId: actor.id, kind: 'skill' });
-          else pick('skill', skillActs.map((a) => a.targetId as string), skill.target === 'ally' ? 'Выберите союзника для лечения' : 'Выберите цель навыка');
-        });
-        actions.append(btn);
-      }
-      actions.append(finishButton());
+      const skillTargets = legal.filter((a) => a.kind === 'skill').map((a) => a.targetId as string);
+      const pick = (kind: 'attack' | 'skill') => {
+        const targets = kind === 'attack' ? attackTargets : skillTargets;
+        const ally = kind === 'skill' && skill?.target === 'ally';
+        promptEl.textContent = ally ? `${skill?.name}: выберите союзника на арене или в карточках` : `${kind === 'skill' ? skill?.name : 'Атака'}: выберите противника`;
+        promptEl.classList.add('is-on');
+        setPending({ kind, targets, actor: actor.id });
+        renderButtons(kind);
+      };
+      const cancel = () => {
+        setPending(null);
+        promptEl.classList.remove('is-on');
+        renderButtons(null);
+      };
+      const renderButtons = (selected: 'attack' | 'skill' | null) => {
+        actionsEl.replaceChildren(h('div', { class: 'action-bar__who' }, h('strong', null, actor.name), h('span', null, selected ? 'выбор цели' : 'ваш ход')));
+        const style = attackStyle(actor);
+        const atk = actionButton(ATTACK_GLYPH[style] ?? 'sword', 'Атака', style === 'melee' ? 'Ближний бой' : 'Дальний бой', `action--attack${selected === 'attack' ? ' is-selected' : ''}`, attackTargets.length === 0, () => pick('attack'), '1');
+        actionsEl.append(atk);
+        if (skill) {
+          const ready = actor.cd === 0 && skillTargets.length > 0;
+          const sub = ready ? (skill.target === 'ally' ? 'Союзник' : 'Одна цель') : `Перезарядка: ${actor.cd}`;
+          const btn = actionButton(SKILL_GLYPH[skill.id] ?? 'sword', skill.name, sub, `action--skill${ready ? ' is-ready' : ''}${selected === 'skill' ? ' is-selected' : ''}`, !ready, () => pick('skill'), '2');
+          if (!ready) btn.append(h('span', { class: 'action__cd num' }, String(actor.cd)));
+          actionsEl.append(btn);
+        }
+        if (selected) {
+          const c = actionButton('close', 'Отмена', 'Esc', 'action--cancel', false, cancel, 'Esc');
+          actionsEl.append(c);
+        }
+        hotkeys = { '1': () => attackTargets.length && pick('attack'), '2': () => skill && actor.cd === 0 && skillTargets.length && pick('skill'), Escape: cancel };
+      };
+      renderButtons(null);
       paintAll();
     });
 
-  // ---------- Ход боя ----------
-
-  const finishButton = () => {
-    const b = h('button', { class: 'btn btn--ghost' }, 'Досчитать бой');
-    b.addEventListener('click', () => {
-      view.fast = true;
-      if (view.choice && battle.current) {
-        const resolve = view.choice;
-        view.choice = null;
-        view.pending = null;
-        resolve(autoAction(battle, unitById(battle, battle.current)));
-      }
-      for (const w of [...view.wakers]) w();
-    });
-    return b;
+  const waitingBar = (actor: Unit) => {
+    actionsEl.replaceChildren(h('div', { class: 'action-bar__who action-bar__who--wait' }, h('strong', null, displayName(actor)), h('span', null, actor.side === 'enemy' ? 'ход противника' : 'автобой')));
+    hotkeys = {};
   };
 
-  const finishUi = () => {
-    status.textContent = '';
-    paintAll();
-    paintTurns();
-    const win = battle.result === 'victory';
-    if (!view.fast) (win ? sfx.win : sfx.lose)();
-    banner.className = `banner ${win ? 'banner--win' : 'banner--lose'}`;
-    banner.replaceChildren(h('h3', null, win ? 'Победа' : 'Отряд разбит'));
-    const next = h('button', { class: 'btn btn--block' }, win ? 'Продолжить' : 'К итогам');
-    next.addEventListener('click', () => {
-      finishBattle(run);
-      stopBattleView();
-      ctx.render();
-    });
-    actions.replaceChildren(next);
-  };
-
-  const loop = async () => {
-    await sleep(500);
-    while (alive()) {
-      const logStart = battle.log.length;
-      const actor = advance(battle);
-      const advanceEvents = battle.log.slice(logStart).filter((e) => e.t === 'bossPhase');
-      if (advanceEvents.length > 0) {
-        addLog(advanceEvents);
-        paintAll();
-      }
-      if (!actor) break;
-      paintAll();
-      paintTurns();
-      let base: Action;
-      if (actor.side === 'hero' && battlePrefs.manual && !view.fast) base = await askPlayer(actor);
-      else base = autoAction(battle, actor);
-      if (!alive()) return;
-      await performAction(actor, base);
-      if (!alive()) return;
-      await sleep(240);
+  // ---------- Управление ----------
+  const resolveWithAuto = () => {
+    if (view.choice && battle.current) {
+      const resolve = view.choice;
+      view.choice = null;
+      setPending(null);
+      promptEl.classList.remove('is-on');
+      resolve(autoAction(battle, unitById(battle, battle.current)));
     }
-    if (alive()) finishUi();
   };
-
-  // ---------- Панель управления ----------
-
-  const seg = (labels: string[], pressed: number, on: (i: number) => void) => {
-    const wrap = h('div', { class: 'segmented' });
+  const seg = (labels: string[], pressed: number, on: (i: number) => void, label: string) => {
+    const wrap = h('div', { class: 'segmented', role: 'group', 'aria-label': label });
     labels.forEach((text, i) => {
-      const b = h('button', { 'aria-pressed': i === pressed ? 'true' : 'false' }, text);
+      const b = h('button', { type: 'button', 'aria-pressed': i === pressed ? 'true' : 'false' }, text);
       b.addEventListener('click', () => {
         on(i);
         [...wrap.children].forEach((c, j) => c.setAttribute('aria-pressed', j === i ? 'true' : 'false'));
@@ -615,39 +668,123 @@ export function battleScreen(ctx: Ctx): HTMLElement {
     });
     return wrap;
   };
-
-  const modeSeg = seg(['Авто', 'Вручную'], battlePrefs.manual ? 1 : 0, (i) => {
-    battlePrefs.manual = i === 1;
-    if (!battlePrefs.manual && view.choice && battle.current) {
-      const resolve = view.choice;
-      view.choice = null;
-      view.pending = null;
-      resolve(autoAction(battle, unitById(battle, battle.current)));
-    }
-  });
   const speeds: Array<1 | 2 | 4> = [1, 2, 4];
-  const speedSeg = seg(['×1', '×2', '×4'], speeds.indexOf(battlePrefs.speed), (i) => {
-    battlePrefs.speed = speeds[i] ?? 1;
+  const finishBtn = h('button', { class: 'btn btn--ghost btn--small', type: 'button', title: 'Мгновенно доиграть бой автобоем' }, 'Досчитать');
+  finishBtn.addEventListener('click', () => {
+    view.fast = true;
+    scene.finishAll();
+    resolveWithAuto();
   });
-  const soundBtn = h('button', { class: 'btn btn--ghost btn--small', 'aria-pressed': sfx.enabled ? 'true' : 'false' }, sfx.enabled ? 'Звук: да' : 'Звук: нет');
+  const soundBtn = h('button', { class: 'btn btn--ghost btn--small', type: 'button', 'aria-pressed': sfx.enabled ? 'true' : 'false' }, sfx.enabled ? 'Звук' : 'Без звука');
   soundBtn.addEventListener('click', () => {
     sfx.setEnabled(!sfx.enabled);
-    soundBtn.textContent = sfx.enabled ? 'Звук: да' : 'Звук: нет';
+    soundBtn.textContent = sfx.enabled ? 'Звук' : 'Без звука';
     soundBtn.setAttribute('aria-pressed', sfx.enabled ? 'true' : 'false');
   });
-
-  const root = h(
-    'section',
-    { class: 'stage' },
-    turns,
-    arena,
-    banner,
-    h('div', { class: 'controls controls--battle' }, h('div', { class: 'controls__top' }, modeSeg, speedSeg, soundBtn), status, actions, log),
+  controlsEl.append(
+    seg(['Вручную', 'Авто'], battlePrefs.manual ? 0 : 1, (i) => {
+      battlePrefs.manual = i === 0;
+      if (!battlePrefs.manual) resolveWithAuto();
+    }, 'Режим боя'),
+    seg(['×1', '×2', '×4'], speeds.indexOf(battlePrefs.speed), (i) => {
+      battlePrefs.speed = speeds[i] ?? 1;
+      scene.speed = battlePrefs.speed;
+    }, 'Скорость'),
+    finishBtn,
+    soundBtn,
   );
 
+  // Пауза при уходе со вкладки: бой замирает на безопасной границе (анимации ждут RAF).
+  const onVis = () => {
+    scene.paused = document.visibilityState === 'hidden';
+  };
+  document.addEventListener('visibilitychange', onVis);
+  view.cleanup.push(() => {
+    document.removeEventListener('keydown', onKey);
+    document.removeEventListener('visibilitychange', onVis);
+    window.clearTimeout(bannerTimer);
+  });
+
+  // ---------- Финал ----------
+  const finishUi = async () => {
+    promptEl.classList.remove('is-on');
+    setPending(null);
+    paintAll();
+    paintTurns();
+    const win = battle.result === 'victory';
+    hotkeys = {};
+    scene.fast = false;
+    if (win) {
+      sfx.win();
+      await scene.victory(battle.units.filter((u) => u.side === 'hero').map((u) => u.id));
+    } else {
+      sfx.lose();
+      await scene.defeat();
+    }
+    if (!alive()) return;
+    const survivors = battle.units.filter((u) => u.side === 'hero');
+    const next = h('button', { class: 'btn btn--block btn--primary', type: 'button' }, win ? (isBoss ? 'Забрать награду' : 'Продолжить путь') : 'К итогам экспедиции');
+    next.addEventListener('click', () => {
+      if (run.battle !== battle) return;
+      finishBattle(run);
+      stopBattleView();
+      ctx.save();
+      ctx.render();
+    });
+    resultEl.replaceChildren(
+      h('div', { class: `result-card ${win ? 'result-card--win' : 'result-card--lose'}` },
+        h('h3', null, win ? (isBoss ? 'Костяной король повержен' : 'Победа') : 'Отряд разбит'),
+        h('ul', { class: 'result-card__heroes' }, ...survivors.map((u) => h('li', { class: u.alive ? '' : 'is-dead' },
+          heroPortrait({ identity: u.identity ?? null, cls: u.kind as HeroClass, name: u.name }, 48),
+          h('span', null, u.name), h('span', { class: 'num' }, u.alive ? hpText(u) : 'ранен'),
+        ))),
+        next,
+      ),
+    );
+    resultEl.hidden = false;
+    actionsEl.replaceChildren();
+    window.setTimeout(() => next.focus(), 50);
+  };
+
+  // ---------- Ход боя ----------
+  const loop = async () => {
+    await scene.ready;
+    if (!alive()) return;
+    paintAll();
+    paintTurns();
+    if (scene.errors.length) ctx.toast('Часть иллюстраций не загрузилась — показаны заглушки');
+    if (battle.round === 0 && battle.current) {
+      banner(isBoss ? 'Костяной король пробуждается' : 'Бой начинается', isBoss ? 'phase' : 'info', 1600);
+      await scene.wait(isBoss ? 1100 : 600);
+    }
+    while (alive()) {
+      const logStart = battle.log.length;
+      const actor = advance(battle);
+      addLog(battle.log.slice(logStart));
+      if (!actor) break;
+      paintAll();
+      paintTurns();
+      let action: Action;
+      if (actor.side === 'hero' && battlePrefs.manual && !view.fast) action = await askPlayer(actor);
+      else {
+        waitingBar(actor);
+        action = autoAction(battle, actor);
+      }
+      if (!alive()) return;
+      waitingBar(actor);
+      await performAction(actor, action);
+      if (!alive()) return;
+      if (!view.fast) await scene.wait(260);
+    }
+    if (alive()) void finishUi();
+  };
+
+  // Восстановленный бой: показать сразу верное состояние.
   paintAll();
   paintTurns();
-  actions.append(finishButton());
   void loop();
   return root;
 }
+
+// Экспорт для тестов отображения: подписи событий и имя для плашек.
+export const __test = { eventLine, displayName, ENEMIES };

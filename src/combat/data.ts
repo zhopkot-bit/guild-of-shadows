@@ -1,53 +1,72 @@
 import { HP_SCALE, LEVEL_STAT_GROWTH } from '../core/config';
 import type { Hero, HeroClass, Rarity } from '../core/types';
+import type { EnemyKind } from '../content/roster';
 import type { Skill, Stats, Unit } from './types';
 
+/** Умения героев — Combat & Expeditions Spec v0.3, раздел «Роли». */
 export const SKILLS: Record<string, Skill> = {
-  powerStrike: { id: 'powerStrike', name: 'Мощный удар', cooldown: 3, target: 'enemy', mult: 2.0 },
-  fireWave: { id: 'fireWave', name: 'Огненная волна', cooldown: 3, target: 'allEnemies', mult: 0.8 },
-  backstab: { id: 'backstab', name: 'Удар в спину', cooldown: 3, target: 'enemy', mult: 2.4, ignoreDef: true },
-  heal: { id: 'heal', name: 'Исцеление', cooldown: 2, target: 'ally', mult: 0, healPctMax: 0.25, healAtkMult: 1 },
-  shamanHeal: { id: 'shamanHeal', name: 'Знахарство', cooldown: 3, target: 'ally', mult: 0, healPctMax: 0.3, healAtkMult: 0 },
-  groundSlam: { id: 'groundSlam', name: 'Удар по площади', cooldown: 3, target: 'allEnemies', mult: 0.7 },
+  cover: { id: 'cover', name: 'Прикрытие', cooldown: 2, target: 'ally', effect: 'cover', mult: 0, coverPct: 0.3 },
+  lunge: { id: 'lunge', name: 'Точный выпад', cooldown: 2, target: 'enemy', effect: 'damage', mult: 1.7 },
+  aimedShot: { id: 'aimedShot', name: 'Прицельный выстрел', cooldown: 2, target: 'enemy', effect: 'damage', mult: 2.0, penetration: 0.3 },
+  healingLight: { id: 'healingLight', name: 'Свет исцеления', cooldown: 2, target: 'ally', effect: 'heal', mult: 0, healPctMax: 0.22 },
 };
 
 export interface ClassDef {
   cls: HeroClass;
   name: string;
-  icon: string;
   stats: Stats;
   skill: string;
+  passive: string;
   blurb: string;
 }
 
+/** Базовые характеристики L1 — Content Bible v1.1 / Combat Spec v0.3. */
 export const CLASSES: Record<HeroClass, ClassDef> = {
-  warrior: { cls: 'warrior', name: 'Воин', icon: '⚔', stats: { maxHp: 120, atk: 14, def: 8, spd: 8 }, skill: 'powerStrike', blurb: 'Крепкий боец, мощный удар по одной цели.' },
-  mage: { cls: 'mage', name: 'Маг', icon: '✦', stats: { maxHp: 70, atk: 18, def: 3, spd: 10 }, skill: 'fireWave', blurb: 'Хрупкий, но бьёт по всем врагам сразу.' },
-  rogue: { cls: 'rogue', name: 'Плут', icon: '🗡', stats: { maxHp: 85, atk: 16, def: 5, spd: 14 }, skill: 'backstab', blurb: 'Ходит первым, удар в спину игнорирует защиту.' },
-  priest: { cls: 'priest', name: 'Жрец', icon: '✚', stats: { maxHp: 90, atk: 10, def: 5, spd: 9 }, skill: 'heal', blurb: 'Лечит союзников, слабо бьёт сам.' },
+  defender: {
+    cls: 'defender', name: 'Защитник', stats: { maxHp: 145, atk: 12, def: 8, spd: 6 }, skill: 'cover',
+    passive: 'Последний заслон: пока Защитник жив, первый удар по союзнику с HP ниже 35% за бой слабее на 15%.',
+    blurb: 'Прикрывает союзника: следующий удар по нему слабее на 30%.',
+  },
+  scout: {
+    cls: 'scout', name: 'Разведчик', stats: { maxHp: 100, atk: 15, def: 4, spd: 11 }, skill: 'lunge',
+    passive: 'Читает следы: открывает разведывательные варианты в событиях.',
+    blurb: 'Ходит рано; Точный выпад наносит ×1.7 урона.',
+  },
+  shooter: {
+    cls: 'shooter', name: 'Стрелок', stats: { maxHp: 82, atk: 19, def: 3, spd: 7 }, skill: 'aimedShot',
+    passive: 'Дисциплина огня: обычная атака по врагу с подготовленным ударом игнорирует ещё 10% DEF.',
+    blurb: 'Прицельный выстрел ×2.0 игнорирует 30% защиты цели.',
+  },
+  healer: {
+    cls: 'healer', name: 'Целительница', stats: { maxHp: 110, atk: 9, def: 5, spd: 7 }, skill: 'healingLight',
+    passive: 'Мягкое восстановление: после победы самый раненый союзник восстанавливает 5% HP.',
+    blurb: 'Свет исцеления восстанавливает союзнику 22% HP.',
+  },
 };
 
 // Редкость — косметическая/коллекционная характеристика, а не множитель боевой силы.
-// Оставлено как таблица для совместимости с существующими сейвами и UI.
 export const RARITY_MULT: Record<Rarity, number> = { common: 1, rare: 1, epic: 1, legendary: 1 };
 export const RARITY_NAME: Record<Rarity, string> = { common: 'Обычный', rare: 'Редкий', epic: 'Эпический', legendary: 'Легендарный' };
 
 export interface EnemyDef {
-  id: string;
+  id: EnemyKind;
   name: string;
-  icon: string;
   stats: Stats;
-  skill?: string;
   boss?: boolean;
+  /** Короткое описание поведения для подсказки на арене. */
+  behavior: string;
 }
 
-export const ENEMIES: Record<string, EnemyDef> = {
-  skeleton: { id: 'skeleton', name: 'Скелет', icon: '💀', stats: { maxHp: 60, atk: 12, def: 6, spd: 7 } },
-  goblin: { id: 'goblin', name: 'Гоблин-лучник', icon: '🏹', stats: { maxHp: 40, atk: 14, def: 2, spd: 13 } },
-  troll: { id: 'troll', name: 'Тролль', icon: '🪨', stats: { maxHp: 140, atk: 16, def: 10, spd: 4 } },
-  shaman: { id: 'shaman', name: 'Шаман', icon: '🔮', stats: { maxHp: 50, atk: 10, def: 3, spd: 9 }, skill: 'shamanHeal' },
-  guardian: { id: 'guardian', name: 'Страж гробницы', icon: '👁', stats: { maxHp: 380, atk: 20, def: 12, spd: 8 }, skill: 'groundSlam', boss: true },
+/** Четыре базовых архетипа и босс — Content Bible v1.1, листы Enemies и Boss. */
+export const ENEMIES: Record<EnemyKind, EnemyDef> = {
+  goblinRaider: { id: 'goblinRaider', name: 'Гоблин-налётчик', stats: { maxHp: 90, atk: 14, def: 3, spd: 8 }, behavior: 'Бьёт Защитника, а без него — героя с наименьшим HP.' },
+  ashWolf: { id: 'ashWolf', name: 'Пепельный волк', stats: { maxHp: 72, atk: 13, def: 2, spd: 12 }, behavior: 'Быстрый; бросается на самого израненного героя.' },
+  boneGuard: { id: 'boneGuard', name: 'Костяной страж', stats: { maxHp: 120, atk: 11, def: 9, spd: 4 }, behavior: 'Готовит тяжёлый удар ×1.6 по выбранной цели.' },
+  ashMage: { id: 'ashMage', name: 'Пепельный чародей', stats: { maxHp: 68, atk: 12, def: 2, spd: 10 }, behavior: 'Каждый третий ход наводит пепельный заряд ×1.4 на слабейшего.' },
+  boneKing: { id: 'boneKing', name: 'Костяной король', stats: { maxHp: 460, atk: 22, def: 8, spd: 6 }, boss: true, behavior: 'Фаза I — тяжёлый клинок по одной цели; фаза II — призрачная волна по всему отряду.' },
 };
+
+export const BOSS_PHASE2_NAME = 'Костяной король — пробуждённый';
 
 export interface HeroBonus {
   hpPct: number;
@@ -62,7 +81,7 @@ export function levelMult(level: number): number {
   return 1 + LEVEL_STAT_GROWTH * (level - 1);
 }
 
-/** Итоговые характеристики героя: класс × уровень × бонусы постов и реликвий. Редкость не даёт скрытого множителя силы. */
+/** Итоговые характеристики героя: роль × уровень × бонусы постов и реликвий. Редкость не даёт скрытого множителя силы. */
 export function heroStats(hero: Pick<Hero, 'cls' | 'level' | 'rarity'>, bonus: HeroBonus = NO_BONUS): Stats {
   const base = CLASSES[hero.cls].stats;
   const m = levelMult(hero.level) * RARITY_MULT[hero.rarity];
@@ -76,6 +95,7 @@ export function heroStats(hero: Pick<Hero, 'cls' | 'level' | 'rarity'>, bonus: H
 
 export function heroUnit(hero: Hero, bonus: HeroBonus, hp?: number): Unit {
   const stats = heroStats(hero, bonus);
+  const skill = SKILLS[CLASSES[hero.cls].skill];
   return {
     id: hero.id,
     name: hero.name,
@@ -83,12 +103,15 @@ export function heroUnit(hero: Hero, bonus: HeroBonus, hp?: number): Unit {
     kind: hero.cls,
     stats,
     hp: Math.min(stats.maxHp, hp ?? stats.maxHp),
-    cd: 1,
-    skill: SKILLS[CLASSES[hero.cls].skill] ?? null,
+    cd: 0,
+    skill: skill ? { ...skill } : null,
     alive: (hp ?? stats.maxHp) > 0,
     heroId: hero.id,
+    identity: hero.identity,
     rarity: hero.rarity,
     portrait: hero.portrait,
+    cover: 0,
+    turns: 0,
   };
 }
 
@@ -101,33 +124,40 @@ export interface EnemyScale {
   mult?: number;
 }
 
-export function enemyUnit(id: string, uid: string, scale: EnemyScale): Unit {
+/** Элита по Combat Spec v0.3: HP ×1.35, ATK ×1.15 и видимая метка. */
+export const ELITE_HP = 1.35;
+export const ELITE_ATK = 1.15;
+
+export function enemyUnit(id: EnemyKind, uid: string, scale: EnemyScale): Unit {
   const def = ENEMIES[id];
   if (!def) throw new Error(`Неизвестный враг: ${id}`);
   const t = scale.tier - 1;
   const hpAtk = Math.pow(1.3, t) * (1 + scale.ramp) * (scale.mult ?? 1);
   const defMult = Math.pow(1.15, t);
-  const maxHp = Math.round(def.stats.maxHp * hpAtk * (scale.elite ? 1.5 : 1) * HP_SCALE);
+  const maxHp = Math.round(def.stats.maxHp * hpAtk * (scale.elite ? ELITE_HP : 1) * HP_SCALE);
   const stats: Stats = {
     maxHp,
-    atk: Math.round(def.stats.atk * hpAtk * (scale.elite ? 1.2 : 1)),
+    atk: Math.round(def.stats.atk * hpAtk * (scale.elite ? ELITE_ATK : 1)),
     def: Math.round(def.stats.def * defMult),
     spd: def.stats.spd,
   };
   const unit: Unit = {
     id: uid,
-    name: scale.elite ? `${def.name} (элита)` : def.name,
+    name: def.name,
     side: 'enemy',
     kind: def.id,
     stats,
     hp: maxHp,
-    cd: 1,
-    skill: def.skill ? SKILLS[def.skill] ?? null : null,
+    cd: 0,
+    skill: null,
     alive: true,
+    intent: null,
+    turns: 0,
   };
   if (def.boss) {
     unit.boss = true;
     unit.bossPhase = 1;
+    unit.phaseTurns = 0;
   }
   if (scale.elite) unit.elite = true;
   return unit;

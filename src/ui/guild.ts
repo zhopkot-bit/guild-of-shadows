@@ -17,7 +17,7 @@ function effectText(ctx: Ctx, def: PostDef): string {
 export function guildScreen(ctx: Ctx): HTMLElement {
   const root = h('section', { class: 'screen screen--guild' },
     h('div', { class: 'guild-hero' },
-      h('img', { class: 'guild-hero__art', src: './art/scenes/citadel.webp', alt: 'Готическая цитадель гильдии', draggable: 'false', fetchpriority: 'high' }),
+      h('img', { class: 'guild-hero__art', src: './art/v17/guild/citadel.webp', alt: 'Готическая цитадель гильдии', draggable: 'false', fetchpriority: 'high' }),
       h('div', { class: 'guild-hero__shade', 'aria-hidden': 'true' }),
       h('div', { class: 'guild-hero__content' },
         h('span', { class: 'eyebrow' }, 'ЦИТАДЕЛЬ НА КРАЮ ИЗВЕСТНОГО МИРА'),

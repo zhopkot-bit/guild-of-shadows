@@ -5,6 +5,7 @@ import {
   chooseCamp,
   chooseChest,
   chooseEventOption,
+  eventChoices,
   continueFromEvent,
   enterNode,
   finishBattle,
@@ -65,7 +66,8 @@ export function autoPlayRun(
         break;
       }
       case 'event':
-        chooseEventOption(run, (run.event as NonNullable<Run['event']>).choices[0]!.id);
+        // Бот выбирает первый доступный вариант (варианты Миры недоступны без неё в отряде).
+        chooseEventOption(run, (eventChoices(run).find((c) => c.available) ?? eventChoices(run)[0])!.choice.id);
         break;
       case 'eventResult':
         continueFromEvent(run);
