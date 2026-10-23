@@ -68,7 +68,7 @@ export function buyPostMany(state: GameState, id: PostId, count: number): number
   return bought;
 }
 
-// ---------- Реликварий (сток Эссенции) ----------
+// ---------- Реликварий (сток осколков реликвий) ----------
 
 export function relicariumCost(purchased: number): Num {
   return Math.ceil(5 * Math.pow(1.6, purchased));

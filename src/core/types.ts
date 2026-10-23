@@ -71,6 +71,8 @@ export interface GameState {
   /** Самое глубокое открытое подземелье (1..). */
   maxTier: number;
   stats: Stats;
+  /** Обучающие подсказки, которые игрок уже видел (id). */
+  tipsSeen: string[];
   /** Сериализованный активный забег; строка изолирует модель сохранения от runtime-классов боя. */
   activeRun: string | null;
 }

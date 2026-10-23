@@ -1,4 +1,4 @@
-import { coverTransform, type Backend, type BackgroundParams, type QuadDraw, type SpriteDraw, type Tex } from './backend';
+import { coverTransform, type AffinePart, type Backend, type BackgroundParams, type QuadDraw, type RenderTarget, type SpriteDraw, type Tex } from './backend';
 
 /**
  * Запасной рендерер для устройств без WebGL. Сцена, анимации и эффекты те же; вместо деформации
@@ -80,7 +80,8 @@ export class Canvas2DBackend implements Backend {
         c.shadowBlur = 14;
       }
     }
-    c.drawImage(d.tex.source, -d.w / 2, -d.h, d.w, d.h);
+    const [u0, v0, u1, v1] = d.uv;
+    c.drawImage(d.tex.source, u0 * d.tex.w, v0 * d.tex.h, (u1 - u0) * d.tex.w, (v1 - v0) * d.tex.h, -d.w / 2, -d.h, d.w, d.h);
     c.shadowBlur = 0;
     c.shadowColor = 'transparent';
     c.filter = 'none';
@@ -91,7 +92,8 @@ export class Canvas2DBackend implements Backend {
       s.height = Math.max(1, Math.round(d.h));
       const sc = s.getContext('2d') as CanvasRenderingContext2D;
       sc.clearRect(0, 0, s.width, s.height);
-      sc.drawImage(d.emissive && d.emissiveStrength > 0.02 && d.flash < 0.02 ? d.emissive.source : d.tex.source, 0, 0, s.width, s.height);
+      const src = d.emissive && d.emissiveStrength > 0.02 && d.flash < 0.02 ? d.emissive : d.tex;
+      sc.drawImage(src.source, d.uv[0] * src.w, d.uv[1] * src.h, (d.uv[2] - d.uv[0]) * src.w, (d.uv[3] - d.uv[1]) * src.h, 0, 0, s.width, s.height);
       sc.globalCompositeOperation = 'source-in';
       const col = d.flash > 0.02 ? d.flashColor : d.emissiveColor;
       sc.fillStyle = `rgb(${col.map((v) => Math.round(Math.min(1, v) * 255)).join(',')})`;
@@ -118,6 +120,30 @@ export class Canvas2DBackend implements Backend {
       c.restore();
     }
   }
+
+  createTarget(w: number, h: number): RenderTarget {
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    return { tex: { w, h, handle: c, source: c }, w, h };
+  }
+
+  drawRig(target: RenderTarget, atlas: Tex, parts: AffinePart[]): void {
+    const c = (target.tex.source as HTMLCanvasElement).getContext('2d');
+    if (!c) return;
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.clearRect(0, 0, target.w, target.h);
+    for (const p of parts) {
+      c.setTransform(p.m[0], p.m[1], p.m[2], p.m[3], p.m[4], p.m[5]);
+      c.globalAlpha = p.alpha;
+      const [u0, v0, u1, v1] = p.uv;
+      c.drawImage(atlas.source, u0 * atlas.w, v0 * atlas.h, (u1 - u0) * atlas.w, (v1 - v0) * atlas.h, p.x0, p.y0, p.w, p.h);
+    }
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.globalAlpha = 1;
+  }
+
+  disposeTarget(): void {}
 
   overlay(r: number, g: number, b: number, a: number, additive: boolean): void {
     if (a <= 0) return;

@@ -2,6 +2,7 @@ import { advance as advanceBattle } from '../combat/battle';
 import { createBattle } from '../combat/battle';
 import { enemyUnit, heroStats, heroUnit, type HeroBonus } from '../combat/data';
 import type { EnemyKind } from '../content/roster';
+import { shards } from '../content/text';
 import type { Battle, Stats, Unit } from '../combat/types';
 import {
   FATE_BASE,
@@ -20,9 +21,9 @@ import { nextSeed } from '../core/state';
 import type { GameState, Hero, HeroIdentity } from '../core/types';
 import { eventDef, outcomesFor, pickEvent, type Choice, type Effect, type EventDef } from './events';
 import { generateMap, type MapNode } from './map';
-import { relicDef, relicEffects, rollRelics, type RelicId } from './relics';
+import { moduleDef, moduleEffects, normalizeModules, rollModules, type ModuleId } from './modules';
 
-export type RunStage = 'map' | 'battle' | 'event' | 'eventResult' | 'chest' | 'camp' | 'ended';
+export type RunStage = 'map' | 'battle' | 'event' | 'eventResult' | 'chest' | 'camp' | 'prep' | 'ended';
 export type BattleKind = 'battle' | 'elite' | 'boss' | 'ambush';
 
 export interface RunMember {
@@ -33,7 +34,7 @@ export interface RunMember {
 }
 
 export type ChestOffer =
-  | { id: string; kind: 'relic'; relic: RelicId }
+  | { id: string; kind: 'module'; module: ModuleId }
   | { id: string; kind: 'heal'; pct: number }
   | { id: string; kind: 'essence'; amount: number };
 
@@ -46,7 +47,8 @@ export interface Run {
   visited: string[];
   heroes: Record<string, Hero>;
   members: RunMember[];
-  relics: RelicId[];
+  /** Модули экспедиции (MOD01–08). Поле сохранило имя relics ради совместимости сейвов. */
+  relics: ModuleId[];
   atkBuff: number;
   postBonus: { hpPct: number; atkPct: number; campHeal: number };
   essenceEarned: number;
@@ -72,6 +74,10 @@ export interface Run {
   reviveLeft: number;
   result: 'victory' | 'defeat' | null;
   finished: boolean;
+  /** Выбор на экране подготовки к боссу. Optional для сейвов до v1.8. */
+  bossPrep?: 'heal' | 'ward' | null;
+  /** Сумка собирателя уже сработала в этом забеге. */
+  pouchUsed?: boolean;
   /** Cached result makes reward application idempotent across reloads. */
   summary: RunSummary | null;
 }
@@ -101,7 +107,7 @@ export function deserializeRun(json: string | null): Run | null {
       return value;
     };
     const run = revive(parsed) as Run;
-    const stages: RunStage[] = ['map', 'battle', 'event', 'eventResult', 'chest', 'camp', 'ended'];
+    const stages: RunStage[] = ['map', 'battle', 'event', 'eventResult', 'chest', 'camp', 'prep', 'ended'];
     if (
       !run ||
       !Number.isFinite(run.seed) ||
@@ -112,6 +118,18 @@ export function deserializeRun(json: string | null): Run | null {
       typeof run.finished !== 'boolean' ||
       (run.stage === 'battle' && (!run.battle || !(run.battle.rng instanceof RNG)))
     ) return null;
+    // Реликвии сейвов до v1.8 → модули Content Bible; Перо Феникса сохраняет свой отдельный эффект.
+    const rawRelics = (run.relics as unknown as string[]) ?? [];
+    if (rawRelics.includes('phoenixFeather') && !run.battle) run.phoenixLeft = true;
+    run.relics = normalizeModules(rawRelics);
+    if (run.chestOffers) {
+      run.chestOffers = run.chestOffers.map((o) => {
+        const legacy = o as unknown as { id: string; kind: string; relic?: string };
+        if (legacy.kind !== 'relic') return o;
+        const [mod] = normalizeModules([legacy.relic ?? '']);
+        return mod ? { id: legacy.id, kind: 'module', module: mod } : { id: legacy.id, kind: 'essence', amount: 3 };
+      });
+    }
     return run;
   } catch {
     return null;
@@ -205,12 +223,12 @@ export function startRun(state: GameState, nowMs: number, tier: number): Run {
 // ---------- Отряд внутри забега ----------
 
 export function runBonus(run: Run): HeroBonus {
-  const r = relicEffects(run.relics);
+  const m = moduleEffects(run.relics);
   return {
-    hpPct: run.postBonus.hpPct + r.hpPct,
-    atkPct: run.postBonus.atkPct + r.atkPct + run.atkBuff,
-    defPct: r.defPct,
-    spdPct: r.spdPct,
+    hpPct: run.postBonus.hpPct + m.hpPct,
+    atkPct: run.postBonus.atkPct + run.atkBuff,
+    defPct: 0,
+    spdPct: 0,
   };
 }
 
@@ -288,25 +306,48 @@ function rollEnemyIds(rng: RNG, count: number, layer: number, preset: EnemyKind[
   return ids.slice(preset.length);
 }
 
-function buildEnemies(run: Run, kind: BattleKind, layer: number): Unit[] {
-  const ramp = (layer - 1) * 0.06;
-  const scale = { tier: run.tier, ramp, mult: run.enemyMult };
-  if (kind === 'boss') return [enemyUnit('boneKing', 'e1', scale)];
-  if (kind === 'elite') {
-    const [rest] = rollEnemyIds(run.rng, 2, Math.max(2, layer), ['boneGuard']);
-    return [enemyUnit('boneGuard', 'e1', { ...scale, elite: true }), enemyUnit(rest ?? 'goblinRaider', 'e2', scale)];
-  }
-  const count = layer <= 2 ? 2 : run.rng.int(2, 3);
-  return rollEnemyIds(run.rng, count, layer).map((id, i) => enemyUnit(id, `e${i + 1}`, scale));
+/**
+ * Состав встречи узла зависит только от сида забега и id узла, поэтому его можно заранее показать
+ * на карте (Карта следопыта, MOD06) и он не меняется от порядка посещения узлов.
+ */
+function encounterRng(run: Run, nodeId: string): RNG {
+  let h = (run.seed ^ 0x2c1b3c6d) >>> 0;
+  for (const ch of nodeId) h = Math.imul(h ^ ch.charCodeAt(0), 0x01000193) >>> 0;
+  return new RNG(h);
 }
 
-function startBattle(run: Run, kind: BattleKind, layer: number): void {
-  const effects = relicEffects(run.relics);
+export function encounterKinds(run: Run, kind: BattleKind, layer: number, nodeId: string | null): EnemyKind[] {
+  const rng = nodeId ? encounterRng(run, nodeId) : run.rng;
+  if (kind === 'boss') return ['boneKing'];
+  if (kind === 'elite') return ['boneGuard', ...rollEnemyIds(rng, 2, Math.max(2, layer), ['boneGuard'])];
+  const count = layer <= 2 ? 2 : rng.int(2, 3);
+  return rollEnemyIds(rng, count, layer);
+}
+
+/** Превью состава для узла карты (null — узел не боевой). */
+export function encounterPreview(run: Run, node: MapNode): EnemyKind[] | null {
+  if (node.type !== 'battle' && node.type !== 'elite' && node.type !== 'boss') return null;
+  return encounterKinds(run, node.type, node.layer, node.id);
+}
+
+function buildEnemies(run: Run, kind: BattleKind, layer: number, nodeId: string | null): Unit[] {
+  const ramp = (layer - 1) * 0.06;
+  const scale = { tier: run.tier, ramp, mult: run.enemyMult };
+  return encounterKinds(run, kind, layer, nodeId).map((id, i) => enemyUnit(id, `e${i + 1}`, kind === 'elite' && i === 0 ? { ...scale, elite: true } : scale));
+}
+
+function startBattle(run: Run, kind: BattleKind, layer: number, nodeId: string | null): void {
+  const m = moduleEffects(run.relics);
   const bonus = runBonus(run);
-  const heroes = liveMembers(run).map((m) => heroUnit(run.heroes[m.heroId] as Hero, bonus, memberHp(run, m)));
-  run.battle = createBattle(heroes, buildEnemies(run, kind, layer), run.rng.int(1, 2_000_000_000), {
-    skillDamageMult: effects.skillDamageMult,
-    phoenix: run.phoenixLeft && effects.hasPhoenix,
+  const heroes = liveMembers(run).map((mem) => heroUnit(run.heroes[mem.heroId] as Hero, bonus, memberHp(run, mem)));
+  run.battle = createBattle(heroes, buildEnemies(run, kind, layer, nodeId), run.rng.int(1, 2_000_000_000), {
+    skillDamageMult: 1,
+    phoenix: run.phoenixLeft,
+    shooterBasicBonus: m.shooterBasicBonus,
+    pierceLeft: m.shooterFirstPen,
+    wardenLeft: m.wardenFlat,
+    firstRoundSpd: m.firstRoundSpd,
+    bossWard: kind === 'boss' && run.bossPrep === 'ward' ? BOSS_WARD : 0,
   });
   run.battleKind = kind;
   run.stage = 'battle';
@@ -314,8 +355,8 @@ function startBattle(run: Run, kind: BattleKind, layer: number): void {
 }
 
 function makeChest(run: Run, relicsOnly: boolean): ChestOffer[] {
-  const relics = rollRelics(run.rng, run.relics, relicsOnly ? 2 : 1);
-  const offers: ChestOffer[] = relics.map((relic, i) => ({ id: `relic${i}`, kind: 'relic', relic }));
+  const mods = rollModules(run.rng, run.relics, relicsOnly ? 2 : 1);
+  const offers: ChestOffer[] = mods.map((module, i) => ({ id: `module${i}`, kind: 'module', module }));
   if (relicsOnly) {
     if (offers.length === 0) offers.push({ id: 'essence', kind: 'essence', amount: 3 + run.tier });
     return offers;
@@ -333,8 +374,12 @@ export function enterNode(run: Run, nodeId: string): void {
   switch (node.type) {
     case 'battle':
     case 'elite':
+      startBattle(run, node.type, node.layer, node.id);
+      break;
     case 'boss':
-      startBattle(run, node.type, node.layer);
+      // Combat Spec: после шестого слоя — гарантированный экран подготовки к боссу.
+      run.bossPrep = null;
+      run.stage = 'prep';
       break;
     case 'event': {
       const ev = pickEvent(run.rng, run.eventsSeen);
@@ -368,6 +413,7 @@ export function finishBattle(run: Run): void {
     if (!unit.alive && !run.fallen.includes(member.heroId)) run.fallen.push(member.heroId);
   }
   run.phoenixLeft = b.mods.phoenix;
+  const mods = moduleEffects(run.relics);
   const kind = run.battleKind;
   run.battle = null;
   run.battleKind = null;
@@ -378,14 +424,17 @@ export function finishBattle(run: Run): void {
     return;
   }
   run.nodesCleared += 1;
-  const heal = relicEffects(run.relics).healAfterBattle;
-  if (heal > 0) healParty(run, heal);
 
   if (kind === 'boss') {
     run.stage = 'ended';
     run.result = 'victory';
   } else if (kind === 'elite') {
     run.elitesCleared += 1;
+    // Сумка собирателя (MOD08): один раз за забег после первой элиты.
+    if (mods.pouch && !run.pouchUsed) {
+      run.pouchUsed = true;
+      run.essenceEarned += 1;
+    }
     run.chestOffers = makeChest(run, true);
     run.stage = 'chest';
   } else {
@@ -395,10 +444,8 @@ export function finishBattle(run: Run): void {
 
 // ---------- Сундук, лагерь, события ----------
 
-function grantRelic(run: Run, relic: RelicId): void {
-  if (run.relics.includes(relic)) return;
-  run.relics.push(relic);
-  if (relic === 'phoenixFeather') run.phoenixLeft = true;
+function grantModule(run: Run, mod: ModuleId): void {
+  if (!run.relics.includes(mod)) run.relics.push(mod);
 }
 
 export function chooseChest(run: Run, offerId: string): string {
@@ -406,15 +453,15 @@ export function chooseChest(run: Run, offerId: string): string {
   const offer = run.chestOffers.find((o) => o.id === offerId);
   if (!offer) throw new Error(`Нет варианта ${offerId}`);
   let text: string;
-  if (offer.kind === 'relic') {
-    grantRelic(run, offer.relic);
-    text = `Реликвия: ${relicDef(offer.relic).name}`;
+  if (offer.kind === 'module') {
+    grantModule(run, offer.module);
+    text = `Модуль: ${moduleDef(offer.module).name}`;
   } else if (offer.kind === 'heal') {
     healParty(run, offer.pct);
     text = 'Отряд подлечен';
   } else {
     run.essenceEarned += offer.amount;
-    text = `+${offer.amount} Эссенции`;
+    text = `+${shards(offer.amount)}`;
   }
   run.chestOffers = null;
   run.stage = 'map';
@@ -427,7 +474,9 @@ export function chooseCamp(run: Run, option: 'rest' | 'train'): string {
   if (option === 'rest') {
     const pct = 0.4 + run.postBonus.campHeal;
     healParty(run, pct);
-    text = `Отдых: отряд восстановил ${Math.round(pct * 100)}% здоровья`;
+    const extra = moduleEffects(run.relics).campHealAbs;
+    if (extra > 0) shiftPartyHp(run, extra);
+    text = `Отдых: отряд восстановил ${Math.round(pct * 100)}% здоровья${extra > 0 ? ` и ещё ${Math.round(extra * HP_SCALE)} HP (Зелье восстановления)` : ''}`;
   } else {
     run.atkBuff += 0.1;
     text = 'Тренировка: +10% АТК до конца забега';
@@ -436,14 +485,14 @@ export function chooseCamp(run: Run, option: 'rest' | 'train'): string {
   return text;
 }
 
-function describeEffect(e: Effect, gainedRelic: RelicId | null): string | null {
+function describeEffect(e: Effect, gainedRelic: ModuleId | null): string | null {
   switch (e.k) {
     case 'essence':
-      return `${e.v >= 0 ? '+' : ''}${e.v} Эссенции`;
+      return `${e.v >= 0 ? '+' : '−'}${shards(Math.abs(e.v))}`;
     case 'partyHp':
       return e.v >= 0 ? `Отряд лечится на ${Math.round(e.v * 100)}%` : `Отряд теряет ${Math.round(-e.v * 100)}% здоровья`;
     case 'relic':
-      return gainedRelic ? `Реликвия: ${relicDef(gainedRelic).name}` : 'Реликвий больше нет: +2 Эссенции';
+      return gainedRelic ? `Модуль: ${moduleDef(gainedRelic).name}` : 'Модулей больше нет: +2 осколка реликвий';
     case 'ambush':
       return 'Засада!';
     case 'atkBuff':
@@ -472,7 +521,7 @@ export function chooseEventOption(run: Run, choiceId: string): void {
   const outcome = run.rng.weighted(outcomes, (o) => o.weight);
   const lines: string[] = [];
   for (const e of outcome.effects) {
-    let gained: RelicId | null = null;
+    let gained: ModuleId | null = null;
     switch (e.k) {
       case 'essence':
         run.essenceEarned += e.v;
@@ -488,10 +537,10 @@ export function chooseEventOption(run: Run, choiceId: string): void {
         else hurtParty(run, -e.v);
         break;
       case 'relic': {
-        const [relic] = rollRelics(run.rng, run.relics, 1);
-        if (relic) {
-          grantRelic(run, relic);
-          gained = relic;
+        const [mod] = rollModules(run.rng, run.relics, 1);
+        if (mod) {
+          grantModule(run, mod);
+          gained = mod;
         } else {
           run.essenceEarned += 2;
         }
@@ -519,10 +568,25 @@ export function continueFromEvent(run: Run): void {
   if (run.pendingAmbush) {
     run.pendingAmbush = false;
     const layer = run.currentNodeId ? nodeById(run, run.currentNodeId).layer : 1;
-    startBattle(run, 'ambush', layer);
+    startBattle(run, 'ambush', layer, null);
   } else {
     run.stage = 'map';
   }
+}
+
+// ---------- Подготовка к боссу ----------
+
+/** Защита от первой спецатаки босса: её урон уменьшается вдвое (одна атака за бой). */
+export const BOSS_WARD = 0.5;
+export const BOSS_PREP_HEAL = 0.3;
+
+export function chooseBossPrep(run: Run, option: 'heal' | 'ward'): string {
+  if (run.stage !== 'prep') throw new Error('Подготовка к боссу недоступна');
+  run.bossPrep = option;
+  if (option === 'heal') healParty(run, BOSS_PREP_HEAL);
+  const node = run.currentNodeId ? nodeById(run, run.currentNodeId) : null;
+  startBattle(run, 'boss', node?.layer ?? 7, node?.id ?? null);
+  return option === 'heal' ? `Отряд восстановил ${Math.round(BOSS_PREP_HEAL * 100)}% здоровья` : 'Первая спецатака короля будет ослаблена вдвое';
 }
 
 // ---------- Воскрешение за rewarded ----------
@@ -555,11 +619,9 @@ export function finishRun(run: Run, state: GameState, nowMs: number): RunSummary
 
   const victory = run.result === 'victory';
   const tier = run.tier;
-  const effects = relicEffects(run.relics);
-
   const gold = Math.floor(totalIncome(state) * 120 * (1 + 0.5 * (tier - 1)) * (victory ? 1 : 0.4)) + (run.goldEarned ?? 0);
   const baseEssence = 3 + 2 * tier + 2 * run.elitesCleared + (victory ? 5 : 0);
-  const essence = Math.floor(((victory ? baseEssence : baseEssence * 0.25) + run.essenceEarned) * effects.essenceMult);
+  const essence = Math.floor((victory ? baseEssence : baseEssence * 0.25) + run.essenceEarned);
   state.gold += gold;
   state.essence += essence;
 

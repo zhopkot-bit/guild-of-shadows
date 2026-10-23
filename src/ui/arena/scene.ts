@@ -1,4 +1,5 @@
-import type { Backend, QuadDraw, Rgb, Tex } from './backend';
+import type { AnimClip, AnimPack, ArenaLayer, ClipName, LoadedRig } from '../../content/artpack';
+import type { Backend, QuadDraw, RenderTarget, Rgb, Tex } from './backend';
 import { coverTransform } from './backend';
 import { Canvas2DBackend } from './canvas2d';
 import { computeLayout, type Slot } from './layout';
@@ -25,6 +26,14 @@ export interface ActorSpec {
   wide: boolean;
   /** Индивидуальная пластика простоя. */
   idle: { breath: number; sway: number; bob: number; hover: number; speed: number };
+  /** Покадровая анимация художника (атлас + клипы). Без неё — процедурная деформация спрайта. */
+  anim?: AnimPack | null;
+  /** Финальный арт II фазы босса: отдельный спрайт и/или анимация. */
+  sprite2?: string | null;
+  anim2?: AnimPack | null;
+  /** Скелетный персонаж DragonBones (основной формат финальной анимации). */
+  rig?: LoadedRig | null;
+  rig2?: LoadedRig | null;
   /** Номер экземпляра среди одинаковых врагов: лёгкие различия роста, тона и ритма, чтобы не было «клонов». */
   variant?: number;
   /** Уже выбыл (восстановление боя из сохранения). */
@@ -38,6 +47,10 @@ export interface ArenaSetup {
   lights: Array<{ u: number; v: number; size: number; warm: boolean }>;
   wetFloor: boolean;
   mood: 'crypt' | 'boss';
+  /** Витрина одного героя (экран героя): фигура по центру крупным планом. */
+  showcase?: boolean;
+  /** Слои окружения от художника (дальний/средний план, передний план поверх бойцов). */
+  layers?: ArenaLayer[];
 }
 
 export interface ActorScreen {
@@ -79,6 +92,16 @@ export interface ActorStatus {
 class Actor {
   tex: Tex | null = null;
   emi: Tex | null = null;
+  /** Атлас покадровой анимации и текущий клип. */
+  animTex: Tex[] = [];
+  anim: AnimPack | null = null;
+  rig: LoadedRig | null = null;
+  rigAtlas: Tex | null = null;
+  rigTarget: RenderTarget | null = null;
+  rigAtlas2: Tex | null = null;
+  clip: { name: ClipName; start: number; def: AnimClip } | null = null;
+  tex2: Tex | null = null;
+  animTex2: Tex[] = [];
   slot: Slot = { x: 0.5, y: 0.9, h: 0.4, z: 1 };
   x = 0;
   y = 0;
@@ -250,6 +273,7 @@ export class ArenaScene {
   private shardTex: Tex | null = null;
   private shardCells: Array<[number, number, number, number]> = [];
   private resizeObs: ResizeObserver | null = null;
+  private layerTex: Array<{ layer: ArenaLayer; tex: Tex }> = [];
   private frameListeners: Array<(list: ActorScreen[]) => void> = [];
   private destroyed = false;
 
@@ -312,9 +336,22 @@ export class ArenaScene {
       const img = await get(a.spec.sprite);
       a.tex = this.texFrom(img);
       if (a.spec.emissive) a.emi = this.texFrom(await get(a.spec.emissive));
+      if (a.spec.anim?.pageUrls?.length) {
+        a.animTex = await Promise.all(a.spec.anim.pageUrls.map(async (u) => this.texFrom(await get(u))));
+        a.anim = a.spec.anim;
+      }
+      if (a.spec.sprite2) a.tex2 = this.texFrom(await get(a.spec.sprite2));
+      if (a.spec.anim2?.pageUrls?.length) a.animTex2 = await Promise.all(a.spec.anim2.pageUrls.map(async (u) => this.texFrom(await get(u))));
+      if (a.spec.rig) {
+        a.rigAtlas = this.texFrom(await get(a.spec.rig.atlasUrl));
+        a.rig = a.spec.rig;
+      }
+      if (a.spec.rig2) a.rigAtlas2 = this.texFrom(await get(a.spec.rig2.atlasUrl));
     });
+    const layerJobs = (this.setup.layers ?? []).map(async (l) => ({ layer: l, tex: this.texFrom(await get(l.src)) }));
     this.bgTex = this.texFrom(await bg);
     await Promise.all(jobs);
+    this.layerTex = await Promise.all(layerJobs);
     this.layout();
     const boss = [...this.actors.values()].find((a) => a.spec.boss && a.phase2);
     if (boss) this.enterPhase2Visuals(boss, true);
@@ -356,10 +393,15 @@ export class ArenaScene {
       a.y = s.y * H;
       const v = a.spec.variant ?? 0;
       a.h = s.h * H * (v === 1 ? 0.93 : v === 2 ? 0.97 : 1);
-      a.w = a.tex ? (a.h * a.tex.w) / a.tex.h : a.h * 0.45;
+      const box = a.rig?.rig.aabb;
+      a.w = box ? (a.h * box.width) / box.height : a.anim ? (a.h * a.anim.frameWidth) / a.anim.frameHeight : a.tex ? (a.h * a.tex.w) / a.tex.h : a.h * 0.45;
     };
-    heroes.forEach((a, i) => place(a, L.heroes[i]));
-    foes.forEach((a, i) => place(a, L.enemies[i]));
+    if (this.setup.showcase) {
+      heroes.forEach((a) => place(a, { x: 0.5, y: 0.97, h: 0.9, z: 10 }));
+    } else {
+      heroes.forEach((a, i) => place(a, L.heroes[i]));
+      foes.forEach((a, i) => place(a, L.enemies[i]));
+    }
     this.order = [...this.actors.values()].sort((a, b) => a.slot.z - b.slot.z || a.y - b.y);
     this.container.classList.toggle('arena--portrait', L.portrait);
   }
@@ -521,6 +563,7 @@ export class ArenaScene {
         vignette: this.grade.vignette + this.darken,
       });
     }
+    this.drawLayers(false, W, H);
     const quads: QuadDraw[] = [];
     const R = this.atlas.regions;
     // Свет свечей и факелов (мерцание).
@@ -625,6 +668,7 @@ export class ArenaScene {
     for (const [tex, list] of shardQ) b.drawQuads(tex, list);
     b.drawQuads(this.atlasTex, fxq);
 
+    this.drawLayers(true, W, H);
     // Передний туман у пола: даёт глубину и прячет стык фигур с фоном.
     const fog: QuadDraw[] = [];
     for (let i = 0; i < 7; i++) {
@@ -651,8 +695,107 @@ export class ArenaScene {
     for (const fn of this.frameListeners) fn(list);
   }
 
+  private drawLayers(front: boolean, W: number, H: number): void {
+    for (const { layer, tex } of this.layerTex) {
+      if (!!layer.front !== front) continue;
+      const t = coverTransform(W, H, tex.w, tex.h, 1.04, this.camX() * layer.parallax * 2, 0);
+      this.backend.drawQuads(tex, [{ x: t.x0 + t.drawW / 2, y: t.y0 + t.drawH / 2, w: t.drawW, h: t.drawH, rot: 0, r: this.grade.tint[0], g: this.grade.tint[1], b: this.grade.tint[2], a: 1, uv: [0, 0, 1, 1], additive: false }]);
+    }
+  }
+
+  /** Текущий кадр: для рига — перерисованная цель, для листа кадров — страница и прямоугольник. */
+  private frameRect(a: Actor): { tex: Tex; uv: [number, number, number, number]; pivot: [number, number] } | null {
+    if (a.rig && a.rigAtlas) return this.rigFrame(a);
+    const pack = a.anim;
+    if (!pack || !a.animTex.length) return null;
+    if (!a.clip) a.clip = { name: 'idle', start: this.time, def: pack.clips.idle };
+    const c = a.clip;
+    const n = c.def.frames.length;
+    let k = Math.floor((this.time - c.start) * c.def.fps * this.speed);
+    if (k >= n) {
+      if (c.def.loop || c.name === 'idle' || c.name === 'prepare') k %= n;
+      else if (c.name === 'death') k = n - 1;
+      else {
+        a.clip = { name: 'idle', start: this.time, def: pack.clips.idle };
+        k = 0;
+      }
+    }
+    const frame = a.clip.def.frames[Math.max(0, k)] ?? 0;
+    const first = a.animTex[0] as Tex;
+    const cols = Math.max(1, Math.floor(first.w / pack.frameWidth));
+    const rows = Math.max(1, Math.floor(first.h / pack.frameHeight));
+    const perPage = cols * rows;
+    const tex = a.animTex[Math.min(a.animTex.length - 1, Math.floor(frame / perPage))] as Tex;
+    const local = frame % perPage;
+    const fx = (local % cols) * pack.frameWidth;
+    const fy = Math.floor(local / cols) * pack.frameHeight;
+    return { tex, uv: [fx / tex.w, fy / tex.h, (fx + pack.frameWidth) / tex.w, (fy + pack.frameHeight) / tex.h], pivot: pack.pivot };
+  }
+
+  /** Поза рига в текущий момент клипа → текстура-цель нужного размера. */
+  private rigFrame(a: Actor): { tex: Tex; uv: [number, number, number, number]; pivot: [number, number] } | null {
+    const lr = a.rig as LoadedRig;
+    const box = lr.rig.aabb;
+    const th = Math.round(Math.min(2048, Math.max(128, a.h * 1.05)));
+    const tw = Math.round(Math.min(2048, Math.max(64, (th * box.width) / box.height)));
+    if (!a.rigTarget || Math.abs(a.rigTarget.h - th) > 24) {
+      if (a.rigTarget) this.backend.disposeTarget(a.rigTarget);
+      a.rigTarget = this.backend.createTarget(tw, th);
+    }
+    const target = a.rigTarget;
+    const names = lr.rig.animations();
+    if (!a.clip || !names.includes(a.clip.name)) a.clip = { name: 'idle', start: this.time, def: { frames: [0], fps: 1 } };
+    let name: string | null = names.includes(a.clip.name) ? a.clip.name : names.includes('idle') ? 'idle' : null;
+    let t = (this.time - a.clip.start) * this.speed;
+    const info = name ? lr.rig.info(name) : null;
+    if (info) {
+      if (info.loop || name === 'idle' || name === 'prepare') t %= Math.max(0.001, info.duration);
+      else if (t >= info.duration) {
+        if (name === 'death') t = info.duration;
+        else {
+          a.clip = { name: 'idle', start: this.time, def: { frames: [0], fps: 1 } };
+          name = names.includes('idle') ? 'idle' : null;
+          t = 0;
+        }
+      }
+    }
+    const s = target.h / box.height;
+    const map: [number, number, number, number, number, number] = [s, 0, 0, s, -box.x * s, -box.y * s];
+    const parts = lr.rig.pose(name, t).map((p) => ({ ...p, m: mulMat(map, p.m) }));
+    this.backend.drawRig(target, a.rigAtlas as Tex, parts);
+    return { tex: target.tex, uv: [0, 0, 1, 1], pivot: [-box.x / box.width, -box.y / box.height] };
+  }
+
+  private rigPivot(a: Actor): [number, number] {
+    const box = a.rig?.rig.aabb;
+    return box ? [-box.x / box.width, -box.y / box.height] : [0.5, 1];
+  }
+
+  /** Проигрывает клип художника (если он есть); иначе сцена остаётся на процедурной анимации. */
+  play(id: string, name: ClipName): void {
+    const a = this.actors.get(id);
+    if (!a) return;
+    const fallback: Partial<Record<ClipName, ClipName>> = { shoot: 'attack', prepare: 'cast', victory: 'idle' };
+    if (a.rig) {
+      const names = a.rig.rig.animations();
+      const pick = names.includes(name) ? name : fallback[name] && names.includes(fallback[name] as string) ? (fallback[name] as ClipName) : null;
+      if (pick) a.clip = { name: pick, start: this.time, def: { frames: [0], fps: 1 } };
+      return;
+    }
+    const pack = a.anim;
+    if (!pack) return;
+    const def = pack.clips[name] ?? (fallback[name] ? pack.clips[fallback[name] as ClipName] : undefined);
+    if (def) a.clip = { name, start: this.time, def };
+  }
+
   private drawActor(a: Actor, mode: 0 | 1 | 2, shakeX: number, shakeY: number): void {
     if (!a.tex) return;
+    // Риг перерисовывается один раз за кадр (в проходе фигуры), отражение и тень берут ту же текстуру.
+    const rect = mode === 0 || !a.rigTarget ? this.frameRect(a) : { tex: a.rigTarget.tex, uv: [0, 0, 1, 1] as [number, number, number, number], pivot: this.rigPivot(a) };
+    const baseTex = rect ? rect.tex : a.phase2 && a.tex2 ? a.tex2 : a.tex;
+    // При покадровой/скелетной анимации процедурная деформация лишь «дышит» поверх.
+    const animScale = rect ? 0.25 : 1;
+    const pivot = rect ? rect.pivot : [0.5, 1];
     const idle = a.spec.idle;
     const dead = a.dead && a.spec.side === 'enemy' && a.p.dissolve >= 1;
     if (dead) return;
@@ -663,18 +806,19 @@ export class ArenaScene {
     const breath = a.fallen ? idle.breath * 0.3 : idle.breath;
     const chargeLean = charging ? -0.04 - 0.015 * Math.sin(this.time * 5) : 0;
     this.backend.drawSprite({
-      tex: a.tex,
-      emissive: a.emi,
-      x: a.x + a.p.offX + shakeX,
-      y: a.y + a.p.offY + shakeY + (mode === 0 ? hover : 0),
+      tex: baseTex,
+      emissive: rect || (a.phase2 && a.tex2) ? null : a.emi,
+      uv: rect ? rect.uv : [0, 0, 1, 1],
+      x: a.x + a.p.offX + shakeX + (0.5 - (pivot[0] ?? 0.5)) * a.w,
+      y: a.y + a.p.offY + shakeY + (mode === 0 ? hover : 0) + (1 - (pivot[1] ?? 1)) * a.h,
       w: a.w,
       h: a.h,
       flip: a.spec.flip,
       time: this.time * idle.speed * (1 + (a.spec.variant ?? 0) * 0.13),
       phase: a.phase,
-      breath,
-      sway: a.fallen ? 0.2 : idle.sway,
-      bob: idle.bob,
+      breath: breath * animScale,
+      sway: (a.fallen ? 0.2 : idle.sway) * animScale,
+      bob: idle.bob * animScale,
       lean: a.p.lean + chargeLean,
       sx: a.p.sx,
       sy: a.p.sy,
@@ -801,6 +945,7 @@ export class ArenaScene {
     const dy = (t.y - a.y) * (a.spec.boss ? 0.2 : 0.85);
     const color = opts.color ?? (a.spec.side === 'hero' ? [1, 0.85, 0.6] as Rgb : [1, 0.5, 0.35] as Rgb);
     const heavy = !!opts.heavy;
+    this.play(actorId, 'attack');
     await this.tween(heavy ? 420 : 240, (k) => {
       a.p.lean = -0.1 * k * dir;
       a.p.sx = 1 - 0.05 * k;
@@ -838,6 +983,7 @@ export class ArenaScene {
     const dir = a.dir();
     const dx = (t.x - a.x) + t.w * 0.45 * -dir;
     const dy = t.y - a.y;
+    this.play(actorId, 'attack');
     await this.tween(260, (k) => {
       a.p.sy = 1 - 0.12 * k;
       a.p.sx = 1 + 0.06 * k;
@@ -866,6 +1012,7 @@ export class ArenaScene {
     const t = this.actor(targetId);
     const dir = a.dir();
     const color: Rgb = kind === 'ash' ? ASH : kind === 'light' ? [0.7, 0.85, 1] : empowered ? GOLD : [1, 0.95, 0.85];
+    this.play(actorId, 'shoot');
     if (empowered) {
       const c = a.chest();
       this.glowFx(c.x + a.w * 0.3 * dir, c.y, a.w * 1.2, GOLD, 0.6);
@@ -928,6 +1075,7 @@ export class ArenaScene {
       this.sparks(c.x, c.y, COLD, 16, 1.1);
     }
     const kb = (heavy ? 30 : 16) * this.dpr * (t.spec.boss ? 0.35 : 1) * dir;
+    if (!t.dead) this.play(targetId, 'hit');
     void this.tween(90, (k) => {
       t.p.offX = kb * k;
       t.p.lean = 0.06 * dir * k;
@@ -947,6 +1095,7 @@ export class ArenaScene {
     t.status.charging = null;
     t.status.threatened = null;
     t.status.targetable = null;
+    this.play(targetId, 'death');
     if (t.spec.side === 'hero') {
       t.fallen = true;
       await this.tween(600, (k) => {
@@ -993,6 +1142,7 @@ export class ArenaScene {
   /** Жест умения на месте (Прикрытие, лечение): подъём, свечение. */
   async gesture(actorId: string, color: Rgb): Promise<void> {
     const a = this.actor(actorId);
+    this.play(actorId, 'cast');
     const c = a.chest();
     this.glowFx(c.x, c.y - a.h * 0.15, a.w * 1.8, color, 0.7, 0.8);
     if (!this.fast) {
@@ -1056,6 +1206,7 @@ export class ArenaScene {
   async prepare(actorId: string, color: Rgb): Promise<void> {
     const a = this.actor(actorId);
     a.status.charging = color;
+    this.play(actorId, 'prepare');
     const c = a.chest();
     this.glowFx(c.x, c.y, a.w * 1.6, color, 0.8, 0.7);
     if (a.spec.boss) this.shake(4);
@@ -1165,6 +1316,17 @@ export class ArenaScene {
 
   private enterPhase2Visuals(a: Actor, instant: boolean): void {
     a.phase2 = true;
+    // Финальный арт II фазы от художника заменяет модель; процедурное свечение тогда не накладывается.
+    if (a.spec.anim2 && a.animTex2.length) {
+      a.anim = a.spec.anim2;
+      a.animTex = a.animTex2;
+      a.clip = null;
+    }
+    if (a.spec.rig2 && a.rigAtlas2) {
+      a.rig = a.spec.rig2;
+      a.rigAtlas = a.rigAtlas2;
+      a.clip = null;
+    }
     a.spec.idle = { ...a.spec.idle, hover: 6, breath: a.spec.idle.breath * 1.3, sway: a.spec.idle.sway * 1.6 };
     this.ensureShards(a);
     this.shards = Array.from({ length: 9 }, (_, i) => {
@@ -1206,6 +1368,7 @@ export class ArenaScene {
     await Promise.all(heroIds.map((id, i) => {
       const a = this.actors.get(id);
       if (!a || a.dead) return Promise.resolve();
+      this.play(id, 'victory');
       return this.wait(i * 90).then(() => this.tween(520, (k) => {
         a.p.offY = -Math.sin(Math.PI * k) * 22 * this.dpr;
         a.p.sy = 1 + 0.04 * Math.sin(Math.PI * k);
@@ -1219,6 +1382,16 @@ export class ArenaScene {
     });
   }
 
+  /** Витрина: периодически проигрывает жест умения, чтобы фигура «жила» и между вдохами. */
+  showcaseLoop(id: string, color: Rgb): void {
+    const tick = async () => {
+      if (this.destroyed) return;
+      await this.gesture(id, color);
+      if (!this.destroyed) window.setTimeout(() => void tick(), 4200);
+    };
+    window.setTimeout(() => void tick(), 1200);
+  }
+
   destroy(): void {
     this.destroyed = true;
     cancelAnimationFrame(this.raf);
@@ -1227,6 +1400,7 @@ export class ArenaScene {
     for (const p of this.projectiles) p.resolve();
     this.tweens = [];
     this.projectiles = [];
+    for (const a of this.actors.values()) if (a.rigTarget) this.backend.disposeTarget(a.rigTarget);
     this.backend.destroy();
     this.canvas.remove();
   }
@@ -1259,7 +1433,17 @@ export class ArenaScene {
     if (a && !a.phase2) this.enterPhase2Visuals(a, true);
   }
 
-  stats(): { backend: string; actors: number; particles: number; errors: string[] } {
-    return { backend: this.backend.kind, actors: this.actors.size, particles: this.particles.length, errors: [...this.errors] };
+  stats(): { backend: string; actors: number; particles: number; errors: string[]; units: Array<{ id: string; x: number; offX: number; alpha: number; dissolve: number; clip: string | null; anim: boolean }> } {
+    return {
+      backend: this.backend.kind,
+      actors: this.actors.size,
+      particles: this.particles.length,
+      errors: [...this.errors],
+      units: [...this.actors.values()].map((a) => ({ id: a.spec.id, x: Math.round(a.x), offX: Math.round(a.p.offX), alpha: a.p.alpha, dissolve: a.p.dissolve, clip: a.clip?.name ?? null, anim: !!a.anim })),
+    };
   }
+}
+
+function mulMat(p: [number, number, number, number, number, number], c: [number, number, number, number, number, number]): [number, number, number, number, number, number] {
+  return [p[0] * c[0] + p[2] * c[1], p[1] * c[0] + p[3] * c[1], p[0] * c[2] + p[2] * c[3], p[1] * c[2] + p[3] * c[3], p[0] * c[4] + p[2] * c[5] + p[4], p[1] * c[4] + p[3] * c[5] + p[5]];
 }

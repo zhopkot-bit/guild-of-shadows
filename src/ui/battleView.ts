@@ -4,6 +4,7 @@ import { ENEMIES } from '../combat/data';
 import type { Action, Battle, BattleEvent, HitInfo, Intent, Unit } from '../combat/types';
 import { ARENAS } from '../content/arenas';
 import { BOSS_EMISSIVE, ENEMY_ART, heroArt, roleName } from '../content/roster';
+import { artFor, arenaLayers } from '../content/artpack';
 import type { HeroClass } from '../core/types';
 import { finishBattle } from '../expedition/run';
 import { ASH, ArenaScene, DANGER, SPECTRAL, type ActorScreen, type ActorSpec, type AttackStyle } from './arena/scene';
@@ -140,6 +141,8 @@ function eventLine(b: Battle, e: BattleEvent): string | null {
       return `${e.name}: доспехи трескаются, начинается II фаза`;
     case 'aftercare':
       return `${name(e.actor)}: мягкое восстановление → ${name(e.target)} +${e.amount}`;
+    case 'ward':
+      return `Сомкнутые щиты: «${e.intent.name}» ослаблен вдвое`;
     default:
       return null;
   }
@@ -165,8 +168,10 @@ export function battleScreen(ctx: Ctx): HTMLElement {
   const bannerEl = h('div', { class: 'hud__banner', 'aria-live': 'assertive' });
   const promptEl = h('div', { class: 'hud__prompt', 'aria-live': 'polite' });
   const resultEl = h('div', { class: 'hud__result' });
+  const coachEl = h('div', { class: 'coach', role: 'status', 'aria-live': 'polite' });
+  coachEl.hidden = true;
   resultEl.hidden = true;
-  hud.append(topBar, turnsEl, intentsEl, platesEl, floatsEl, bannerEl, promptEl, resultEl);
+  hud.append(topBar, turnsEl, intentsEl, platesEl, floatsEl, bannerEl, promptEl, coachEl, resultEl);
   arenaEl.append(hud);
 
   const partyEl = h('div', { class: 'party-cards' });
@@ -180,7 +185,13 @@ export function battleScreen(ctx: Ctx): HTMLElement {
   // ---------- Сцена ----------
   const specs: ActorSpec[] = battle.units.map((u) => {
     const k = u.side === 'enemy' ? enemyKind(u) : null;
+    const pack = u.side === 'hero' ? (u.identity ? artFor('heroes', u.identity) : null) : k ? artFor('enemies', k) : null;
     return {
+      anim: pack?.anim ?? null,
+      sprite2: pack?.phase2Sprite ?? null,
+      anim2: pack?.phase2Anim ?? null,
+      rig: pack?.rig ?? null,
+      rig2: pack?.phase2Rig ?? null,
       id: u.id,
       side: u.side,
       sprite: spriteFor(u),
@@ -195,7 +206,8 @@ export function battleScreen(ctx: Ctx): HTMLElement {
       phase2: !!u.boss && u.bossPhase === 2,
     } as ActorSpec;
   });
-  const scene = new ArenaScene(arenaEl, isBoss ? ARENAS.boss : ARENAS.crypt, specs);
+  const arenaId = isBoss ? 'boss' : 'crypt';
+  const scene = new ArenaScene(arenaEl, { ...ARENAS[arenaId], layers: arenaLayers(arenaId) }, specs);
   scene.speed = battlePrefs.speed;
 
   const view: View = { dead: false, fast: false, scene, choice: null, pending: null, cleanup: [] };
@@ -465,6 +477,7 @@ export function battleScreen(ctx: Ctx): HTMLElement {
           pendingAnims.push(scene.revive(e.target));
         } else if (e.t === 'retarget') banner(`Цель выбыла — удар по ${unitById(battle, e.to).name}`, 'foe');
         else if (e.t === 'cancel') floatText(e.actor, 'Удар сорван', 'float--label');
+        else if (e.t === 'ward') banner('Сомкнутые щиты: удар ослаблен вдвое', 'hero');
       }
       paintAll();
     };
@@ -475,7 +488,8 @@ export function battleScreen(ctx: Ctx): HTMLElement {
       const magic: Rgb | undefined = e.intentId === 'spectralWave' ? SPECTRAL : e.intentId === 'ashBolt' || enemyKind(attacker) === 'ashMage' ? ASH : undefined;
       scene.hit(e.target, { heavy, covered: e.covered, magic, color: magic, fromDir: attacker.side === 'hero' ? 1 : -1 });
       floatText(e.target, `−${e.dmg}`, heavy ? 'float--crit' : 'float--dmg');
-      if (e.mitigated) floatText(e.target, e.covered ? `Прикрытие −${e.mitigated}` : `Заслон −${e.mitigated}`, 'float--block');
+      if (e.mitigated) floatText(e.target, e.covered ? `Прикрытие −${e.mitigated}` : e.warden ? `Щит хранителя −${e.mitigated}` : `Заслон −${e.mitigated}`, 'float--block');
+      if (e.pierced) floatText(e.target, 'Пробитие', 'float--label');
       sfx.hit(heavy);
       if (e.killed && !target.alive) {
         sfx.die();
@@ -746,6 +760,41 @@ export function battleScreen(ctx: Ctx): HTMLElement {
     window.setTimeout(() => next.focus(), 50);
   };
 
+  // ---------- Обучение ----------
+  // Подсказки показываются один раз каждая (state.tipsSeen) и не блокируют бой.
+  const TIPS: Record<string, { title: string; text: string; anchor: 'actions' | 'intents' | 'center' }> = {
+    turn: { title: 'Ваш ход', text: 'Выберите действие внизу (клавиши 1 и 2), затем цель — щелчком по фигуре на арене или по плашке над ней.', anchor: 'actions' },
+    telegraph: { title: 'Подготовленный удар', text: 'Красный контур и метка на полу — враг готовит сильный удар по этой цели. Цель и ожидаемый урон — в панели «Намерения врагов». Ответ: Прикрытие Брана на цель или добить врага до его хода.', anchor: 'intents' },
+    cover: { title: 'Прикрытие', text: 'Бран может прикрыть союзника: следующий удар по нему будет слабее на 30%. Лучший момент — когда цель подготовленного удара известна.', anchor: 'actions' },
+    heal: { title: 'Свет исцеления', text: 'Нора восстанавливает союзнику 22% здоровья. Лечите до сильного удара, а не после.', anchor: 'actions' },
+    wave: { title: 'Призрачная волна', text: 'Во II фазе король бьёт по всему отряду раз в три хода. Прикрытие защитит одного, поэтому держите здоровье отряда высоким заранее.', anchor: 'intents' },
+  };
+  let coachTimer = 0;
+  const tip = (id: keyof typeof TIPS) => {
+    if (view.fast || ctx.state.tipsSeen.includes(id)) return;
+    ctx.state.tipsSeen.push(id);
+    ctx.save();
+    const t = TIPS[id];
+    if (!t) return;
+    coachEl.className = `coach coach--${t.anchor}`;
+    const ok = h('button', { class: 'btn btn--small', type: 'button' }, 'Понятно');
+    ok.addEventListener('click', () => (coachEl.hidden = true));
+    coachEl.replaceChildren(h('strong', null, t.title), h('p', null, t.text), ok);
+    coachEl.hidden = false;
+    window.clearTimeout(coachTimer);
+    coachTimer = window.setTimeout(() => (coachEl.hidden = true), 14000);
+  };
+  const checkTips = (actor: Unit | null) => {
+    const armed = aliveUnits(battle, 'enemy').filter((f) => f.intent);
+    if (armed.some((f) => f.intent?.aoe)) tip('wave');
+    else if (armed.length) tip('telegraph');
+    if (!actor || actor.side !== 'hero' || !battlePrefs.manual) return;
+    if (actor.kind === 'defender' && armed.length && actor.cd === 0) tip('cover');
+    else if (actor.kind === 'healer' && actor.cd === 0 && aliveUnits(battle, 'hero').some((u) => u.hp < u.stats.maxHp * 0.6)) tip('heal');
+    else tip('turn');
+  };
+  view.cleanup.push(() => window.clearTimeout(coachTimer));
+
   // ---------- Ход боя ----------
   const loop = async () => {
     await scene.ready;
@@ -764,6 +813,7 @@ export function battleScreen(ctx: Ctx): HTMLElement {
       if (!actor) break;
       paintAll();
       paintTurns();
+      checkTips(actor);
       let action: Action;
       if (actor.side === 'hero' && battlePrefs.manual && !view.fast) action = await askPlayer(actor);
       else {

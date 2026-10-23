@@ -1,0 +1,86 @@
+{
+ "version": 1,
+ "image": "bran_anim.webp",
+ "frameWidth": 400,
+ "frameHeight": 716,
+ "pivot": [
+  0.5,
+  0.97
+ ],
+ "clips": {
+  "idle": {
+   "frames": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "fps": 8,
+   "loop": true
+  },
+  "attack": {
+   "frames": [
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+   ],
+   "fps": 16,
+   "impact": 5
+  },
+  "cast": {
+   "frames": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21
+   ],
+   "fps": 12,
+   "impact": 3
+  },
+  "hit": {
+   "frames": [
+    22,
+    23,
+    24,
+    25
+   ],
+   "fps": 14
+  },
+  "death": {
+   "frames": [
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33
+   ],
+   "fps": 10
+  },
+  "prepare": {
+   "frames": [
+    34,
+    35,
+    36,
+    37,
+    38,
+    39
+   ],
+   "fps": 8,
+   "loop": true
+  }
+ }
+}

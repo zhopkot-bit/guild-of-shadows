@@ -42,6 +42,8 @@ export interface SpriteDraw {
   outlineColor: Rgb;
   /** 0 — фигура, 1 — отражение на мокром полу, 2 — тень-силуэт. */
   mode: 0 | 1 | 2;
+  /** Прямоугольник кадра в атласе (u0, v0, u1, v1); [0,0,1,1] — вся текстура. */
+  uv: [number, number, number, number];
 }
 
 export interface QuadDraw {
@@ -58,6 +60,8 @@ export interface QuadDraw {
   a: number;
   uv: [number, number, number, number];
   additive: boolean;
+  /** Готовые 4 угла (x,y ×4: лево-верх, право-верх, право-низ, лево-низ); если заданы, x/y/w/h/rot не используются. */
+  corners?: number[];
 }
 
 export interface BackgroundParams {
@@ -74,6 +78,24 @@ export interface BackgroundParams {
   vignette: number;
 }
 
+/** Текстура, в которую рисуется скелетный персонаж; дальше она идёт через обычный шейдер спрайта. */
+export interface RenderTarget {
+  tex: Tex;
+  w: number;
+  h: number;
+}
+
+/** Часть рига: матрица в пространство цели, прямоугольник изображения и uv в атласе. */
+export interface AffinePart {
+  m: [number, number, number, number, number, number];
+  x0: number;
+  y0: number;
+  w: number;
+  h: number;
+  uv: [number, number, number, number];
+  alpha: number;
+}
+
 export interface Backend {
   readonly kind: 'webgl' | 'canvas2d';
   resize(width: number, height: number): void;
@@ -82,6 +104,10 @@ export interface Backend {
   drawBackground(tex: Tex, p: BackgroundParams): void;
   drawSprite(d: SpriteDraw): void;
   drawQuads(tex: Tex, quads: QuadDraw[]): void;
+  createTarget(w: number, h: number): RenderTarget;
+  /** Очищает цель и рисует в неё части рига (премультиплицированная альфа). */
+  drawRig(target: RenderTarget, atlas: Tex, parts: AffinePart[]): void;
+  disposeTarget(target: RenderTarget): void;
   /** Полноэкранная заливка (вспышки фазы, затемнение поражения). */
   overlay(r: number, g: number, b: number, a: number, additive: boolean): void;
   end(): void;

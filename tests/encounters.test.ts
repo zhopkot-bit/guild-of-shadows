@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { newGame } from '../src/core/state';
 import { EVENTS } from '../src/expedition/events';
-import { availableNodes, chooseEventOption, enterNode, eventChoices, startRun, type Run } from '../src/expedition/run';
+import { availableNodes, chooseBossPrep, chooseEventOption, enterNode, eventChoices, startRun, type Run } from '../src/expedition/run';
 import { generateMap } from '../src/expedition/map';
 
 const T0 = Date.UTC(2026, 9, 23, 12, 0, 0);
@@ -30,6 +30,8 @@ describe('составы встреч (Combat Spec v0.3)', () => {
     for (let i = 0; i < 20; i++) {
       const run = runWith(i);
       forceNode(run, 'boss', 7);
+      expect(run.stage).toBe('prep');
+      chooseBossPrep(run, i % 2 ? 'heal' : 'ward');
       expect(run.battle!.units.filter((u) => u.side === 'enemy').map((u) => u.kind)).toEqual(['boneKing']);
     }
   });

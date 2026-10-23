@@ -110,14 +110,17 @@ export function advance(b: Battle): Unit | null {
     }
     b.round += 1;
     b.log.push({ t: 'round', n: b.round });
-    b.queue = initiativeOrder(b);
+    b.queue = initiativeOrder(b, b.round);
   }
 }
 
-function initiativeOrder(b: Battle): string[] {
+/** Инициатива раунда. Перо быстрого шага (MOD07) ускоряет героев только в первом раунде. */
+function initiativeOrder(b: Battle, round: number): string[] {
+  const bonus = round === 1 ? b.mods.firstRoundSpd ?? 0 : 0;
+  const spd = (u: Unit) => u.stats.spd + (u.side === 'hero' ? bonus : 0);
   return aliveUnits(b)
     .map((u) => ({ u, i: b.units.indexOf(u) }))
-    .sort((a, c) => c.u.stats.spd - a.u.stats.spd || a.i - c.i)
+    .sort((a, c) => spd(c.u) - spd(a.u) || a.i - c.i)
     .map((x) => x.u.id);
 }
 
@@ -126,7 +129,7 @@ export function turnOrder(b: Battle): { now: string[]; next: string[] } {
   const now: string[] = [];
   if (b.current !== null) now.push(b.current);
   for (const id of b.queue) if (unitById(b, id).alive && !now.includes(id)) now.push(id);
-  return { now, next: initiativeOrder(b) };
+  return { now, next: initiativeOrder(b, b.round + 1) };
 }
 
 export function legalActions(b: Battle, unit: Unit): Action[] {
@@ -209,7 +212,7 @@ function damage(
   actor: Unit,
   target: Unit,
   mult: number,
-  opts: { penetration?: number; bonusFactor?: number; skill?: string; via: HitInfo['via']; intentId?: Intent['id'] },
+  opts: { penetration?: number; bonusFactor?: number; skill?: string; via: HitInfo['via']; intentId?: Intent['id']; pierced?: boolean },
 ): void {
   const raw = expectedDamage(actor, target, mult, opts.penetration ?? 0, opts.bonusFactor ?? 1) * variance(b);
   let mitigation = 0;
@@ -229,7 +232,13 @@ function damage(
     }
   }
   mitigation = Math.min(MAX_MITIGATION, mitigation);
-  const dmg = Math.max(1, Math.round(raw * (1 - mitigation)));
+  // Щит хранителя (MOD04): фиксированное снижение после процентного, один раз за бой.
+  let flat = 0;
+  if (target.side === 'hero' && (b.mods.wardenLeft ?? 0) > 0) {
+    flat = b.mods.wardenLeft ?? 0;
+    b.mods.wardenLeft = 0;
+  }
+  const dmg = Math.max(1, Math.round(raw * (1 - mitigation) - flat));
   const mitigated = Math.max(0, Math.round(raw) - dmg);
   target.hp = Math.max(0, target.hp - dmg);
   const killed = target.hp === 0;
@@ -249,6 +258,8 @@ function damage(
   if (mitigated > 0) ev.mitigated = mitigated;
   if (covered) ev.covered = true;
   if (lastStand) ev.lastStand = true;
+  if (flat > 0) ev.warden = true;
+  if (opts.pierced) ev.pierced = true;
   pushEvent(b, out, ev);
   enterBossPhase(b, target, out);
   if (killed && target.side === 'hero' && b.mods.phoenix) {
@@ -270,19 +281,30 @@ export function applyAction(b: Battle, action: Action): BattleEvent[] {
   const out: BattleEvent[] = [];
   const actor = unitById(b, action.actorId);
   const skill = action.kind === 'skill' ? actor.skill : null;
+  // Пробивная стрела (MOD03): первая атака Стрелка в бою (обычная или умение) получает дополнительное пробитие.
+  const takePierce = (): number => {
+    if (actor.kind !== 'shooter' || !(b.mods.pierceLeft ?? 0)) return 0;
+    const v = b.mods.pierceLeft ?? 0;
+    b.mods.pierceLeft = 0;
+    return v;
+  };
 
   if (action.kind === 'attack') {
     const target = unitById(b, action.targetId as string);
     // Дисциплина огня (Стрелок): обычная атака по врагу с подготовленным ударом пробивает 10% DEF.
-    const pen = actor.kind === 'shooter' && target.intent ? SHOOTER_PASSIVE_PEN : 0;
-    damage(b, out, actor, target, 1, { penetration: pen, via: 'attack' });
+    const extra = takePierce();
+    const pen = (actor.kind === 'shooter' && target.intent ? SHOOTER_PASSIVE_PEN : 0) + extra;
+    // Око ястреба (MOD02): +15% к обычной атаке Стрелка.
+    const bonus = actor.kind === 'shooter' ? 1 + (b.mods.shooterBasicBonus ?? 0) : 1;
+    damage(b, out, actor, target, 1, { penetration: pen, bonusFactor: bonus, via: 'attack', pierced: extra > 0 });
   } else if (action.kind === 'skill' && skill) {
     if (skill.effect === 'damage') {
       const bonus = actor.side === 'hero' ? b.mods.skillDamageMult : 1;
+      const extra = takePierce();
       if (skill.target === 'allEnemies') {
-        for (const foe of opponents(b, actor)) damage(b, out, actor, foe, skill.mult, { penetration: skill.penetration ?? 0, bonusFactor: bonus, skill: skill.name, via: 'skill' });
+        for (const foe of opponents(b, actor)) damage(b, out, actor, foe, skill.mult, { penetration: (skill.penetration ?? 0) + extra, bonusFactor: bonus, skill: skill.name, via: 'skill', pierced: extra > 0 });
       } else {
-        damage(b, out, actor, unitById(b, action.targetId as string), skill.mult, { penetration: skill.penetration ?? 0, bonusFactor: bonus, skill: skill.name, via: 'skill' });
+        damage(b, out, actor, unitById(b, action.targetId as string), skill.mult, { penetration: (skill.penetration ?? 0) + extra, bonusFactor: bonus, skill: skill.name, via: 'skill', pierced: extra > 0 });
       }
     } else if (skill.effect === 'heal') {
       const target = unitById(b, action.targetId as string);
@@ -299,8 +321,14 @@ export function applyAction(b: Battle, action: Action): BattleEvent[] {
     actor.intent = { ...action.intent };
     pushEvent(b, out, { t: 'prepare', actor: actor.id, intent: actor.intent });
   } else if (action.kind === 'release' && actor.intent) {
-    const intent = actor.intent;
+    let intent = actor.intent;
     actor.intent = null;
+    // Защита от первой спецатаки босса (экран подготовки): урон этой атаки снижается, заряд расходуется.
+    if (actor.boss && (b.mods.bossWard ?? 0) > 0) {
+      intent = { ...intent, mult: intent.mult * (1 - (b.mods.bossWard ?? 0)) };
+      b.mods.bossWard = 0;
+      pushEvent(b, out, { t: 'ward', actor: actor.id, intent });
+    }
     if (intent.aoe) {
       for (const hero of aliveUnits(b, 'hero')) damage(b, out, actor, hero, intent.mult, { skill: intent.name, via: 'intent', intentId: intent.id });
     } else {

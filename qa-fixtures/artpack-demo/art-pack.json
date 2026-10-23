@@ -1,0 +1,24 @@
+{
+ "version": 1,
+ "heroes": {
+  "bran": {
+   "anim": "bran_anim.json"
+  },
+  "rook": {
+   "rig": "mannequin_ske.json",
+   "rigAtlas": "mannequin_tex.json"
+  }
+ },
+ "enemies": {},
+ "arenas": {
+  "crypt": {
+   "layers": [
+    {
+     "src": "crypt_front.webp",
+     "parallax": 1.6,
+     "front": true
+    }
+   ]
+  }
+ }
+}

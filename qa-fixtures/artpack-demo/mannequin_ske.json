@@ -1,0 +1,466 @@
+{
+ "frameRate": 24,
+ "name": "mannequin",
+ "version": "5.5",
+ "armature": [
+  {
+   "type": "Armature",
+   "name": "mannequin",
+   "frameRate": 24,
+   "aabb": {
+    "x": -170,
+    "y": -560,
+    "width": 340,
+    "height": 575
+   },
+   "bone": [
+    {
+     "name": "root"
+    },
+    {
+     "name": "hip",
+     "parent": "root",
+     "transform": {
+      "y": -190
+     }
+    },
+    {
+     "name": "torso",
+     "parent": "hip",
+     "transform": {
+      "y": -90
+     }
+    },
+    {
+     "name": "head",
+     "parent": "torso",
+     "transform": {
+      "y": -150
+     }
+    },
+    {
+     "name": "cape",
+     "parent": "torso",
+     "transform": {
+      "y": -40
+     }
+    },
+    {
+     "name": "leg_l",
+     "parent": "hip",
+     "transform": {
+      "x": -26,
+      "y": 0
+     }
+    },
+    {
+     "name": "leg_r",
+     "parent": "hip",
+     "transform": {
+      "x": 26,
+      "y": 0
+     }
+    },
+    {
+     "name": "arm_r",
+     "parent": "torso",
+     "transform": {
+      "x": 60,
+      "y": -80,
+      "skX": 10,
+      "skY": 10
+     }
+    },
+    {
+     "name": "fore_r",
+     "parent": "arm_r",
+     "transform": {
+      "y": 100,
+      "skX": -20,
+      "skY": -20
+     }
+    },
+    {
+     "name": "sword",
+     "parent": "fore_r",
+     "transform": {
+      "y": 95,
+      "skX": -90,
+      "skY": -90
+     }
+    },
+    {
+     "name": "arm_l",
+     "parent": "torso",
+     "transform": {
+      "x": -60,
+      "y": -80,
+      "skX": -10,
+      "skY": -10
+     }
+    }
+   ],
+   "slot": [
+    {
+     "name": "cape",
+     "parent": "cape"
+    },
+    {
+     "name": "leg_l",
+     "parent": "leg_l"
+    },
+    {
+     "name": "leg_r",
+     "parent": "leg_r"
+    },
+    {
+     "name": "arm_l",
+     "parent": "arm_l"
+    },
+    {
+     "name": "torso",
+     "parent": "torso"
+    },
+    {
+     "name": "head",
+     "parent": "head"
+    },
+    {
+     "name": "arm_r",
+     "parent": "arm_r"
+    },
+    {
+     "name": "fore_r",
+     "parent": "fore_r"
+    },
+    {
+     "name": "sword",
+     "parent": "sword"
+    }
+   ],
+   "skin": [
+    {
+     "slot": [
+      {
+       "name": "cape",
+       "display": [
+        {
+         "name": "cape",
+         "transform": {
+          "y": 90
+         }
+        }
+       ]
+      },
+      {
+       "name": "leg_l",
+       "display": [
+        {
+         "name": "leg",
+         "transform": {
+          "y": 95
+         }
+        }
+       ]
+      },
+      {
+       "name": "leg_r",
+       "display": [
+        {
+         "name": "leg",
+         "transform": {
+          "y": 95
+         }
+        }
+       ]
+      },
+      {
+       "name": "arm_l",
+       "display": [
+        {
+         "name": "arm_u",
+         "transform": {
+          "y": 50
+         }
+        }
+       ]
+      },
+      {
+       "name": "torso",
+       "display": [
+        {
+         "name": "torso",
+         "transform": {
+          "y": 10
+         }
+        }
+       ]
+      },
+      {
+       "name": "head",
+       "display": [
+        {
+         "name": "head",
+         "transform": {
+          "y": -30
+         }
+        }
+       ]
+      },
+      {
+       "name": "arm_r",
+       "display": [
+        {
+         "name": "arm_u",
+         "transform": {
+          "y": 50
+         }
+        }
+       ]
+      },
+      {
+       "name": "fore_r",
+       "display": [
+        {
+         "name": "arm_l",
+         "transform": {
+          "y": 45
+         }
+        }
+       ]
+      },
+      {
+       "name": "sword",
+       "display": [
+        {
+         "name": "sword",
+         "transform": {
+          "y": -90
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "animation": [
+    {
+     "name": "idle",
+     "duration": 48,
+     "playTimes": 0,
+     "bone": [
+      {
+       "name": "torso",
+       "translateFrame": [
+        {
+         "duration": 24,
+         "tweenEasing": 0,
+         "y": 0
+        },
+        {
+         "duration": 24,
+         "tweenEasing": 0,
+         "y": -6
+        },
+        {
+         "duration": 0,
+         "y": 0
+        }
+       ]
+      },
+      {
+       "name": "arm_r",
+       "rotateFrame": [
+        {
+         "duration": 24,
+         "tweenEasing": 0,
+         "rotate": 0
+        },
+        {
+         "duration": 24,
+         "tweenEasing": 0,
+         "rotate": 6
+        },
+        {
+         "duration": 0,
+         "rotate": 0
+        }
+       ]
+      },
+      {
+       "name": "cape",
+       "rotateFrame": [
+        {
+         "duration": 24,
+         "tweenEasing": 0,
+         "rotate": -3
+        },
+        {
+         "duration": 24,
+         "tweenEasing": 0,
+         "rotate": 3
+        },
+        {
+         "duration": 0,
+         "rotate": -3
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "attack",
+     "duration": 20,
+     "playTimes": 1,
+     "frame": [
+      {
+       "duration": 10
+      },
+      {
+       "duration": 10,
+       "events": [
+        {
+         "name": "impact"
+        }
+       ]
+      }
+     ],
+     "bone": [
+      {
+       "name": "arm_r",
+       "rotateFrame": [
+        {
+         "duration": 6,
+         "tweenEasing": 0,
+         "rotate": 0
+        },
+        {
+         "duration": 4,
+         "tweenEasing": 0,
+         "rotate": -140
+        },
+        {
+         "duration": 4,
+         "tweenEasing": 0,
+         "rotate": 40
+        },
+        {
+         "duration": 6,
+         "tweenEasing": 0,
+         "rotate": 20
+        },
+        {
+         "duration": 0,
+         "rotate": 0
+        }
+       ]
+      },
+      {
+       "name": "torso",
+       "rotateFrame": [
+        {
+         "duration": 10,
+         "tweenEasing": 0,
+         "rotate": -8
+        },
+        {
+         "duration": 10,
+         "tweenEasing": 0,
+         "rotate": 10
+        },
+        {
+         "duration": 0,
+         "rotate": 0
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "cast",
+     "duration": 18,
+     "playTimes": 1,
+     "bone": [
+      {
+       "name": "arm_l",
+       "rotateFrame": [
+        {
+         "duration": 9,
+         "tweenEasing": 0,
+         "rotate": 0
+        },
+        {
+         "duration": 9,
+         "tweenEasing": 0,
+         "rotate": 120
+        },
+        {
+         "duration": 0,
+         "rotate": 0
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "hit",
+     "duration": 10,
+     "playTimes": 1,
+     "bone": [
+      {
+       "name": "torso",
+       "rotateFrame": [
+        {
+         "duration": 4,
+         "tweenEasing": 0,
+         "rotate": 0
+        },
+        {
+         "duration": 6,
+         "tweenEasing": 0,
+         "rotate": -14
+        },
+        {
+         "duration": 0,
+         "rotate": 0
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "death",
+     "duration": 24,
+     "playTimes": 1,
+     "bone": [
+      {
+       "name": "hip",
+       "rotateFrame": [
+        {
+         "duration": 24,
+         "tweenEasing": 0,
+         "rotate": 0
+        },
+        {
+         "duration": 0,
+         "rotate": -70
+        }
+       ],
+       "translateFrame": [
+        {
+         "duration": 24,
+         "tweenEasing": 0,
+         "y": 0
+        },
+        {
+         "duration": 0,
+         "y": 120
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

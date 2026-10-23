@@ -2,6 +2,7 @@ import { runAuto } from '../combat/ai';
 import type { MapNode } from './map';
 import {
   availableNodes,
+  chooseBossPrep,
   chooseCamp,
   chooseChest,
   chooseEventOption,
@@ -74,6 +75,10 @@ export function autoPlayRun(
         break;
       case 'chest':
         chooseChest(run, (run.chestOffers as NonNullable<Run['chestOffers']>)[0]!.id);
+        break;
+      case 'prep':
+        // Подготовка к боссу: при низком здоровье — лечение, иначе защита от первой спецатаки.
+        chooseBossPrep(run, avgFrac(run) < 0.65 ? 'heal' : 'ward');
         break;
       case 'camp':
         chooseCamp(run, avgFrac(run) < 0.9 ? 'rest' : 'train');

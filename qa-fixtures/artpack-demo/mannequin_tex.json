@@ -1,0 +1,57 @@
+{
+ "imagePath": "mannequin_tex.png",
+ "name": "mannequin",
+ "width": 512,
+ "height": 512,
+ "SubTexture": [
+  {
+   "name": "torso",
+   "x": 0,
+   "y": 0,
+   "width": 120,
+   "height": 200
+  },
+  {
+   "name": "head",
+   "x": 124,
+   "y": 0,
+   "width": 80,
+   "height": 90
+  },
+  {
+   "name": "arm_u",
+   "x": 208,
+   "y": 0,
+   "width": 36,
+   "height": 110
+  },
+  {
+   "name": "arm_l",
+   "x": 248,
+   "y": 0,
+   "width": 30,
+   "height": 100
+  },
+  {
+   "name": "leg",
+   "x": 282,
+   "y": 0,
+   "width": 44,
+   "height": 190
+  },
+  {
+   "name": "sword",
+   "x": 330,
+   "y": 0,
+   "width": 22,
+   "height": 200
+  },
+  {
+   "name": "cape",
+   "x": 356,
+   "y": 0,
+   "width": 150,
+   "height": 230
+  }
+ ]
+}

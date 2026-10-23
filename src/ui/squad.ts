@@ -1,5 +1,8 @@
 import { CLASSES, SKILLS, heroStats } from '../combat/data';
-import { identityDef, roleName } from '../content/roster';
+import { heroArt, identityDef, roleName } from '../content/roster';
+import { ARENAS } from '../content/arenas';
+import { ArenaScene } from './arena/scene';
+import { artFor } from '../content/artpack';
 import { PARTY_SIZE } from '../core/config';
 import { heroLevelCap, heroUpgradeCost, refreshHeroes } from '../core/economy';
 import { fmt, fmtDuration } from '../core/num';
@@ -95,9 +98,12 @@ function heroCard(ctx: Ctx, hero: Hero): HTMLElement {
   update();
   ctx.live(update);
 
+  const open = h('button', { class: 'hero-card-lg__open', type: 'button', 'aria-label': `Открыть героя: ${hero.name}` }, heroPortrait(hero, 128));
+  open.addEventListener('click', () => heroSheet(hero));
+
   return h('article', { class: `hero-card-lg${inParty ? ' is-party' : ''} role-${hero.cls}`, 'data-hero': hero.identity ?? hero.id },
     h('div', { class: 'hero-card-lg__top' },
-      heroPortrait(hero, 128),
+      open,
       h('div', { class: 'hero-card-lg__id' },
         h('h3', null, hero.name),
         h('span', { class: 'hero-card-lg__epithet' }, epithet),
@@ -113,4 +119,64 @@ function heroCard(ctx: Ctx, hero: Hero): HTMLElement {
     ),
     h('div', { class: 'hero-card-lg__actions' }, upBtn, partyBtn),
   );
+}
+
+const ROLE_GLOW: Record<string, [number, number, number]> = {
+  defender: [0.55, 0.75, 1],
+  scout: [0.6, 1, 0.6],
+  shooter: [1, 0.8, 0.45],
+  healer: [0.75, 1, 0.7],
+};
+
+/** Экран героя: живая фигура на WebGL-сцене (та же, что в бою) + биография, характеристики, умения. */
+function heroSheet(hero: Hero): void {
+  const art = heroArt(hero);
+  const def = hero.identity ? identityDef(hero.identity) : null;
+  const stats = heroStats(hero);
+  const cls = CLASSES[hero.cls];
+  const skill = SKILLS[cls.skill];
+  const stage = h('div', { class: 'hero-sheet__stage' });
+  const close = h('button', { class: 'hero-sheet__close', type: 'button', 'aria-label': 'Закрыть' }, glyph('close', 22));
+  const overlay = h('div', { class: 'overlay hero-sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': hero.name },
+    h('div', { class: `hero-sheet__panel role-${hero.cls}` },
+      stage,
+      h('div', { class: 'hero-sheet__info' },
+        h('span', { class: 'eyebrow' }, def ? def.contentId : 'НОВОБРАНЕЦ'),
+        h('h2', null, hero.name),
+        h('span', { class: 'hero-card-lg__epithet' }, def?.epithet ?? 'Боец гильдии'),
+        h('span', { class: 'hero-card-lg__role' }, glyph(hero.cls, 14), roleName(hero), ' · ', `уровень ${hero.level}`),
+        def ? h('p', { class: 'hero-sheet__bio' }, def.bio) : null,
+        h('div', { class: 'hero-card-lg__stats' }, stat('HP', stats.maxHp, 'heart'), stat('АТК', stats.atk, 'sword'), stat('ЗАЩ', stats.def, 'shield'), stat('СКР', stats.spd, 'fast')),
+        h('div', { class: 'hero-sheet__skill' }, glyph(hero.cls === 'defender' ? 'cover' : hero.cls === 'scout' ? 'lunge' : hero.cls === 'shooter' ? 'aimedShot' : 'healingLight', 30, 1.5),
+          h('div', null, h('strong', null, `Умение: ${skill?.name ?? ''}`), h('span', null, `${cls.blurb} Перезарядка — ${skill?.cooldown ?? 0} хода.`))),
+        h('div', { class: 'hero-sheet__skill' }, glyph('ember', 30, 1.5), h('div', null, h('strong', null, 'Пассивная черта'), h('span', null, cls.passive))),
+      ),
+      close,
+    ),
+  );
+  document.body.append(overlay);
+  let scene: ArenaScene | null = null;
+  if (art.sprite) {
+    const pack = hero.identity ? artFor('heroes', hero.identity) : null;
+    scene = new ArenaScene(stage, { ...ARENAS.crypt, showcase: true }, [{
+      id: hero.id, side: 'hero', sprite: art.sprite, flip: false, style: art.attackStyle, boss: false, wide: false,
+      anim: pack?.anim ?? null, rig: pack?.rig ?? null,
+      idle: { breath: 0.014, sway: 1.2, bob: 0.8, hover: 0, speed: 0.9 },
+    }]);
+    scene.showcaseLoop(hero.id, ROLE_GLOW[hero.cls] ?? [1, 1, 1]);
+  }
+  const shut = () => {
+    scene?.destroy();
+    overlay.remove();
+    document.removeEventListener('keydown', onKey);
+  };
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') shut();
+  };
+  document.addEventListener('keydown', onKey);
+  close.addEventListener('click', shut);
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) shut();
+  });
+  window.setTimeout(() => close.focus(), 30);
 }

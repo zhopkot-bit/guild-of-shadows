@@ -158,6 +158,7 @@ function normalize(raw: Raw, nowMs: number): GameState {
       heroesLost: int(stats.heroesLost, 0, 0, 1_000_000),
     },
     activeRun: typeof raw.activeRun === 'string' ? raw.activeRun : null,
+    tipsSeen: Array.isArray(raw.tipsSeen) ? raw.tipsSeen.filter((x): x is string => typeof x === 'string').slice(0, 64) : [],
   };
   // Гарантия ростера: все четыре канонических героя присутствуют, прогресс существующих не трогаем.
   if (finalHeroes !== base.heroes) {

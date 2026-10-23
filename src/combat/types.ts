@@ -92,8 +92,18 @@ export interface Action {
 export interface BattleMods {
   /** Множитель урона умений героев (Руна Огня). */
   skillDamageMult: number;
-  /** Перо Феникса: первый павший герой воскресает один раз. */
+  /** Перо Феникса (наследие сейвов до v1.8): первый павший герой воскресает один раз. */
   phoenix: boolean;
+  /** MOD02 Око ястреба: бонус урона обычной атаки Стрелка. */
+  shooterBasicBonus?: number;
+  /** MOD03 Пробивная стрела: пробитие первой атаки Стрелка в бою; 0 — заряд израсходован. */
+  pierceLeft?: number;
+  /** MOD04 Щит хранителя: фиксированное снижение первого удара по отряду; 0 — израсходован. */
+  wardenLeft?: number;
+  /** MOD07 Перо быстрого шага: +СКР героям в первом раунде. */
+  firstRoundSpd?: number;
+  /** Подготовка к боссу «Защита»: доля урона, снимаемая с первой спецатаки босса; 0 — израсходована. */
+  bossWard?: number;
 }
 
 export interface HitInfo {
@@ -110,6 +120,10 @@ export interface HitInfo {
   mitigated?: number;
   covered?: boolean;
   lastStand?: boolean;
+  /** Сработал Щит хранителя (MOD04). */
+  warden?: boolean;
+  /** Сработала Пробивная стрела (MOD03). */
+  pierced?: boolean;
 }
 
 export type BattleEvent =
@@ -123,6 +137,7 @@ export type BattleEvent =
   | { t: 'phoenix'; target: string }
   | { t: 'bossPhase'; unit: string; phase: 2; name: string }
   | { t: 'aftercare'; actor: string; target: string; amount: number }
+  | { t: 'ward'; actor: string; intent: Intent }
   | { t: 'end'; result: 'victory' | 'defeat' };
 
 export type BattleResult = 'ongoing' | 'victory' | 'defeat';

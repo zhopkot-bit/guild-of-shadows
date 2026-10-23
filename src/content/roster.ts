@@ -17,28 +17,30 @@ export interface HeroIdentityDef {
   sprite: string;
   /** Тип базовой атаки на арене: ближний бой или выстрел. */
   attackStyle: 'melee' | 'bow' | 'crossbow' | 'staff';
+  /** Биография Content Bible, адаптированная под Dark Fantasy (без индустриальных деталей). */
+  bio: string;
 }
 
 export const ROSTER: readonly HeroIdentityDef[] = [
   {
     identity: 'bran', contentId: 'HERO_BRAN', name: 'Бран', epithet: 'Опора', role: 'defender',
     look: 'тёмноволосый бородатый мужчина в латах, синий шарф, щит и меч',
-    portrait: './art/v17/heroes/bran/portrait.webp', sprite: './art/v17/heroes/bran/sprite.webp', attackStyle: 'melee',
+    portrait: './art/v17/heroes/bran/portrait.webp', sprite: './art/v17/heroes/bran/sprite.webp', bio: 'Спокойный ветеран, бывший старшина каменщиков крепости. Сдержанный и практичный, первым встаёт между товарищами и угрозой.', attackStyle: 'melee',
   },
   {
     identity: 'mira', contentId: 'HERO_MIRA', name: 'Мира', epithet: 'Глаз маршрута', role: 'scout',
     look: 'женщина в зелёном капюшоне, лук и колчан',
-    portrait: './art/v17/heroes/mira/portrait.webp', sprite: './art/v17/heroes/mira/sprite.webp', attackStyle: 'bow',
+    portrait: './art/v17/heroes/mira/portrait.webp', sprite: './art/v17/heroes/mira/sprite.webp', bio: 'Внимательная картографка катакомб. Замечает расшатанную кладку, свежие следы и безопасные проходы там, где другие видят только тьму.', attackStyle: 'bow',
   },
   {
     identity: 'rook', contentId: 'HERO_ROOK', name: 'Рук', epithet: 'Точный расчёт', role: 'shooter',
     look: 'черноволосый мужчина в тёмном плаще, арбалет',
-    portrait: './art/v17/heroes/rook/portrait.webp', sprite: './art/v17/heroes/rook/sprite.webp', attackStyle: 'crossbow',
+    portrait: './art/v17/heroes/rook/portrait.webp', sprite: './art/v17/heroes/rook/sprite.webp', bio: 'Молчаливый стрелок, знаток арбалета. Ценит точность, а не браваду: один выверенный выстрел вместо трёх поспешных.', attackStyle: 'crossbow',
   },
   {
     identity: 'nora', contentId: 'HERO_NORA', name: 'Нора', epithet: 'Тихий свет', role: 'healer',
     look: 'светловолосая женщина в бело-синем одеянии, посох с кристаллом',
-    portrait: './art/v17/heroes/nora/portrait.webp', sprite: './art/v17/heroes/nora/sprite.webp', attackStyle: 'staff',
+    portrait: './art/v17/heroes/nora/portrait.webp', sprite: './art/v17/heroes/nora/sprite.webp', bio: 'Целительница, изучающая исцеляющие чары гильдии. Её посох светится мягким сине-золотым светом, который возвращает силы отряду.', attackStyle: 'staff',
   },
 ];
 

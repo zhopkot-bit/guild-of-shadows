@@ -1,4 +1,4 @@
-import { coverTransform, type Backend, type BackgroundParams, type QuadDraw, type SpriteDraw, type Tex } from './backend';
+import { coverTransform, type AffinePart, type Backend, type BackgroundParams, type QuadDraw, type RenderTarget, type SpriteDraw, type Tex } from './backend';
 
 /**
  * WebGL-рендерер арены. Персонажи рисуются как деформируемая сетка (дыхание, колыхание плаща,
@@ -12,8 +12,10 @@ const SPRITE_VS = `
 precision highp float;
 attribute vec2 a_uv;
 uniform vec2 u_res, u_pos, u_size, u_scale;
+uniform vec4 u_uvRect;
 uniform float u_flip, u_time, u_phase, u_breath, u_sway, u_bob, u_lean, u_rot, u_mode;
 varying vec2 v_uv;
+varying vec2 v_luv;
 varying float v_hf;
 void main() {
   float hf = 1.0 - a_uv.y;
@@ -45,7 +47,8 @@ void main() {
   vec2 p = vec2(c * x - s * y, s * x + c * y) + u_pos;
   vec2 clip = p / u_res * 2.0 - 1.0;
   gl_Position = vec4(clip.x, -clip.y, 0.0, 1.0);
-  v_uv = a_uv;
+  v_uv = mix(u_uvRect.xy, u_uvRect.zw, a_uv);
+  v_luv = a_uv;
   v_hf = hf;
 }`;
 
@@ -56,6 +59,7 @@ precision highp float;
 precision mediump float;
 #endif
 varying vec2 v_uv;
+varying vec2 v_luv;
 varying float v_hf;
 uniform sampler2D u_tex, u_emi, u_noise;
 uniform vec2 u_texel;
@@ -84,7 +88,7 @@ void main() {
   }
   col = mix(col, u_flashC * a, u_flash);
   if (u_dissolve > 0.0) {
-    float n = texture2D(u_noise, v_uv * vec2(1.6, 2.4)).r * 0.82 + v_hf * 0.18;
+    float n = texture2D(u_noise, v_luv * vec2(1.6, 2.4)).r * 0.82 + v_hf * 0.18;
     if (n < u_dissolve) discard;
     float edgeD = smoothstep(u_dissolve, u_dissolve + 0.07, n);
     col = mix(vec3(1.6, 0.62, 0.18) * a, col, edgeD);
@@ -146,11 +150,12 @@ attribute vec2 a_pos;
 attribute vec2 a_uv;
 attribute vec4 a_col;
 uniform vec2 u_res;
+uniform float u_yflip;
 varying vec2 v_uv;
 varying vec4 v_col;
 void main() {
   vec2 clip = a_pos / u_res * 2.0 - 1.0;
-  gl_Position = vec4(clip.x, -clip.y, 0.0, 1.0);
+  gl_Position = vec4(clip.x, clip.y * u_yflip, 0.0, 1.0);
   v_uv = a_uv;
   v_col = a_col;
 }`;
@@ -213,6 +218,10 @@ export class WebGLBackend implements Backend {
   private white: Tex;
   private w = 1;
   private h = 1;
+  /** Размер текущей цели рендера (null — экран). */
+  private targetW: number | null = null;
+  private targetH: number | null = null;
+  private fbos = new Map<Tex, WebGLFramebuffer>();
 
   constructor(private canvas: HTMLCanvasElement, noiseCanvas: HTMLCanvasElement) {
     const gl = canvas.getContext('webgl', { premultipliedAlpha: true, alpha: false, antialias: true, preserveDrawingBuffer: true }) as WebGLRenderingContext | null;
@@ -348,6 +357,7 @@ export class WebGLBackend implements Backend {
     gl.uniform2f(u.u_pos as WebGLUniformLocation, d.x, d.y);
     gl.uniform2f(u.u_size as WebGLUniformLocation, d.w, d.h);
     gl.uniform2f(u.u_scale as WebGLUniformLocation, d.sx, d.sy);
+    gl.uniform4f(u.u_uvRect as WebGLUniformLocation, d.uv[0], d.uv[1], d.uv[2], d.uv[3]);
     gl.uniform2f(u.u_texel as WebGLUniformLocation, 1 / d.tex.w, 1 / d.tex.h);
     gl.uniform1f(u.u_flip as WebGLUniformLocation, d.flip ? -1 : 1);
     gl.uniform1f(u.u_time as WebGLUniformLocation, d.time);
@@ -383,7 +393,8 @@ export class WebGLBackend implements Backend {
     gl.useProgram(prog);
     this.bindTex(0, tex);
     gl.uniform1i(u.u_tex as WebGLUniformLocation, 0);
-    gl.uniform2f(u.u_res as WebGLUniformLocation, this.w, this.h);
+    gl.uniform2f(u.u_res as WebGLUniformLocation, this.targetW ?? this.w, this.targetH ?? this.h);
+    gl.uniform1f(u.u_yflip as WebGLUniformLocation, this.targetW ? 1 : -1);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuf);
     const pos = attr('a_pos');
     const uvl = attr('a_uv');
@@ -408,13 +419,17 @@ export class WebGLBackend implements Backend {
           const hw = q.w / 2;
           const hh = q.h / 2;
           const [u0, v0, u1, v1] = q.uv;
-          const corners: Array<[number, number, number, number]> = [
-            [-hw, -hh, u0, v0], [hw, -hh, u1, v0], [-hw, hh, u0, v1],
-            [hw, -hh, u1, v0], [hw, hh, u1, v1], [-hw, hh, u0, v1],
-          ];
-          for (const [lx, ly, uu, vv] of corners) {
-            data[o++] = q.x + lx * c - ly * s;
-            data[o++] = q.y + lx * s + ly * c;
+          // Готовые углы (риг) или прямоугольник с поворотом вокруг центра.
+          const k = q.corners;
+          const K = (i: number) => (k?.[i] ?? 0);
+          const pts: Array<[number, number, number, number]> = k
+            ? [[K(0), K(1), u0, v0], [K(2), K(3), u1, v0], [K(6), K(7), u0, v1], [K(2), K(3), u1, v0], [K(4), K(5), u1, v1], [K(6), K(7), u0, v1]]
+            : ([[-hw, -hh, u0, v0], [hw, -hh, u1, v0], [-hw, hh, u0, v1], [hw, -hh, u1, v0], [hw, hh, u1, v1], [-hw, hh, u0, v1]] as Array<[number, number, number, number]>).map(
+                ([lx, ly, uu, vv]) => [q.x + lx * c - ly * s, q.y + lx * s + ly * c, uu, vv] as [number, number, number, number],
+              );
+          for (const [px, py, uu, vv] of pts) {
+            data[o++] = px;
+            data[o++] = py;
             data[o++] = uu;
             data[o++] = vv;
             data[o++] = q.r;
@@ -431,6 +446,54 @@ export class WebGLBackend implements Backend {
     gl.disableVertexAttribArray(pos);
     gl.disableVertexAttribArray(uvl);
     gl.disableVertexAttribArray(col);
+  }
+
+  createTarget(w: number, h: number): RenderTarget {
+    const gl = this.gl;
+    const t = gl.createTexture() as WebGLTexture;
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const fb = gl.createFramebuffer() as WebGLFramebuffer;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    const canvasStub = document.createElement('canvas');
+    const tex: Tex = { w, h, handle: t, source: canvasStub };
+    this.fbos.set(tex, fb);
+    return { tex, w, h };
+  }
+
+  drawRig(target: RenderTarget, atlas: Tex, parts: AffinePart[]): void {
+    const gl = this.gl;
+    const fb = this.fbos.get(target.tex);
+    if (!fb) return;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.viewport(0, 0, target.w, target.h);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    this.targetW = target.w;
+    this.targetH = target.h;
+    const quads: QuadDraw[] = [];
+    // Части рисуются через батч квадов: четыре угла считаются на CPU по аффинной матрице.
+    for (const p of parts) quads.push({ x: 0, y: 0, w: 0, h: 0, rot: 0, r: 1, g: 1, b: 1, a: p.alpha, uv: p.uv, additive: false, corners: corners(p) });
+    this.drawQuads(atlas, quads);
+    this.targetW = null;
+    this.targetH = null;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, this.w, this.h);
+  }
+
+  disposeTarget(target: RenderTarget): void {
+    const fb = this.fbos.get(target.tex);
+    if (fb) this.gl.deleteFramebuffer(fb);
+    this.gl.deleteTexture(target.tex.handle as WebGLTexture);
+    this.fbos.delete(target.tex);
   }
 
   overlay(r: number, g: number, b: number, a: number, additive: boolean): void {
@@ -451,4 +514,11 @@ export class WebGLBackend implements Backend {
   cover(tex: Tex, zoom: number, offX: number, offY: number) {
     return coverTransform(this.w, this.h, tex.w, tex.h, zoom, offX, offY);
   }
+}
+
+/** Углы части рига (по часовой: лево-верх, право-верх, право-низ, лево-низ). */
+function corners(p: AffinePart): number[] {
+  const m = p.m;
+  const at = (x: number, y: number) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
+  return [...at(p.x0, p.y0), ...at(p.x0 + p.w, p.y0), ...at(p.x0 + p.w, p.y0 + p.h), ...at(p.x0, p.y0 + p.h)];
 }

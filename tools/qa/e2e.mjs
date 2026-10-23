@@ -37,6 +37,16 @@ let s = await save();
 step(`состав после замены: ${s.party.map((id) => s.heroes.find((h) => h.id === id).name).join(', ')}`);
 await page.locator('.hero-card-lg[data-hero="mira"] button', { hasText: 'Убрать из отряда' }).click();
 await page.locator('.hero-card-lg[data-hero="nora"] button', { hasText: 'В отряд' }).click();
+// Экран героя: живая фигура на сцене, биография, закрытие по Esc.
+await page.locator('.hero-card-lg[data-hero="mira"] .hero-card-lg__open').click();
+await page.waitForTimeout(1200);
+const sheet = await page.locator('.hero-sheet').evaluate((e) => ({ name: e.querySelector('h2')?.textContent, bio: !!e.querySelector('.hero-sheet__bio'), canvas: !!e.querySelector('canvas') }));
+step(`экран героя: ${JSON.stringify(sheet)}`);
+if (sheet.name !== 'Мира' || !sheet.bio || !sheet.canvas) issues.push(`экран героя неполный: ${JSON.stringify(sheet)}`);
+await shot('02b-hero-sheet');
+await page.keyboard.press('Escape');
+await page.waitForTimeout(300);
+if (await page.locator('.hero-sheet').count()) issues.push('экран героя не закрылся по Esc');
 
 await tab('Экспедиция');
 await page.waitForTimeout(500);
@@ -50,6 +60,8 @@ const goldBefore = (await save()).gold;
 let manualDone = false;
 let reloadDone = false;
 let bossSeen = false;
+const tipsShot = new Set();
+const shotStages = new Set();
 for (let guard = 0; guard < 400; guard++) {
   const stage = await page.evaluate(() => document.querySelector('.screen--expedition')?.className ?? document.querySelector('main section')?.className ?? '');
   if (stage.includes('stage-map')) {
@@ -64,6 +76,16 @@ for (let guard = 0; guard < 400; guard++) {
     continue;
   }
   if (stage.includes('stage-battle')) {
+    const coach = page.locator('.coach:not([hidden])');
+    if (await coach.count()) {
+      const title = (await coach.locator('strong').innerText()).trim();
+      if (!tipsShot.has(title)) {
+        tipsShot.add(title);
+        step(`подсказка обучения: «${title}»`);
+        await shot(`05t-coach-${tipsShot.size}`);
+      }
+      await coach.locator('button').click().catch(() => {});
+    }
     const boss = await page.locator('.boss-bar').count();
     if (boss && !bossSeen) {
       bossSeen = true;
@@ -128,8 +150,22 @@ for (let guard = 0; guard < 400; guard++) {
     }
     continue;
   }
+  if (stage.includes('stage-prep')) {
+    const prep = await page.locator('.stage--prep').innerText();
+    step(`подготовка к боссу: ${prep.replace(/\s+/g, ' ').slice(0, 160)}`);
+    await shot('07p-boss-prep');
+    await page.locator('.stage--prep .btn, .stage--prep .offer').first().click();
+    await page.waitForTimeout(600);
+    continue;
+  }
   if (stage.includes('stage-eventResult') || stage.includes('stage-chest') || stage.includes('stage-camp')) {
-    const b = page.locator('.stage .btn').first();
+    const kind = stage.match(/stage-(\w+)/)?.[1];
+    if (kind && !shotStages.has(kind)) {
+      shotStages.add(kind);
+      await shot(`10${kind === 'chest' ? 'c' : kind === 'camp' ? 'k' : 'r'}-${kind}`);
+      if (kind === 'chest') step(`сундук: ${(await page.locator('.stage').innerText()).replace(/\s+/g, ' ').slice(0, 160)}`);
+    }
+    const b = page.locator('.stage .btn, .stage .offer').first();
     await b.click();
     await page.waitForTimeout(400);
     continue;
@@ -162,6 +198,8 @@ for (let guard = 0; guard < 400; guard++) {
   }
   await page.waitForTimeout(300);
 }
+if (!tipsShot.size) issues.push('подсказки обучения первого боя не показались');
+if (!steps.some((x) => x.startsWith('подготовка к боссу'))) issues.push('экран подготовки к боссу не пройден');
 writeFileSync(`${outDir}/e2e-report.json`, JSON.stringify({ viewport: `${W}x${H}`, steps, issues }, null, 2));
 console.log(JSON.stringify({ issues }, null, 1));
 await browser.close();

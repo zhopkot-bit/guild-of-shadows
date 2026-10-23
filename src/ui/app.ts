@@ -9,6 +9,8 @@ import { deserializeRun, serializeRun, type Run } from '../expedition/run';
 import { stopBattleView } from './battleView';
 import type { Ctx, ModalButton } from './ctx';
 import { clear, h, type Child } from './dom';
+import { glyph } from './glyphs';
+import { loadArtPack } from '../content/artpack';
 import { expeditionScreen } from './expedition';
 import { guildScreen } from './guild';
 import { squadScreen } from './squad';
@@ -28,6 +30,8 @@ const BACKUP_KEY = 'gos_corrupt_backup';
 export async function startApp(platform: Platform, root: HTMLElement): Promise<void> {
   root.replaceChildren(h('div', { class: 'loading' }, 'Гильдия просыпается…'));
 
+  // Финальный арт художника (если поставлен): реестр art-pack.json и пакеты анимаций.
+  await loadArtPack();
   const raw = await platform.load();
   const loaded = deserialize(raw, platform.now());
   platform.track('game_start', { platform: platform.name, save_status: loaded.ok ? 'loaded' : loaded.reason });
@@ -64,7 +68,7 @@ export async function startApp(platform: Platform, root: HTMLElement): Promise<v
   const goldEl = h('strong', { class: 'num' });
   const rateEl = h('span', { class: 'topbar__rate num' });
   const essenceEl = h('b');
-  const essencePill = h('span', { class: 'pill pill--essence' }, 'Эссенция ', essenceEl);
+  const essencePill = h('span', { class: 'pill pill--essence', title: 'Осколки реликвий' }, glyph('ember', 14), ' ', essenceEl);
   const topbar = h(
     'header',
     { class: 'topbar' },

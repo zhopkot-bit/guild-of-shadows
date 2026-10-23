@@ -4,6 +4,7 @@ import { fmt } from '../core/num';
 import { POST_IDS } from '../core/types';
 import type { Ctx } from './ctx';
 import { h } from './dom';
+import { shards } from '../content/text';
 
 const MONO: Record<string, string> = { barracks: 'Ка', forge: 'Ку', library: 'Б', tavern: 'Т', alchemy: 'А' };
 const POST_ART: Record<string, string> = { barracks: 'barracks', forge: 'forge', library: 'library', tavern: 'tavern', alchemy: 'alchemy' };
@@ -87,7 +88,7 @@ export function guildScreen(ctx: Ctx): HTMLElement {
     const update = () => {
       const cost = relicariumCost(ctx.state.relicarium);
       meta.textContent = `Золото гильдии +${ctx.state.relicarium * 5}%. Куплено: ${ctx.state.relicarium}`;
-      btn.textContent = `Улучшить за ${cost} эссенции`;
+      btn.textContent = `Улучшить за ${shards(cost)}`;
       (btn as HTMLButtonElement).disabled = ctx.state.essence < cost;
     };
     update();

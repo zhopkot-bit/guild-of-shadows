@@ -1,14 +1,19 @@
-import { MAX_TIER, PARTY_SIZE } from '../core/config';
+import { HP_SCALE, MAX_TIER, PARTY_SIZE } from '../core/config';
 import { fmt } from '../core/num';
 import type { Hero } from '../core/types';
-import { relicDef } from '../expedition/relics';
+import { moduleDef } from '../expedition/modules';
+import { ENEMIES } from '../combat/data';
+import { shards } from '../content/text';
 import type { MapNode } from '../expedition/map';
 import {
   availableNodes,
   canRevive,
   canStartRun,
+  BOSS_PREP_HEAL,
+  chooseBossPrep,
   chooseCamp,
   chooseChest,
+  encounterPreview,
   chooseEventOption,
   continueFromEvent,
   enterNode,
@@ -26,7 +31,8 @@ import { battleScreen, stopBattleView } from './battleView';
 import type { Ctx } from './ctx';
 import { h } from './dom';
 import { NODE_NAME, nodeIcon } from './icons';
-import { heroPortrait } from './portrait';
+import { enemyPortrait, heroPortrait } from './portrait';
+import { glyph } from './glyphs';
 import { roleName } from '../content/roster';
 
 let selectedTier = 1;
@@ -61,6 +67,9 @@ export function expeditionScreen(ctx: Ctx): HTMLElement {
       break;
     case 'camp':
       root.append(campView(ctx, run));
+      break;
+    case 'prep':
+      root.append(prepView(ctx, run));
       break;
     case 'ended':
       root.append(summaryView(ctx, run));
@@ -144,6 +153,15 @@ function lobby(ctx: Ctx): HTMLElement {
 
 // ---------- Шапка забега ----------
 
+function moduleChips(run: Run): HTMLElement | null {
+  if (run.relics.length === 0) return null;
+  return h('div', { class: 'modules', 'aria-label': 'Модули экспедиции' },
+    ...run.relics.map((id) => {
+      const d = moduleDef(id);
+      return h('span', { class: 'module-chip', title: `${d.contentId} · ${d.text}` }, glyph(d.glyph, 16), h('span', null, d.name));
+    }));
+}
+
 function runHead(ctx: Ctx, run: Run): HTMLElement {
   const head = h('div', { class: 'run-head' });
   for (const m of run.members) {
@@ -151,13 +169,9 @@ function runHead(ctx: Ctx, run: Run): HTMLElement {
     const max = memberStats(run, m).maxHp;
     const hp = memberHp(run, m);
     head.append(
-      h(
-        'div',
-        { class: m.alive ? 'member' : 'member is-dead' },
+      h('div', { class: m.alive ? 'member' : 'member is-dead' },
         heroPortrait(hero, 48),
-        h(
-          'div',
-          { class: 'member__info' },
+        h('div', { class: 'member__info' },
           h('div', { class: 'member__name' }, hero.name),
           h('div', { class: m.frac < 0.3 ? 'bar is-low' : 'bar' }, h('i', { style: `width:${Math.round((hp / max) * 100)}%` })),
           h('div', { class: 'bar-text num' }, `${hp} из ${max}`),
@@ -165,15 +179,12 @@ function runHead(ctx: Ctx, run: Run): HTMLElement {
       ),
     );
   }
-  const wrap = h('div', null, head);
-  if (run.relics.length > 0) {
-    wrap.append(h('div', { class: 'relics' }, ...run.relics.map((id) => h('span', { class: 'relic', title: relicDef(id).text }, relicDef(id).name))));
-  }
+  const wrap = h('div', { class: 'run-head-wrap' }, head);
+  const chips = moduleChips(run);
+  if (chips) wrap.append(chips);
   if (canRevive(run)) {
     wrap.append(
-      h(
-        'div',
-        { style: 'margin-top:10px' },
+      h('div', { style: 'margin-top:10px' },
         btn('Воскресить павшего за рекламу', async () => {
           const ok = await ctx.platform.showRewarded('revive');
           if (!ok) return;
@@ -191,6 +202,7 @@ function runHead(ctx: Ctx, run: Run): HTMLElement {
 
 function mapView(ctx: Ctx, run: Run): HTMLElement {
   const reachable = new Set(availableNodes(run).map((n) => n.id));
+  const reveal = run.relics.includes('pathfinderMap');
   const visited = new Set(run.visited);
   const layers = new Map<number, MapNode[]>();
   for (const n of run.map) layers.set(n.layer, [...(layers.get(n.layer) ?? []), n]);
@@ -218,7 +230,17 @@ function mapView(ctx: Ctx, run: Run): HTMLElement {
         ctx.render();
       });
       nodeEls.set(node.id, b);
-      row.append(h('div', { class: 'node-wrap' }, b, h('span', { class: 'node-label' }, node.type === 'boss' ? 'Костяной король' : NODE_NAME[node.type])));
+      const label = h('span', { class: 'node-label' }, node.type === 'boss' ? 'Костяной король' : NODE_NAME[node.type]);
+      // Карта следопыта (MOD06): состав противников доступных боёв виден заранее.
+      if (reveal && canGo) {
+        const kinds = encounterPreview(run, node);
+        if (kinds) {
+          const counts = new Map<string, number>();
+          for (const k of kinds) counts.set(ENEMIES[k].name, (counts.get(ENEMIES[k].name) ?? 0) + 1);
+          label.append(h('small', { class: 'node-scout' }, [...counts].map(([n, c]) => (c > 1 ? `${n} ×${c}` : n)).join(', ')));
+        }
+      }
+      row.append(h('div', { class: 'node-wrap' }, b, label));
     }
     map.append(row);
   }
@@ -310,52 +332,97 @@ function eventResultView(ctx: Ctx, run: Run): HTMLElement {
 }
 
 function chestView(ctx: Ctx, run: Run): HTMLElement {
-  const list = h('div', { class: 'choice-list' });
+  const list = h('div', { class: 'offer-grid' });
   for (const offer of run.chestOffers ?? []) {
-    let label: string;
-    let small: string;
-    if (offer.kind === 'relic') {
-      const r = relicDef(offer.relic);
-      label = r.name;
-      small = r.text;
+    let title: string;
+    let text: string;
+    let icon: Parameters<typeof glyph>[0];
+    let tag: string;
+    if (offer.kind === 'module') {
+      const d = moduleDef(offer.module);
+      title = d.name;
+      text = d.text;
+      icon = d.glyph;
+      tag = `Модуль · ${d.category}`;
     } else if (offer.kind === 'heal') {
-      label = 'Лечебный настой';
-      small = `Отряд восстанавливает ${Math.round(offer.pct * 100)}% здоровья`;
+      title = 'Лечебный настой';
+      text = `Отряд восстанавливает ${Math.round(offer.pct * 100)}% здоровья`;
+      icon = 'heart';
+      tag = 'Сразу';
     } else {
-      label = 'Эссенция';
-      small = `+${offer.amount} Эссенции после забега`;
+      title = 'Осколки реликвий';
+      text = `+${shards(offer.amount)} после забега`;
+      icon = 'ember';
+      tag = 'Награда';
     }
-    const b = h('button', { class: 'btn btn--ghost' }, label, h('small', null, small));
+    const b = h('button', { class: 'offer', type: 'button' }, h('span', { class: 'offer__icon' }, glyph(icon, 34, 1.5)), h('span', { class: 'offer__tag' }, tag), h('strong', null, title), h('span', { class: 'offer__text' }, text));
     b.addEventListener('click', () => {
       ctx.toast(chooseChest(run, offer.id));
+      ctx.save();
       ctx.render();
     });
     list.append(b);
   }
-  return h('div', { class: 'stage' }, h('h3', null, 'Сундук'), h('p', null, 'Заберите одну вещь: на всё сразу времени нет.'), list);
+  const elite = (run.chestOffers ?? []).length > 0 && (run.chestOffers ?? []).every((o) => o.kind !== 'heal');
+  return h('div', { class: 'stage stage--panel' },
+    h('h3', null, elite ? 'Трофеи элитного стража' : 'Тайник'),
+    h('p', null, 'Заберите одну вещь: модули действуют до конца экспедиции и не складываются.'),
+    list);
 }
 
 function campView(ctx: Ctx, run: Run): HTMLElement {
   const heal = Math.round((0.4 + run.postBonus.campHeal) * 100);
+  const potion = run.relics.includes('healingPotion');
   const go = (opt: 'rest' | 'train') => () => {
     ctx.toast(chooseCamp(run, opt));
+    ctx.save();
     ctx.render();
   };
-  return h(
-    'div',
-    { class: 'stage' },
+  return h('div', { class: 'stage stage--panel' },
     h('h3', null, 'Лагерь'),
-    h('p', null, 'Можно перевести дух или потренироваться.'),
-    h(
-      'div',
-      { class: 'choice-list' },
-      h('button', { class: 'btn btn--ghost', onclick: go('rest') }, 'Отдохнуть', h('small', null, `Отряд восстанавливает ${heal}% здоровья`)),
-      h('button', { class: 'btn btn--ghost', onclick: go('train') }, 'Потренироваться', h('small', null, '+10% АТК до конца забега')),
+    h('p', null, 'Короткий привал у затухающего костра. Можно перевести дух или потренироваться.'),
+    h('div', { class: 'offer-grid' },
+      h('button', { class: 'offer', type: 'button', onclick: go('rest') }, h('span', { class: 'offer__icon' }, glyph('heart', 34, 1.5)), h('span', { class: 'offer__tag' }, 'Отдых'), h('strong', null, 'Отдохнуть'), h('span', { class: 'offer__text' }, `Отряд восстанавливает ${heal}% здоровья${potion ? ` и ещё ${Math.round(15 * HP_SCALE)} HP (Зелье восстановления)` : ''}`)),
+      h('button', { class: 'offer', type: 'button', onclick: go('train') }, h('span', { class: 'offer__icon' }, glyph('sword', 34, 1.5)), h('span', { class: 'offer__tag' }, 'Тренировка'), h('strong', null, 'Потренироваться'), h('span', { class: 'offer__text' }, '+10% АТК до конца забега')),
+    ),
+  );
+}
+
+/** Подготовка к боссу (Combat Spec v0.3): лечение ИЛИ защита от первой спецатаки. */
+function prepView(ctx: Ctx, run: Run): HTMLElement {
+  const go = (opt: 'heal' | 'ward') => () => {
+    ctx.toast(chooseBossPrep(run, opt));
+    ctx.save();
+    ctx.render();
+  };
+  return h('div', { class: 'stage stage--panel stage--prep' },
+    h('div', { class: 'prep-head' },
+      enemyPortrait('boneKing', 'Костяной король', 128),
+      h('div', null,
+        h('span', { class: 'eyebrow' }, 'ТРОННЫЙ СКЛЕП'),
+        h('h3', null, 'Перед боем с Костяным королём'),
+        h('p', null, 'За дверью — древний король в тяжёлых доспехах. Сначала он бьёт тяжёлым клинком по одной цели, а когда доспехи треснут — призрачной волной по всему отряду. Подготовьтесь к одному из ударов.'),
+      ),
+    ),
+    h('div', { class: 'offer-grid' },
+      h('button', { class: 'offer', type: 'button', onclick: go('heal') }, h('span', { class: 'offer__icon' }, glyph('heart', 34, 1.5)), h('span', { class: 'offer__tag' }, 'Лечение'), h('strong', null, 'Перевязать раны'), h('span', { class: 'offer__text' }, `Каждый живой герой восстанавливает ${Math.round(BOSS_PREP_HEAL * 100)}% здоровья`)),
+      h('button', { class: 'offer', type: 'button', onclick: go('ward') }, h('span', { class: 'offer__icon' }, glyph('cover', 34, 1.5)), h('span', { class: 'offer__tag' }, 'Защита'), h('strong', null, 'Сомкнуть щиты'), h('span', { class: 'offer__text' }, 'Первая спецатака короля (клинок или волна) наносит вдвое меньше урона')),
     ),
   );
 }
 
 // ---------- Итоги ----------
+
+function countUp(el: HTMLElement, to: number, format: (n: number) => string): void {
+  const start = performance.now();
+  const dur = 900;
+  const step = (now: number) => {
+    const k = Math.min(1, (now - start) / dur);
+    el.textContent = format(to * (1 - Math.pow(1 - k, 3)));
+    if (k < 1 && el.isConnected) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
 
 function summaryView(ctx: Ctx, run: Run): HTMLElement {
   if (!summary) {
@@ -369,17 +436,35 @@ function summaryView(ctx: Ctx, run: Run): HTMLElement {
   }
   const s = summary;
   const win = s.result === 'victory';
-  const list = h('ul', { class: 'summary__list' });
-  const goldLine = h('li', null, 'Золото: ', h('b', { class: 'num' }, `+${fmt(s.gold)}`));
-  list.append(goldLine, h('li', null, 'Эссенция: ', h('b', { class: 'num' }, `+${s.essence}`)), h('li', null, `Пройдено узлов: ${s.nodesCleared}`));
-  if (s.safe) list.append(h('li', null, 'Защитное благословение первых экспедиций: павшие герои возвращаются без травм.'));
-  for (const hero of s.survivors) {
-    if (!s.safe) list.append(h('li', null, h('span', { class: 'tag tag--warn' }, 'Ранен'), ` ${hero.name} выжил и отдыхает 30 минут`));
-  }
-  for (const hero of s.lost) list.append(h('li', null, h('span', { class: 'tag tag--warn' }, 'Погиб'), ` ${hero.name} не вернулся`));
-  if (s.unlockedTier) list.append(h('li', null, `Открыто подземелье ${s.unlockedTier}. Герои могут расти выше.`));
 
-  const actions = h('div', { class: 'btn-row' });
+  const goldNum = h('b', { class: 'num' }, '0');
+  const shardNum = h('b', { class: 'num' }, '0');
+  countUp(goldNum, s.doubled ? s.gold * 2 : s.gold, (n) => `+${fmt(Math.round(n))}`);
+  countUp(shardNum, s.essence, (n) => `+${Math.round(n)}`);
+  const rewards = h('div', { class: 'reward-tiles' },
+    h('div', { class: 'reward-tile reward-tile--gold' }, glyph('crown', 30, 1.5), goldNum, h('span', null, 'золота')),
+    h('div', { class: 'reward-tile reward-tile--shards' }, glyph('ember', 30, 1.5), shardNum, h('span', null, 'осколков реликвий')),
+    h('div', { class: 'reward-tile' }, glyph('target', 30, 1.5), h('b', { class: 'num' }, String(s.nodesCleared)), h('span', null, 'пройдено узлов')),
+  );
+
+  const fallen = new Set(s.survivors.map((x) => x.id));
+  const heroes = h('div', { class: 'summary-heroes' },
+    ...Object.values(run.heroes).map((hero) => {
+      const wounded = fallen.has(hero.id) && !s.safe;
+      return h('div', { class: `summary-hero${fallen.has(hero.id) ? ' is-fallen' : ''}` },
+        heroPortrait(hero, 96),
+        h('strong', null, hero.name),
+        h('span', { class: `tag ${wounded ? 'tag--warn' : 'tag--ok'}` }, wounded ? 'Ранен · отдых 30 мин' : fallen.has(hero.id) ? 'Пал, но без травмы' : 'В строю'),
+      );
+    }),
+  );
+
+  const notes = h('ul', { class: 'summary__list' });
+  if (s.safe) notes.append(h('li', null, 'Защитное благословение первых экспедиций: павшие герои возвращаются без травм.'));
+  if (s.unlockedTier) notes.append(h('li', null, `Открыто подземелье ${s.unlockedTier}. Предел уровня героев вырос.`));
+  if (run.relics.length) notes.append(h('li', null, `Модули экспедиции: ${run.relics.map((id) => moduleDef(id).name).join(', ')}.`));
+
+  const actions = h('div', { class: 'btn-row summary__actions' });
   // Флаг удвоения хранится в самих итогах забега: перезагрузка страницы не даёт удвоить повторно.
   if (s.gold > 0 && !s.doubled) {
     const dbl = btn('Удвоить золото за рекламу', async () => {
@@ -388,7 +473,7 @@ function summaryView(ctx: Ctx, run: Run): HTMLElement {
       s.doubled = true;
       ctx.state.gold += s.gold;
       ctx.save();
-      goldLine.replaceChildren('Золото: ', h('b', { class: 'num' }, `+${fmt(s.gold * 2)}`));
+      countUp(goldNum, s.gold * 2, (n) => `+${fmt(Math.round(n))}`);
       dbl.remove();
     }, 'btn btn--ghost');
     actions.append(dbl);
@@ -399,14 +484,17 @@ function summaryView(ctx: Ctx, run: Run): HTMLElement {
     stopBattleView();
     ctx.save();
     ctx.render();
-  }));
+  }, 'btn btn--primary'));
 
-  return h(
-    'div',
-    { class: 'summary' },
-    h('div', { class: win ? 'banner banner--win' : 'banner banner--lose' }, h('h3', null, win ? 'Экспедиция удалась' : 'Экспедиция провалена')),
-    list,
+  return h('div', { class: `summary summary--${win ? 'win' : 'lose'}` },
+    h('div', { class: 'summary__banner' },
+      h('span', { class: 'eyebrow' }, `ПОДЗЕМЕЛЬЕ ${s.tier}`),
+      h('h2', null, win ? 'Экспедиция удалась' : 'Экспедиция провалена'),
+      h('p', null, win ? 'Костяной король повержен. Гильдия встречает отряд с добычей.' : 'Отряд отступил. Часть добычи удалось сохранить.'),
+    ),
+    rewards,
+    heroes,
+    notes,
     actions,
   );
 }
-

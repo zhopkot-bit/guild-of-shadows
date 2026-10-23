@@ -57,6 +57,7 @@ export function newGame(nowMs: number): GameState {
     maxTier: 1,
     stats: { expeditionsStarted: 0, expeditionsWon: 0, heroesLost: 0 },
     activeRun: null,
+    tipsSeen: [],
   };
   // Канонический стартовый ростер GDD v1.1 §8.3: Бран, Мира, Рук, Нора; в отряде трое.
   for (const def of ROSTER) createCanonHero(state, def.identity);
