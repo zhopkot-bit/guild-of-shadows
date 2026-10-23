@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 128" width="100" height="128">
+<defs><linearGradient id="s" x1="0" x2="1"><stop offset="0" stop-color="#ebe4d4" stop-opacity=".5"/><stop offset=".4" stop-color="#ebe4d4" stop-opacity="0"/></linearGradient></defs>
+<path d="M6 128C6 102 28 94 50 94s44 8 44 34z" fill="#1b1838"/>
+<path d="M30 128c2-20 10-30 20-30s18 10 20 30z" fill="#2f2a5c" stroke="#8d7437" stroke-width="1.5"/>
+<ellipse cx="19" cy="105" rx="16" ry="11" fill="#2d2858" stroke="#cfa84e" stroke-width="1.5"/>
+<ellipse cx="81" cy="105" rx="16" ry="11" fill="#2d2858" stroke="#cfa84e" stroke-width="1.5"/>
+<path d="M36 86h28v13c-7 5-21 5-28 0z" fill="#241f4a"/>
+<path d="M29 66C29 40 38 27 50 27s21 13 21 39v10c0 9-9 15-21 15S29 85 29 76z" fill="#3b3568" stroke="#cfa84e" stroke-width="1.5"/>
+<path d="M50 28v20" stroke="#8d7437" stroke-width="2"/>
+<rect x="34" y="57" width="32" height="7" rx="2.5" fill="#0b0919"/>
+<rect x="47" y="57" width="6" height="26" rx="2.5" fill="#0b0919"/>
+<path d="M50 29C38 12 58 1 71 12C62 11 58 19 57 31z" fill="#d0565f"/>
+<path d="M29 66C29 40 38 27 50 27" fill="none" stroke="#ebe4d4" stroke-opacity=".5" stroke-width="2"/>
+<rect width="100" height="128" fill="url(#s)"/>
+</svg>

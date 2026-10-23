@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Гильдия Теней: образец стиля</title>
+<link rel="stylesheet" href="../src/ui/style.css">
+<style>
+body{background:#0b0a18}
+.board{display:flex;gap:28px;justify-content:center;padding:28px;flex-wrap:wrap}
+.phone{width:390px;background:linear-gradient(180deg,var(--ink-900) 0%,var(--ink-950) 60%);border:1px solid var(--ink-600);border-radius:18px;overflow:hidden;padding:0 16px 20px}
+.phone .topbar{margin:0 -16px;padding:12px 16px 10px;position:static}
+.phone .tabbar-sample{display:flex;margin:18px -16px -20px;border-top:1px solid var(--ink-600);background:var(--ink-900)}
+.phone .tabbar-sample span{flex:1;text-align:center;padding:16px 0;font:600 16px var(--serif);color:var(--bone-dim);border-top:3px solid transparent}
+.phone .tabbar-sample span.on{color:var(--brass);border-top-color:var(--brass);background:var(--ink-800)}
+</style></head><body>
+<div class="board">
+
+<section class="phone"><div class="topbar"><div class="topbar__gold"><strong class="num">48 210</strong><span class="topbar__rate num">+86 в секунду</span></div>
+<div class="topbar__row"><span class="pill">Жетоны <b>2 из 3</b></span><span class="pill pill--essence">Эссенция <b>14</b></span></div></div>
+<div class="screen"><h2>Гильдия</h2><p class="hint">Посты приносят золото, пока вы играете и пока вас нет.</p>
+<div class="entry"><div class="mono">К</div><div class="entry__body"><div class="entry__title"><h3>Казарма</h3><span class="entry__lvl num">ур. 12</span></div><div class="entry__meta">Доход <b class="num">+48/с</b>, отряд крепче на 8%</div></div><div class="entry__actions"><button class="btn btn--small">Улучшить за 1 240</button></div></div>
+<div class="entry"><div class="mono">Ку</div><div class="entry__body"><div class="entry__title"><h3>Кузница</h3><span class="entry__lvl num">ур. 4</span></div><div class="entry__meta">Доход <b class="num">+38/с</b>, урон отряда выше на 4%</div></div><div class="entry__actions"><button class="btn btn--small" disabled>Улучшить за 2 906</button></div></div>
+<div class="entry is-locked"><div class="mono">Б</div><div class="entry__body"><div class="entry__title"><h3>Библиотека магии</h3></div><div class="entry__meta">Откроется за 10 000 золота</div></div></div>
+</div><div class="tabbar-sample"><span class="on">Гильдия</span><span>Отряд</span><span>Экспедиция</span></div></section>
+
+<section class="phone"><div class="topbar"><div class="topbar__gold"><strong class="num">48 210</strong><span class="topbar__rate num">+86 в секунду</span></div>
+<div class="topbar__row"><span class="pill">Жетоны <b>1 из 3</b></span></div></div>
+<div class="run-head">
+<div class="member"><div class="portrait portrait--sm rar-legendary cls-warrior"><img src="./art/portraits/warrior.svg" alt=""></div><div class="member__info"><div class="member__name">Борд</div><div class="bar"><i style="width:72%"></i></div><div class="bar-text num">144 из 200</div></div></div>
+<div class="member"><div class="portrait portrait--sm rar-epic cls-mage"><img src="./art/portraits/mage.svg" alt=""></div><div class="member__info"><div class="member__name">Исельда</div><div class="bar is-low"><i style="width:28%"></i></div><div class="bar-text num">34 из 120</div></div></div>
+<div class="member"><div class="portrait portrait--sm rar-rare cls-priest"><img src="./art/portraits/priest.svg" alt=""></div><div class="member__info"><div class="member__name">Анселм</div><div class="bar"><i style="width:90%"></i></div><div class="bar-text num">135 из 150</div></div></div>
+</div>
+<div class="relics"><span class="relic">Клинок мытаря</span><span class="relic">Соль и свеча</span></div>
+<div class="battle"><div class="battle__row">
+<div class="unit foe-target"><div class="portrait portrait--md foe"><img src="./art/portraits/skeleton.svg" alt=""></div><div class="unit__name">Скелет</div><div class="unit__hp num">54 из 90</div></div>
+<div class="unit foe-target is-active"><span class="float float--dmg num">−42</span><div class="portrait portrait--lg foe boss"><img src="./art/portraits/guardian.svg" alt=""></div><div class="unit__name">Страж гробницы</div><div class="unit__hp num">480 из 570</div></div>
+<div class="unit foe-target is-dead"><div class="portrait portrait--md foe"><img src="./art/portraits/skeleton.svg" alt=""></div><div class="unit__name">Скелет</div><div class="unit__hp num">0 из 90</div></div></div>
+<div class="battle__vs">против</div>
+<div class="battle__row">
+<div class="unit is-active"><div class="portrait portrait--md rar-legendary cls-warrior"><img src="./art/portraits/warrior.svg" alt=""></div><div class="unit__name">Борд</div><div class="unit__cd">Мощный удар готов</div></div>
+<div class="unit"><div class="portrait portrait--md rar-epic cls-mage"><img src="./art/portraits/mage.svg" alt=""></div><div class="unit__name">Исельда</div><div class="unit__cd">через 2 хода</div></div>
+<div class="unit"><div class="portrait portrait--md rar-rare cls-priest"><img src="./art/portraits/priest.svg" alt=""></div><div class="unit__name">Анселм</div><div class="unit__cd">Исцеление готово</div></div></div></div>
+<div class="controls"><div class="controls__top"><div class="segmented"><button aria-pressed="false">Авто</button><button aria-pressed="true">Вручную</button></div><div class="segmented"><button aria-pressed="true">×1</button><button aria-pressed="false">×2</button><button aria-pressed="false">×4</button></div></div>
+<div class="controls__status">Выберите действие Борда</div><div class="btn-row"><button class="btn">Удар</button><button class="btn">Мощный удар</button><button class="btn btn--ghost">Досчитать бой</button></div>
+<ul class="log"><li>Борд бьёт Скелета: −31</li><li>Скелет промахивается по Исельде</li><li>Страж гробницы получает −42 от Борда</li></ul></div></section>
+
+<section class="phone"><div class="topbar"><div class="topbar__gold"><strong class="num">48 210</strong><span class="topbar__rate num">+86 в секунду</span></div>
+<div class="topbar__row"><span class="pill">Подземелье <b>1</b></span><span class="pill">Узлов пройдено <b>3 из 7</b></span></div></div>
+<div class="screen"><h2>Склеп у старой мельницы</h2><p class="hint">Выберите, куда идти дальше. Бой можно вести самим или доверить его отряду.</p>
+<div class="map">
+<div class="map__row"><div class="node-wrap"><button class="node node--boss">♛</button><span class="node-label">Страж гробницы</span></div></div>
+<div class="map__row"><div class="node-wrap"><button class="node node--camp is-reachable">▲</button><span class="node-label">Лагерь</span></div><div class="node-wrap"><button class="node node--event is-reachable">?</button><span class="node-label">Событие</span></div></div>
+<div class="map__row"><div class="node-wrap"><button class="node node--battle is-visited">⚔</button><span class="node-label">Бой</span></div><div class="node-wrap"><button class="node node--elite is-visited is-current">☠</button><span class="node-label">Элита</span></div><div class="node-wrap"><button class="node node--chest">◈</button><span class="node-label">Сундук</span></div></div>
+<div class="map__row"><div class="node-wrap"><button class="node node--battle is-visited">⚔</button><span class="node-label">Бой</span></div><div class="node-wrap"><button class="node node--event is-visited">?</button><span class="node-label">Событие</span></div></div></div>
+<div class="btn-row" style="margin-top:8px"><button class="btn btn--ghost btn--small">Покинуть подземелье</button></div></div>
+<div class="tabbar-sample"><span>Гильдия</span><span>Отряд</span><span class="on">Экспедиция</span></div></section>
+
+</div></body></html>
