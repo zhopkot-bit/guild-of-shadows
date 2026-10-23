@@ -149,7 +149,7 @@ function checkRig(group, id, skeRel, atlRel, armName, base) {
   for (const [n, a] of anims) {
     if (!CLIPS.includes(n)) warnings.push(`${L}: анимация «${n}» не используется игрой`);
     if (n === 'idle' && a.playTimes !== 0) errors.push(`${L}.idle: должна быть зациклена (playTimes 0)`);
-    if (n !== 'idle' && a.playTimes === 0) warnings.push(`${L}.${n}: зациклена, игра ждёт одиночное проигрывание`);
+    if (n !== 'idle' && n !== 'prepare' && a.playTimes === 0) warnings.push(`${L}.${n}: зациклена, игра ждёт одиночное проигрывание`);
     if (a.ffd?.length || a.ik?.length || (a.slot ?? []).some((s) => s.deformFrame)) warnings.push(`${L}.${n}: деформации/IK в анимации игнорируются`);
     if (['attack', 'shoot', 'cast'].includes(n)) {
       const ev = (a.frame ?? []).some((f) => f.event === 'impact' || (f.events ?? []).some((e) => e.name === 'impact'));

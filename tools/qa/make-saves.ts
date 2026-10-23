@@ -9,7 +9,7 @@ import { autoAction } from '../../src/combat/ai';
 import { serialize } from '../../src/core/save';
 import { newGame } from '../../src/core/state';
 import type { GameState } from '../../src/core/types';
-import { enterNode, availableNodes, serializeRun, startRun, type Run } from '../../src/expedition/run';
+import { chooseBossPrep, enterNode, availableNodes, serializeRun, startRun, type Run } from '../../src/expedition/run';
 
 const out = process.argv[2] ?? 'qa-saves';
 mkdirSync(out, { recursive: true });
@@ -90,6 +90,8 @@ save('guild', game(), null);
   const s = game();
   const run = startRun(s, T0, 1);
   walkTo(run, 'boss');
+  save('boss-prep', s, run);
+  chooseBossPrep(run, 'ward');
   save('boss', s, run);
   const b = run.battle!;
   for (let i = 0; i < 40; i++) {

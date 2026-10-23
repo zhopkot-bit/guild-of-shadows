@@ -490,7 +490,8 @@ body.is-battle .topbar__motto { display: none; }
 .coach--actions { right: 16px; bottom: 16px; }
 .coach--intents { right: 16px; top: 46%; }
 .coach--center { left: 50%; top: 40%; transform: translateX(-50%); }
-@media (max-width: 760px) { .coach { left: 8px; right: 8px; width: auto; top: auto; bottom: 52px; } }
+@media (max-width: 760px) { .coach { position: fixed; left: 8px; right: 8px; width: auto; top: 6px; bottom: auto; transform: none; padding: 9px 12px; gap: 4px; z-index: 40; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  .coach strong { font-size: 15px; grid-column: 1; } .coach p { font-size: 13px; line-height: 1.35; grid-column: 1; } .coach .btn { grid-column: 2; grid-row: 1 / span 2; } }
 
 /* Док: карточки отряда + панель действий. */
 .battle-dock {

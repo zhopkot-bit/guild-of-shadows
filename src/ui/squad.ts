@@ -141,7 +141,7 @@ function heroSheet(hero: Hero): void {
     h('div', { class: `hero-sheet__panel role-${hero.cls}` },
       stage,
       h('div', { class: 'hero-sheet__info' },
-        h('span', { class: 'eyebrow' }, def ? def.contentId : 'НОВОБРАНЕЦ'),
+        h('span', { class: 'eyebrow' }, def ? 'Герой гильдии' : 'Новобранец'),
         h('h2', null, hero.name),
         h('span', { class: 'hero-card-lg__epithet' }, def?.epithet ?? 'Боец гильдии'),
         h('span', { class: 'hero-card-lg__role' }, glyph(hero.cls, 14), roleName(hero), ' · ', `уровень ${hero.level}`),

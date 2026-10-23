@@ -1,3 +1,4 @@
+import { HP_SCALE } from '../core/config';
 import type { RNG } from '../core/rng';
 
 /**
@@ -29,7 +30,7 @@ export const MODULES: readonly ModuleDef[] = [
   { id: 'hawkEye', contentId: 'MOD02', name: 'Око ястреба', category: 'Урон', text: 'Обычная атака Стрелка наносит +15% урона', glyph: 'scout' },
   { id: 'piercingArrow', contentId: 'MOD03', name: 'Пробивная стрела', category: 'Пробитие', text: 'Первая атака Стрелка в каждом бою игнорирует ещё 30% защиты', glyph: 'aimedShot' },
   { id: 'wardenShield', contentId: 'MOD04', name: 'Щит хранителя', category: 'Снижение урона', text: 'Первый удар по отряду в каждом бою слабее на 8', glyph: 'cover' },
-  { id: 'healingPotion', contentId: 'MOD05', name: 'Зелье восстановления', category: 'Восстановление', text: 'Отдых в лагере дополнительно лечит каждого на 15 HP', glyph: 'heart' },
+  { id: 'healingPotion', contentId: 'MOD05', name: 'Зелье восстановления', category: 'Восстановление', text: `Отдых в лагере дополнительно лечит каждого на ${Math.round(15 * HP_SCALE)} HP`, glyph: 'heart' },
   { id: 'pathfinderMap', contentId: 'MOD06', name: 'Карта следопыта', category: 'Разведка', text: 'На карте виден состав противников в доступных боях', glyph: 'target' },
   { id: 'swiftFeather', contentId: 'MOD07', name: 'Перо быстрого шага', category: 'Инициатива', text: '+1 СКР отряду в первом раунде каждого боя', glyph: 'fast' },
   { id: 'relicPouch', contentId: 'MOD08', name: 'Сумка собирателя', category: 'Экономика', text: 'После первой элитной встречи: +1 осколок реликвий', glyph: 'ember' },

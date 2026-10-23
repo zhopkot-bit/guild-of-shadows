@@ -196,7 +196,7 @@ export function battleScreen(ctx: Ctx): HTMLElement {
       side: u.side,
       sprite: spriteFor(u),
       emissive: u.boss ? BOSS_EMISSIVE : undefined,
-      flip: k === 'goblinRaider',
+      flip: k === 'goblinRaider' && !pack?.rig && !pack?.anim, // текущий спрайт гоблина смотрит вправо; финальный арт врагов рисуется лицом влево
       style: attackStyle(u),
       boss: !!u.boss,
       wide: k === 'ashWolf',

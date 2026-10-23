@@ -158,7 +158,7 @@ function moduleChips(run: Run): HTMLElement | null {
   return h('div', { class: 'modules', 'aria-label': 'Модули экспедиции' },
     ...run.relics.map((id) => {
       const d = moduleDef(id);
-      return h('span', { class: 'module-chip', title: `${d.contentId} · ${d.text}` }, glyph(d.glyph, 16), h('span', null, d.name));
+      return h('span', { class: 'module-chip', title: `${d.name}: ${d.text}` }, glyph(d.glyph, 16), h('span', null, d.name));
     }));
 }
 
