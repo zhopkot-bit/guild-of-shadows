@@ -11,7 +11,7 @@ names=['head','collar','chest','belt','tasset_back','tasset_front','upper_sword'
 # Measured gutters in the generated atlas; do not clip parts to an ideal grid.
 regions=[(25,5,240,260),(255,65,475,252),(477,0,759,265),(768,60,1027,255),(1070,0,1275,272),(1310,0,1518,275),
  (25,261,240,488),(270,265,480,485),(540,274,710,488),(782,265,1017,492),(1064,275,1258,483),(1334,280,1507,490),
- (40,494,206,735),(310,502,445,735),(540,500,705,740),(818,500,1009,738),(1080,500,1220,739),(1338,500,1482,737),
+ (40,494,206,735),(310,502,445,688),(540,635,705,740),(818,500,1009,738),(1080,500,1220,690),(1338,635,1482,737),
  (76,740,175,1020),(267,740,455,1018),(480,750,770,1020),(800,742,1026,1020),(1080,800,1274,962),(1300,750,1518,1020)]
 subs=[]
 for name,region in zip(names,regions):
@@ -34,7 +34,7 @@ bone('tasset_back','pelvis',-90,20);bone('tasset_front','pelvis',80,20)
 bone('cape_upper','torso',-25,-140);bone('cape_lower','cape_upper',0,260);bone('scarf_tail','neck',-80,40)
 part('cape_upper','cape_upper',0,120,400,310);part('cape_lower','cape_lower',0,120,340,350)
 for side in ['back','front']:
- part('thigh_'+side,'thigh_'+side,0,140,190,320);part('shin_'+side,'shin_'+side,0,150,170,320);part('foot_'+side,'foot_'+side,-25,95,220,190)
+ part('thigh_'+side,'thigh_'+side,0,140,190,320);part('shin_'+side,'shin_'+side,0,150,170,320);part('foot_'+side,'foot_'+side,-15,110,190,160)
 for side in ['shield','sword']:
  part('upper_'+side,'upper_'+side,0,80,230,270);part('forearm_'+side,'forearm_'+side,0,80,135,210);part('hand_'+side,'hand_'+side,0,30,105,120)
 part('chest','torso',0,-20,450,420);part('belt','pelvis',0,0,370,150)

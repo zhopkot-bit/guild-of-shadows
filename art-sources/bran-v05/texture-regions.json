@@ -99,14 +99,14 @@
       "x": 320,
       "y": 504,
       "width": 105,
-      "height": 231
+      "height": 184
     },
     {
       "name": "foot_back",
-      "x": 553,
-      "y": 500,
-      "width": 130,
-      "height": 240
+      "x": 555,
+      "y": 635,
+      "width": 114,
+      "height": 105
     },
     {
       "name": "thigh_front",
@@ -120,14 +120,14 @@
       "x": 1105,
       "y": 500,
       "width": 105,
-      "height": 239
+      "height": 190
     },
     {
       "name": "foot_front",
       "x": 1343,
-      "y": 500,
-      "width": 105,
-      "height": 237
+      "y": 635,
+      "width": 101,
+      "height": 102
     },
     {
       "name": "sword",
