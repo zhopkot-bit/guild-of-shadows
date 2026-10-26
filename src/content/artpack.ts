@@ -42,6 +42,8 @@ export interface ArenaLayer {
 }
 
 export interface ArtPackEntry {
+  /** Optional in-game portrait supplied with the art pack. */
+  portrait?: string;
   anim?: string;
   /** Скелет DragonBones (`*_ske.json`) и его атлас (`*_tex.json`). */
   rig?: string;
@@ -105,6 +107,12 @@ export async function loadArtPack(timeoutMs = 2500): Promise<ArtPackRegistry> {
   const reg = raw as ArtPackRegistry;
   registry = { version: 1, heroes: reg.heroes ?? {}, enemies: reg.enemies ?? {}, arenas: reg.arenas ?? {} };
   const base = override ?? `${ART_ROOT}art-pack.json`;
+  // Resolve portrait URLs before the UI constructs character cards.
+  for (const group of [registry.heroes, registry.enemies]) {
+    for (const e of Object.values(group)) {
+      if (e.portrait) e.portrait = new URL(e.portrait, new URL(base, window.location.href)).href;
+    }
+  }
   const entries = [...Object.values(registry.heroes), ...Object.values(registry.enemies)];
   await Promise.all(entries.flatMap((e) => [e.anim, e.phase2Anim]).filter((x): x is string => !!x).map(async (rel) => {
     const u = resolve(base, rel);
@@ -132,6 +140,10 @@ export async function loadArtPack(timeoutMs = 2500): Promise<ArtPackRegistry> {
   }
   for (const a of Object.values(registry.arenas)) for (const l of a.layers) l.src = resolve(base, l.src);
   return registry;
+}
+
+export function artPortraitFor(group: 'heroes' | 'enemies', id: string): string | null {
+  return registry[group][id]?.portrait ?? null;
 }
 
 export function artFor(group: 'heroes' | 'enemies', id: string): { anim: AnimPack | null; phase2Sprite: string | null; phase2Anim: AnimPack | null; rig: LoadedRig | null; phase2Rig: LoadedRig | null } {
