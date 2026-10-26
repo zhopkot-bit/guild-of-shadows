@@ -1,0 +1,47 @@
+{
+  "ok": true,
+  "application": "GIMP 3",
+  "rows": [
+    {
+      "file": "art-sources/bran-v05/bran_layers.psd",
+      "width": 1200,
+      "height": 1600,
+      "layersTopToBottom": [
+        "shield",
+        "sword",
+        "scarf_tail",
+        "collar",
+        "head",
+        "tasset_front",
+        "tasset_back",
+        "belt",
+        "chest",
+        "hand_sword",
+        "forearm_sword",
+        "upper_sword",
+        "hand_shield",
+        "forearm_shield",
+        "upper_shield",
+        "foot_front",
+        "shin_front",
+        "thigh_front",
+        "foot_back",
+        "shin_back",
+        "thigh_back",
+        "cape_lower",
+        "cape_upper"
+      ]
+    },
+    {
+      "file": "art-sources/crypt-v05/crypt_layers.psd",
+      "width": 1672,
+      "height": 941,
+      "layersTopToBottom": [
+        "front",
+        "floor",
+        "mid",
+        "far"
+      ]
+    }
+  ]
+}

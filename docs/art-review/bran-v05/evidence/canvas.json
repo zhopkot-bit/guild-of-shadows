@@ -1,0 +1,47 @@
+{
+  "ok": true,
+  "check": "ACTUAL GAME v1.8",
+  "viewportCount": 4,
+  "rows": [
+    {
+      "viewport": "1920x1080",
+      "ok": true,
+      "errors": [],
+      "branId": "h1",
+      "rig": true,
+      "portrait": true,
+      "sceneErrors": [],
+      "backend": "canvas2d"
+    },
+    {
+      "viewport": "1366x768",
+      "ok": true,
+      "errors": [],
+      "branId": "h1",
+      "rig": true,
+      "portrait": true,
+      "sceneErrors": [],
+      "backend": "canvas2d"
+    },
+    {
+      "viewport": "1024x768",
+      "ok": true,
+      "errors": [],
+      "branId": "h1",
+      "rig": true,
+      "portrait": true,
+      "sceneErrors": [],
+      "backend": "canvas2d"
+    },
+    {
+      "viewport": "390x844",
+      "ok": true,
+      "errors": [],
+      "branId": "h1",
+      "rig": true,
+      "portrait": true,
+      "sceneErrors": [],
+      "backend": "canvas2d"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "ok": false,
+  "passed": 57,
+  "failures": [
+    {
+      "code": "FILE",
+      "detail": "character authentic master: art-sources/bran-v05/bran_master.png"
+    },
+    {
+      "code": "FILE",
+      "detail": "portrait authentic master: art-sources/bran-v05/bran_portrait_master.png"
+    },
+    {
+      "code": "FILE",
+      "detail": "project authentic master: art-sources/bran-v05/bran.dbproj"
+    }
+  ],
+  "manual": [
+    "Verify exact approved Bran identity against sprite.webp, portrait.webp and hero-lineup.webp.",
+    "Check true isolated far/mid/floor/front parallax and absence of double floor at all viewports.",
+    "View full 24fps attack, hit, death (lying end frame), plus alpha halos at moving joints."
+  ]
+}

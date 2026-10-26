@@ -1,0 +1,517 @@
+{
+  "ok": true,
+  "lifecycle": {
+    "ok": true,
+    "death": {
+      "id": "h1",
+      "x": 137,
+      "offX": 0,
+      "alpha": 0.5,
+      "dissolve": 0,
+      "clip": "death",
+      "anim": false,
+      "rig": true
+    },
+    "revived": {
+      "id": "h1",
+      "x": 137,
+      "offX": 0,
+      "alpha": 1,
+      "dissolve": 0,
+      "clip": "idle",
+      "anim": false,
+      "rig": true
+    },
+    "method": "Live ArenaScene methods at manual turn, not combat HP events"
+  },
+  "errors": [],
+  "rows": [
+    {
+      "clip": "idle",
+      "fraction": 0,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.041666666666666664,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.08333333333333333,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.125,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.16666666666666666,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.20833333333333334,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.25,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.2916666666666667,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.3333333333333333,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.375,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.4166666666666667,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.4583333333333333,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.5,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.5416666666666666,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.5833333333333334,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.625,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.6666666666666666,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.7083333333333334,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.75,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.7916666666666666,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.8333333333333334,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.875,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.9166666666666666,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.9583333333333334,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "idle",
+      "fraction": 0.999,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "attack",
+      "fraction": 0,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "attack",
+      "fraction": 0.1,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "attack",
+      "fraction": 0.2,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "attack",
+      "fraction": 0.3,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "attack",
+      "fraction": 0.4,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "attack",
+      "fraction": 0.5,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "attack",
+      "fraction": 0.6,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "attack",
+      "fraction": 0.7,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "attack",
+      "fraction": 0.8,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "attack",
+      "fraction": 0.9,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "attack",
+      "fraction": 0.999,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "cast",
+      "fraction": 0,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "cast",
+      "fraction": 0.1111111111111111,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "cast",
+      "fraction": 0.2222222222222222,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "cast",
+      "fraction": 0.3333333333333333,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "cast",
+      "fraction": 0.4444444444444444,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "cast",
+      "fraction": 0.5555555555555556,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "cast",
+      "fraction": 0.6666666666666666,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "cast",
+      "fraction": 0.7777777777777778,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "cast",
+      "fraction": 0.8888888888888888,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "cast",
+      "fraction": 0.999,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "hit",
+      "fraction": 0,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "hit",
+      "fraction": 0.2,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "hit",
+      "fraction": 0.4,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "hit",
+      "fraction": 0.6,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "hit",
+      "fraction": 0.8,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "hit",
+      "fraction": 0.999,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "death",
+      "fraction": 0,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "death",
+      "fraction": 0.08333333333333333,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "death",
+      "fraction": 0.16666666666666666,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "death",
+      "fraction": 0.25,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "death",
+      "fraction": 0.3333333333333333,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "death",
+      "fraction": 0.4166666666666667,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "death",
+      "fraction": 0.5,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "death",
+      "fraction": 0.5833333333333334,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "death",
+      "fraction": 0.6666666666666666,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "death",
+      "fraction": 0.75,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "death",
+      "fraction": 0.8333333333333334,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "death",
+      "fraction": 0.9166666666666666,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "death",
+      "fraction": 0.999,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "victory",
+      "fraction": 0,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "victory",
+      "fraction": 0.06666666666666667,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "victory",
+      "fraction": 0.13333333333333333,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "victory",
+      "fraction": 0.2,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "victory",
+      "fraction": 0.26666666666666666,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "victory",
+      "fraction": 0.3333333333333333,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "victory",
+      "fraction": 0.4,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "victory",
+      "fraction": 0.4666666666666667,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "victory",
+      "fraction": 0.5333333333333333,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "victory",
+      "fraction": 0.6,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "victory",
+      "fraction": 0.6666666666666666,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "victory",
+      "fraction": 0.7333333333333333,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "victory",
+      "fraction": 0.8,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "victory",
+      "fraction": 0.8666666666666667,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "victory",
+      "fraction": 0.9333333333333333,
+      "backend": "webgl",
+      "errors": []
+    },
+    {
+      "clip": "victory",
+      "fraction": 0.999,
+      "backend": "webgl",
+      "errors": []
+    }
+  ],
+  "method": "Sampled poses in live renderer, not combat sequencing or FPS benchmark"
+}
