@@ -1,6 +1,35 @@
 {
   "version": 1,
-  "heroes": {},
+  "heroes": {
+    "bran": {
+      "rig": "rigs/bran/bran_ske.json",
+      "rigAtlas": "rigs/bran/bran_tex.json",
+      "rigArmature": "bran",
+      "portrait": "heroes/bran/portrait_pilot_v04.webp"
+    }
+  },
   "enemies": {},
-  "arenas": {}
+  "arenas": {
+    "crypt": {
+      "layers": [
+        {
+          "src": "arenas/crypt/crypt_far.webp",
+          "parallax": 0.3
+        },
+        {
+          "src": "arenas/crypt/crypt_mid.webp",
+          "parallax": 0.7
+        },
+        {
+          "src": "arenas/crypt/crypt_floor.webp",
+          "parallax": 1.0
+        },
+        {
+          "src": "arenas/crypt/crypt_front.webp",
+          "parallax": 1.6,
+          "front": true
+        }
+      ]
+    }
+  }
 }

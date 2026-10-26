@@ -1,0 +1,1544 @@
+{
+  "frameRate": 24,
+  "name": "bran",
+  "version": "5.5",
+  "armature": [
+    {
+      "type": "Armature",
+      "name": "bran",
+      "frameRate": 24,
+      "aabb": {
+        "x": -880,
+        "y": -1080,
+        "width": 1670,
+        "height": 1250
+      },
+      "bone": [
+        {
+          "name": "root"
+        },
+        {
+          "name": "hip",
+          "parent": "root",
+          "transform": {
+            "x": -19,
+            "y": -523
+          }
+        },
+        {
+          "name": "torso",
+          "parent": "hip",
+          "transform": {
+            "x": 7,
+            "y": -134
+          }
+        },
+        {
+          "name": "head",
+          "parent": "torso",
+          "transform": {
+            "x": -7,
+            "y": -168
+          }
+        },
+        {
+          "name": "cape",
+          "parent": "torso",
+          "transform": {
+            "x": -29,
+            "y": 60
+          }
+        },
+        {
+          "name": "leg_back",
+          "parent": "hip",
+          "transform": {
+            "x": 68,
+            "y": 168
+          }
+        },
+        {
+          "name": "leg_front",
+          "parent": "hip",
+          "transform": {
+            "x": -101,
+            "y": 169
+          }
+        },
+        {
+          "name": "arm_sword_u",
+          "parent": "torso",
+          "transform": {
+            "x": -106,
+            "y": -107
+          }
+        },
+        {
+          "name": "arm_sword_fore",
+          "parent": "arm_sword_u",
+          "transform": {
+            "x": -46,
+            "y": 185
+          }
+        },
+        {
+          "name": "sword",
+          "parent": "arm_sword_fore",
+          "transform": {
+            "x": -63,
+            "y": 189
+          }
+        },
+        {
+          "name": "arm_shield_u",
+          "parent": "torso",
+          "transform": {
+            "x": 136,
+            "y": -123
+          }
+        },
+        {
+          "name": "arm_shield_fore",
+          "parent": "arm_shield_u",
+          "transform": {
+            "x": 24,
+            "y": 154
+          }
+        },
+        {
+          "name": "shield",
+          "parent": "arm_shield_fore",
+          "transform": {
+            "x": 35,
+            "y": 44
+          }
+        },
+        {
+          "name": "scarf",
+          "parent": "torso",
+          "transform": {
+            "x": -9,
+            "y": -138
+          }
+        }
+      ],
+      "slot": [
+        {
+          "name": "cape_back",
+          "parent": "cape",
+          "displayIndex": 0
+        },
+        {
+          "name": "leg_back",
+          "parent": "leg_back",
+          "displayIndex": 0
+        },
+        {
+          "name": "leg_front",
+          "parent": "leg_front",
+          "displayIndex": 0
+        },
+        {
+          "name": "arm_shield_u",
+          "parent": "arm_shield_u",
+          "displayIndex": 0
+        },
+        {
+          "name": "arm_shield_fore",
+          "parent": "arm_shield_fore",
+          "displayIndex": 0
+        },
+        {
+          "name": "pelvis",
+          "parent": "hip",
+          "displayIndex": 0
+        },
+        {
+          "name": "torso",
+          "parent": "torso",
+          "displayIndex": 0
+        },
+        {
+          "name": "arm_sword_u",
+          "parent": "arm_sword_u",
+          "displayIndex": 0
+        },
+        {
+          "name": "arm_sword_fore",
+          "parent": "arm_sword_fore",
+          "displayIndex": 0
+        },
+        {
+          "name": "scarf",
+          "parent": "scarf",
+          "displayIndex": 0
+        },
+        {
+          "name": "head",
+          "parent": "head",
+          "displayIndex": 0
+        },
+        {
+          "name": "sword",
+          "parent": "sword",
+          "displayIndex": 0
+        },
+        {
+          "name": "shield",
+          "parent": "shield",
+          "displayIndex": 0
+        },
+        {
+          "name": "guard_glow",
+          "parent": "shield",
+          "displayIndex": 0,
+          "color": {
+            "aM": 0
+          }
+        }
+      ],
+      "skin": [
+        {
+          "slot": [
+            {
+              "name": "cape_back",
+              "display": [
+                {
+                  "name": "cape_back",
+                  "type": "image",
+                  "transform": {
+                    "x": -3.5,
+                    "y": 134.5
+                  }
+                }
+              ]
+            },
+            {
+              "name": "leg_back",
+              "display": [
+                {
+                  "name": "leg_back",
+                  "type": "image",
+                  "transform": {
+                    "x": 72.0,
+                    "y": 175.0
+                  }
+                }
+              ]
+            },
+            {
+              "name": "leg_front",
+              "display": [
+                {
+                  "name": "leg_front",
+                  "type": "image",
+                  "transform": {
+                    "x": 3.5,
+                    "y": 183.0
+                  }
+                }
+              ]
+            },
+            {
+              "name": "arm_shield_u",
+              "display": [
+                {
+                  "name": "arm_shield_u",
+                  "type": "image",
+                  "transform": {
+                    "x": 8.0,
+                    "y": 63.5
+                  }
+                }
+              ]
+            },
+            {
+              "name": "arm_shield_fore",
+              "display": [
+                {
+                  "name": "arm_shield_fore",
+                  "type": "image",
+                  "transform": {
+                    "x": 16.0,
+                    "y": 66.0
+                  }
+                }
+              ]
+            },
+            {
+              "name": "pelvis",
+              "display": [
+                {
+                  "name": "pelvis",
+                  "type": "image",
+                  "transform": {
+                    "x": -18.5,
+                    "y": 147.5
+                  }
+                }
+              ]
+            },
+            {
+              "name": "torso",
+              "display": [
+                {
+                  "name": "torso",
+                  "type": "image",
+                  "transform": {
+                    "x": 9.0,
+                    "y": -19.5
+                  }
+                }
+              ]
+            },
+            {
+              "name": "arm_sword_u",
+              "display": [
+                {
+                  "name": "arm_sword_u",
+                  "type": "image",
+                  "transform": {
+                    "x": -11.5,
+                    "y": 80.0
+                  }
+                }
+              ]
+            },
+            {
+              "name": "arm_sword_fore",
+              "display": [
+                {
+                  "name": "arm_sword_fore",
+                  "type": "image",
+                  "transform": {
+                    "x": -25.5,
+                    "y": 83.5
+                  }
+                }
+              ]
+            },
+            {
+              "name": "scarf",
+              "display": [
+                {
+                  "name": "scarf",
+                  "type": "image",
+                  "transform": {
+                    "x": 0.0,
+                    "y": 2.5
+                  }
+                }
+              ]
+            },
+            {
+              "name": "head",
+              "display": [
+                {
+                  "name": "head",
+                  "type": "image",
+                  "transform": {
+                    "x": 2.5,
+                    "y": -61.5
+                  }
+                }
+              ]
+            },
+            {
+              "name": "sword",
+              "display": [
+                {
+                  "name": "sword",
+                  "type": "image",
+                  "transform": {
+                    "x": -65.5,
+                    "y": 168.5
+                  }
+                }
+              ]
+            },
+            {
+              "name": "shield",
+              "display": [
+                {
+                  "name": "shield",
+                  "type": "image",
+                  "transform": {
+                    "x": 20.5,
+                    "y": 146.0
+                  }
+                }
+              ]
+            },
+            {
+              "name": "guard_glow",
+              "display": [
+                {
+                  "name": "guard_glow",
+                  "type": "image",
+                  "transform": {
+                    "x": 0,
+                    "y": 6
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "animation": [
+        {
+          "name": "idle",
+          "duration": 48,
+          "playTimes": 0,
+          "bone": [
+            {
+              "name": "torso",
+              "rotateFrame": [
+                {
+                  "duration": 12,
+                  "tweenEasing": 0,
+                  "rotate": -1.0
+                },
+                {
+                  "duration": 12,
+                  "tweenEasing": 0,
+                  "rotate": 0.45
+                },
+                {
+                  "duration": 12,
+                  "tweenEasing": 0,
+                  "rotate": 1.0
+                },
+                {
+                  "duration": 12,
+                  "tweenEasing": 0,
+                  "rotate": 0.45
+                },
+                {
+                  "duration": 0,
+                  "rotate": -1.0
+                }
+              ],
+              "translateFrame": [
+                {
+                  "duration": 12,
+                  "tweenEasing": 0,
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "duration": 12,
+                  "tweenEasing": 0,
+                  "x": 0,
+                  "y": -2
+                },
+                {
+                  "duration": 12,
+                  "tweenEasing": 0,
+                  "x": 0,
+                  "y": -3
+                },
+                {
+                  "duration": 12,
+                  "tweenEasing": 0,
+                  "x": 0,
+                  "y": -2
+                },
+                {
+                  "duration": 0,
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            },
+            {
+              "name": "head",
+              "rotateFrame": [
+                {
+                  "duration": 24,
+                  "tweenEasing": 0,
+                  "rotate": 1.1
+                },
+                {
+                  "duration": 24,
+                  "tweenEasing": 0,
+                  "rotate": -1.1
+                },
+                {
+                  "duration": 0,
+                  "rotate": 1.1
+                }
+              ]
+            },
+            {
+              "name": "cape",
+              "rotateFrame": [
+                {
+                  "duration": 24,
+                  "tweenEasing": 0,
+                  "rotate": -1.4
+                },
+                {
+                  "duration": 24,
+                  "tweenEasing": 0,
+                  "rotate": 1.4
+                },
+                {
+                  "duration": 0,
+                  "rotate": -1.4
+                }
+              ]
+            },
+            {
+              "name": "arm_shield_u",
+              "rotateFrame": [
+                {
+                  "duration": 24,
+                  "tweenEasing": 0,
+                  "rotate": -1
+                },
+                {
+                  "duration": 24,
+                  "tweenEasing": 0,
+                  "rotate": 1
+                },
+                {
+                  "duration": 0,
+                  "rotate": -1
+                }
+              ]
+            },
+            {
+              "name": "arm_sword_u",
+              "rotateFrame": [
+                {
+                  "duration": 24,
+                  "tweenEasing": 0,
+                  "rotate": 1.4
+                },
+                {
+                  "duration": 24,
+                  "tweenEasing": 0,
+                  "rotate": -1.2
+                },
+                {
+                  "duration": 0,
+                  "rotate": 1.4
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "attack",
+          "duration": 20,
+          "playTimes": 1,
+          "bone": [
+            {
+              "name": "torso",
+              "rotateFrame": [
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": -6
+                },
+                {
+                  "duration": 2,
+                  "tweenEasing": 0,
+                  "rotate": 9
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": 11
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 2
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 0,
+                  "rotate": 0
+                }
+              ]
+            },
+            {
+              "name": "arm_sword_u",
+              "rotateFrame": [
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 35
+                },
+                {
+                  "duration": 2,
+                  "tweenEasing": 0,
+                  "rotate": -95
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": -96
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": -35
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 0,
+                  "rotate": 0
+                }
+              ]
+            },
+            {
+              "name": "arm_sword_fore",
+              "rotateFrame": [
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 6
+                },
+                {
+                  "duration": 2,
+                  "tweenEasing": 0,
+                  "rotate": -15
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": -15
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": -7
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 0,
+                  "rotate": 0
+                }
+              ]
+            },
+            {
+              "name": "head",
+              "rotateFrame": [
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": -3
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": 6
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 1
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 0,
+                  "rotate": 0
+                }
+              ]
+            },
+            {
+              "name": "arm_shield_u",
+              "rotateFrame": [
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": 8
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": -5
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 3
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 0,
+                  "rotate": 0
+                }
+              ]
+            },
+            {
+              "name": "hip",
+              "translateFrame": [
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "x": -15,
+                  "y": 0
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "x": 18,
+                  "y": -5
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "x": 11,
+                  "y": 0
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "duration": 0,
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          ],
+          "frame": [
+            {
+              "duration": 10
+            },
+            {
+              "duration": 10,
+              "events": [
+                {
+                  "name": "impact"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "cast",
+          "duration": 18,
+          "playTimes": 1,
+          "bone": [
+            {
+              "name": "torso",
+              "rotateFrame": [
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": 5
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 8
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 3
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 0,
+                  "rotate": 0
+                }
+              ]
+            },
+            {
+              "name": "arm_shield_u",
+              "rotateFrame": [
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": -48
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": -38
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": -20
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 0,
+                  "rotate": 0
+                }
+              ]
+            },
+            {
+              "name": "arm_shield_fore",
+              "rotateFrame": [
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": -22
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": -26
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": -12
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 0,
+                  "rotate": 0
+                }
+              ]
+            },
+            {
+              "name": "shield",
+              "rotateFrame": [
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": 6
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 12
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 4
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 0,
+                  "rotate": 0
+                }
+              ]
+            }
+          ],
+          "frame": [
+            {
+              "duration": 7
+            },
+            {
+              "duration": 11,
+              "events": [
+                {
+                  "name": "impact"
+                }
+              ]
+            }
+          ],
+          "slot": [
+            {
+              "name": "guard_glow",
+              "colorFrame": [
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "value": {
+                    "aM": 0
+                  }
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "value": {
+                    "aM": 85
+                  }
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "value": {
+                    "aM": 100
+                  }
+                },
+                {
+                  "duration": 7,
+                  "tweenEasing": 0,
+                  "value": {
+                    "aM": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "hit",
+          "duration": 9,
+          "playTimes": 1,
+          "bone": [
+            {
+              "name": "torso",
+              "rotateFrame": [
+                {
+                  "duration": 2,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 2,
+                  "tweenEasing": 0,
+                  "rotate": -14
+                },
+                {
+                  "duration": 2,
+                  "tweenEasing": 0,
+                  "rotate": -9
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 0,
+                  "rotate": 0
+                }
+              ]
+            },
+            {
+              "name": "head",
+              "rotateFrame": [
+                {
+                  "duration": 2,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 2,
+                  "tweenEasing": 0,
+                  "rotate": 9
+                },
+                {
+                  "duration": 2,
+                  "tweenEasing": 0,
+                  "rotate": 5
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 0,
+                  "rotate": 0
+                }
+              ]
+            },
+            {
+              "name": "arm_shield_u",
+              "rotateFrame": [
+                {
+                  "duration": 2,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 2,
+                  "tweenEasing": 0,
+                  "rotate": -12
+                },
+                {
+                  "duration": 2,
+                  "tweenEasing": 0,
+                  "rotate": 3
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 0,
+                  "rotate": 0
+                }
+              ]
+            },
+            {
+              "name": "hip",
+              "translateFrame": [
+                {
+                  "duration": 2,
+                  "tweenEasing": 0,
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "duration": 2,
+                  "tweenEasing": 0,
+                  "x": -9,
+                  "y": 3
+                },
+                {
+                  "duration": 2,
+                  "tweenEasing": 0,
+                  "x": -5,
+                  "y": 0
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "duration": 0,
+                  "x": 0,
+                  "y": 0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "death",
+          "duration": 24,
+          "playTimes": 1,
+          "bone": [
+            {
+              "name": "torso",
+              "rotateFrame": [
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": 10
+                },
+                {
+                  "duration": 6,
+                  "tweenEasing": 0,
+                  "rotate": 24
+                },
+                {
+                  "duration": 8,
+                  "tweenEasing": 0,
+                  "rotate": 33
+                },
+                {
+                  "duration": 0,
+                  "rotate": 33
+                }
+              ]
+            },
+            {
+              "name": "head",
+              "rotateFrame": [
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": 5
+                },
+                {
+                  "duration": 6,
+                  "tweenEasing": 0,
+                  "rotate": -8
+                },
+                {
+                  "duration": 8,
+                  "tweenEasing": 0,
+                  "rotate": -10
+                },
+                {
+                  "duration": 0,
+                  "rotate": -10
+                }
+              ]
+            },
+            {
+              "name": "arm_sword_u",
+              "rotateFrame": [
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": -4
+                },
+                {
+                  "duration": 6,
+                  "tweenEasing": 0,
+                  "rotate": 2
+                },
+                {
+                  "duration": 8,
+                  "tweenEasing": 0,
+                  "rotate": -9
+                },
+                {
+                  "duration": 0,
+                  "rotate": -10
+                }
+              ]
+            },
+            {
+              "name": "arm_sword_fore",
+              "rotateFrame": [
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": 5
+                },
+                {
+                  "duration": 6,
+                  "tweenEasing": 0,
+                  "rotate": 9
+                },
+                {
+                  "duration": 8,
+                  "tweenEasing": 0,
+                  "rotate": 5
+                },
+                {
+                  "duration": 0,
+                  "rotate": 5
+                }
+              ]
+            },
+            {
+              "name": "arm_shield_u",
+              "rotateFrame": [
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": -8
+                },
+                {
+                  "duration": 6,
+                  "tweenEasing": 0,
+                  "rotate": -11
+                },
+                {
+                  "duration": 8,
+                  "tweenEasing": 0,
+                  "rotate": -21
+                },
+                {
+                  "duration": 0,
+                  "rotate": -21
+                }
+              ]
+            },
+            {
+              "name": "arm_shield_fore",
+              "rotateFrame": [
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": -5
+                },
+                {
+                  "duration": 6,
+                  "tweenEasing": 0,
+                  "rotate": -20
+                },
+                {
+                  "duration": 8,
+                  "tweenEasing": 0,
+                  "rotate": -26
+                },
+                {
+                  "duration": 0,
+                  "rotate": -26
+                }
+              ]
+            },
+            {
+              "name": "leg_front",
+              "rotateFrame": [
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": -4
+                },
+                {
+                  "duration": 6,
+                  "tweenEasing": 0,
+                  "rotate": -19
+                },
+                {
+                  "duration": 8,
+                  "tweenEasing": 0,
+                  "rotate": -30
+                },
+                {
+                  "duration": 0,
+                  "rotate": -32
+                }
+              ]
+            },
+            {
+              "name": "leg_back",
+              "rotateFrame": [
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": 2
+                },
+                {
+                  "duration": 6,
+                  "tweenEasing": 0,
+                  "rotate": 16
+                },
+                {
+                  "duration": 8,
+                  "tweenEasing": 0,
+                  "rotate": 34
+                },
+                {
+                  "duration": 0,
+                  "rotate": 34
+                }
+              ]
+            },
+            {
+              "name": "cape",
+              "rotateFrame": [
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": -2
+                },
+                {
+                  "duration": 6,
+                  "tweenEasing": 0,
+                  "rotate": -7
+                },
+                {
+                  "duration": 8,
+                  "tweenEasing": 0,
+                  "rotate": -13
+                },
+                {
+                  "duration": 0,
+                  "rotate": -13
+                }
+              ]
+            },
+            {
+              "name": "hip",
+              "translateFrame": [
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "x": 0,
+                  "y": 0
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "x": -6,
+                  "y": 12
+                },
+                {
+                  "duration": 6,
+                  "tweenEasing": 0,
+                  "x": -15,
+                  "y": 29
+                },
+                {
+                  "duration": 8,
+                  "tweenEasing": 0,
+                  "x": -28,
+                  "y": 55
+                },
+                {
+                  "duration": 0,
+                  "x": -28,
+                  "y": 58
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "victory",
+          "duration": 30,
+          "playTimes": 1,
+          "bone": [
+            {
+              "name": "arm_sword_u",
+              "rotateFrame": [
+                {
+                  "duration": 6,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 8,
+                  "tweenEasing": 0,
+                  "rotate": -37
+                },
+                {
+                  "duration": 9,
+                  "tweenEasing": 0,
+                  "rotate": -45
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": -12
+                },
+                {
+                  "duration": 2,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 0,
+                  "rotate": 0
+                }
+              ]
+            },
+            {
+              "name": "arm_sword_fore",
+              "rotateFrame": [
+                {
+                  "duration": 6,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 8,
+                  "tweenEasing": 0,
+                  "rotate": -16
+                },
+                {
+                  "duration": 9,
+                  "tweenEasing": 0,
+                  "rotate": -14
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": -4
+                },
+                {
+                  "duration": 2,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 0,
+                  "rotate": 0
+                }
+              ]
+            },
+            {
+              "name": "torso",
+              "rotateFrame": [
+                {
+                  "duration": 6,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 8,
+                  "tweenEasing": 0,
+                  "rotate": 2
+                },
+                {
+                  "duration": 9,
+                  "tweenEasing": 0,
+                  "rotate": 3
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": 1
+                },
+                {
+                  "duration": 2,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 0,
+                  "rotate": 0
+                }
+              ]
+            },
+            {
+              "name": "head",
+              "rotateFrame": [
+                {
+                  "duration": 6,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 8,
+                  "tweenEasing": 0,
+                  "rotate": -4
+                },
+                {
+                  "duration": 9,
+                  "tweenEasing": 0,
+                  "rotate": -5
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": -2
+                },
+                {
+                  "duration": 2,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 0,
+                  "rotate": 0
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

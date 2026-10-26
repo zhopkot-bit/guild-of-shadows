@@ -1,0 +1,106 @@
+{
+  "imagePath": "bran_tex.webp",
+  "name": "bran",
+  "width": 2048,
+  "height": 2048,
+  "SubTexture": [
+    {
+      "name": "cape_back",
+      "x": 4,
+      "y": 4,
+      "width": 375,
+      "height": 717
+    },
+    {
+      "name": "shield",
+      "x": 4,
+      "y": 726,
+      "width": 225,
+      "height": 532
+    },
+    {
+      "name": "pelvis",
+      "x": 4,
+      "y": 1263,
+      "width": 363,
+      "height": 509
+    },
+    {
+      "name": "sword",
+      "x": 385,
+      "y": 4,
+      "width": 223,
+      "height": 393
+    },
+    {
+      "name": "leg_back",
+      "x": 385,
+      "y": 402,
+      "width": 240,
+      "height": 376
+    },
+    {
+      "name": "torso",
+      "x": 385,
+      "y": 783,
+      "width": 300,
+      "height": 357
+    },
+    {
+      "name": "leg_front",
+      "x": 385,
+      "y": 1145,
+      "width": 225,
+      "height": 356
+    },
+    {
+      "name": "arm_shield_u",
+      "x": 385,
+      "y": 1506,
+      "width": 178,
+      "height": 317
+    },
+    {
+      "name": "arm_sword_u",
+      "x": 691,
+      "y": 4,
+      "width": 135,
+      "height": 308
+    },
+    {
+      "name": "arm_sword_fore",
+      "x": 691,
+      "y": 317,
+      "width": 161,
+      "height": 257
+    },
+    {
+      "name": "arm_shield_fore",
+      "x": 691,
+      "y": 579,
+      "width": 130,
+      "height": 252
+    },
+    {
+      "name": "head",
+      "x": 691,
+      "y": 836,
+      "width": 217,
+      "height": 231
+    },
+    {
+      "name": "scarf",
+      "x": 691,
+      "y": 1072,
+      "width": 210,
+      "height": 123
+    },
+    {
+      "name": "guard_glow",
+      "x": 980,
+      "y": 20,
+      "width": 267,
+      "height": 555
+    }
+  ]
+}

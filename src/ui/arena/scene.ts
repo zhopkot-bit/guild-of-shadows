@@ -1433,13 +1433,13 @@ export class ArenaScene {
     if (a && !a.phase2) this.enterPhase2Visuals(a, true);
   }
 
-  stats(): { backend: string; actors: number; particles: number; errors: string[]; units: Array<{ id: string; x: number; offX: number; alpha: number; dissolve: number; clip: string | null; anim: boolean }> } {
+  stats(): { backend: string; actors: number; particles: number; errors: string[]; units: Array<{ id: string; x: number; offX: number; alpha: number; dissolve: number; clip: string | null; anim: boolean; rig: boolean }> } {
     return {
       backend: this.backend.kind,
       actors: this.actors.size,
       particles: this.particles.length,
       errors: [...this.errors],
-      units: [...this.actors.values()].map((a) => ({ id: a.spec.id, x: Math.round(a.x), offX: Math.round(a.p.offX), alpha: a.p.alpha, dissolve: a.p.dissolve, clip: a.clip?.name ?? null, anim: !!a.anim })),
+      units: [...this.actors.values()].map((a) => ({ id: a.spec.id, x: Math.round(a.x), offX: Math.round(a.p.offX), alpha: a.p.alpha, dissolve: a.p.dissolve, clip: a.clip?.name ?? null, anim: !!a.anim, rig: !!a.rig && !!a.rigAtlas })),
     };
   }
 }
