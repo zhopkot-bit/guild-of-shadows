@@ -107,6 +107,10 @@ class Actor {
   y = 0;
   w = 1;
   h = 1;
+  /** Swept pixel height of this rig when a sword moves outside standing bounds. */
+  renderH = 1;
+  /** Body width for hit testing and floor shadows, excluding sword reach. */
+  bodyW = 1;
   phase = Math.random() * 10;
   p: Params = { offX: 0, offY: 0, lean: 0, sx: 1, sy: 1, rot: 0, flash: 0, alpha: 1, dissolve: 0, desat: 0, emissive: 0 };
   flashColor: Rgb = [1, 1, 1];
@@ -393,8 +397,15 @@ export class ArenaScene {
       a.y = s.y * H;
       const v = a.spec.variant ?? 0;
       a.h = s.h * H * (v === 1 ? 0.93 : v === 2 ? 0.97 : 1);
-      const box = a.rig?.rig.aabb;
-      a.w = box ? (a.h * box.width) / box.height : a.anim ? (a.h * a.anim.frameWidth) / a.anim.frameHeight : a.tex ? (a.h * a.tex.w) / a.tex.h : a.h * 0.45;
+      const rig = a.rig?.rig;
+      const box = rig?.aabb;
+      const standing = rig?.layoutAabb;
+      const standingHeight = standing?.height ?? box?.height ?? 1;
+      // Keep character stature at slot height; allocate a larger texture for
+      // moving weapon parts instead of shrinking the figure to its sword arc.
+      a.renderH = box ? a.h * box.height / standingHeight : a.h;
+      a.w = box ? a.h * box.width / standingHeight : a.anim ? (a.h * a.anim.frameWidth) / a.anim.frameHeight : a.tex ? (a.h * a.tex.w) / a.tex.h : a.h * 0.45;
+      a.bodyW = standing ? a.h * standing.width / standingHeight : a.w;
     };
     if (this.setup.showcase) {
       heroes.forEach((a) => place(a, { x: 0.5, y: 0.97, h: 0.9, z: 10 }));
@@ -617,7 +628,7 @@ export class ArenaScene {
     const contact: QuadDraw[] = [];
     for (const a of this.order) {
       if (a.dead && a.spec.side === 'enemy' && a.p.dissolve >= 1) continue;
-      const fw = a.w * (a.spec.boss ? 0.7 : a.spec.wide ? 1.0 : 0.95);
+      const fw = a.bodyW * (a.spec.boss ? 0.7 : a.spec.wide ? 1.0 : 0.95);
       const lift = Math.max(0, -a.p.offY) / Math.max(1, a.h);
       contact.push({ x: a.x + a.p.offX, y: a.y + Math.max(0, a.p.offY) * 0.3, w: fw * (1 - lift * 0.5), h: fw * 0.22, rot: 0, r: 0, g: 0, b: 0, a: 0.75 * (1 - lift) * (1 - a.p.dissolve), uv: R.glow, additive: false });
     }
@@ -736,9 +747,9 @@ export class ArenaScene {
   private rigFrame(a: Actor): { tex: Tex; uv: [number, number, number, number]; pivot: [number, number] } | null {
     const lr = a.rig as LoadedRig;
     const box = lr.rig.aabb;
-    const th = Math.round(Math.min(2048, Math.max(128, a.h * 1.05)));
+    const th = Math.round(Math.min(2048, Math.max(128, a.renderH * 1.05)));
     const tw = Math.round(Math.min(2048, Math.max(64, (th * box.width) / box.height)));
-    if (!a.rigTarget || Math.abs(a.rigTarget.h - th) > 24) {
+    if (!a.rigTarget || Math.abs(a.rigTarget.h - th) > 24 || Math.abs(a.rigTarget.w - tw) > 24) {
       if (a.rigTarget) this.backend.disposeTarget(a.rigTarget);
       a.rigTarget = this.backend.createTarget(tw, th);
     }
@@ -796,6 +807,7 @@ export class ArenaScene {
     // При покадровой/скелетной анимации процедурная деформация лишь «дышит» поверх.
     const animScale = rect ? 0.25 : 1;
     const pivot = rect ? rect.pivot : [0.5, 1];
+    const drawH = rect && a.rig ? a.renderH : a.h;
     const idle = a.spec.idle;
     const dead = a.dead && a.spec.side === 'enemy' && a.p.dissolve >= 1;
     if (dead) return;
@@ -810,9 +822,9 @@ export class ArenaScene {
       emissive: rect || (a.phase2 && a.tex2) ? null : a.emi,
       uv: rect ? rect.uv : [0, 0, 1, 1],
       x: a.x + a.p.offX + shakeX + (0.5 - (pivot[0] ?? 0.5)) * a.w,
-      y: a.y + a.p.offY + shakeY + (mode === 0 ? hover : 0) + (1 - (pivot[1] ?? 1)) * a.h,
+      y: a.y + a.p.offY + shakeY + (mode === 0 ? hover : 0) + (1 - (pivot[1] ?? 1)) * drawH,
       w: a.w,
-      h: a.h,
+      h: drawH,
       flip: a.spec.flip,
       time: this.time * idle.speed * (1 + (a.spec.variant ?? 0) * 0.13),
       phase: a.phase,
@@ -851,7 +863,7 @@ export class ArenaScene {
       if (a.dead && a.spec.side === 'enemy') continue;
       const ax = a.x + a.p.offX;
       const ay = a.y + a.p.offY;
-      const hw = a.w * (a.spec.boss ? 0.32 : 0.38);
+      const hw = a.bodyW * (a.spec.boss ? 0.32 : 0.38);
       if (x >= ax - hw && x <= ax + hw && y >= ay - a.h * 0.96 && y <= ay + a.h * 0.03) return a.spec.id;
     }
     return null;
