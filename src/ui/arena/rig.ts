@@ -33,7 +33,10 @@ interface DbFrame {
 export interface DbArmature {
   name: string;
   frameRate?: number;
+  /** Full swept animation bounds (includes sword arc), used only for drawing. */
   aabb?: { x: number; y: number; width: number; height: number };
+  /** Resting character bounds; independent of animation sweeps. */
+  layoutAabb?: { x: number; y: number; width: number; height: number };
   bone: Array<{ name: string; parent?: string; transform?: DbTransform }>;
   slot: Array<{ name: string; parent: string; displayIndex?: number; color?: { aM?: number } }>;
   skin: Array<{ slot: Array<{ name: string; display: Array<{ name: string; type?: string; transform?: DbTransform }> }> }>;
@@ -118,6 +121,7 @@ export class Rig {
   readonly armature: DbArmature;
   readonly frameRate: number;
   readonly aabb: { x: number; y: number; width: number; height: number };
+  readonly layoutAabb: { x: number; y: number; width: number; height: number };
   private sub = new Map<string, DbAtlas['SubTexture'][number]>();
   private boneOrder: DbArmature['bone'];
 
@@ -139,6 +143,12 @@ export class Rig {
     }
     this.boneOrder = order;
     this.aabb = arm.aabb ?? this.computeAabb();
+    // Legacy rigs stay unchanged until a genuine rest-pose bbox is supplied.
+    const standing = arm.layoutAabb ?? this.aabb;
+    if (![standing.x, standing.y, standing.width, standing.height].every(Number.isFinite) || standing.width <= 0 || standing.height <= 0) {
+      throw new Error('DragonBones: invalid layoutAabb');
+    }
+    this.layoutAabb = standing;
   }
 
   animations(): string[] {
