@@ -3,6 +3,8 @@ import { chromium } from 'playwright-core';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
 const [base, outDir, W = '1920', H = '1080'] = process.argv.slice(2);
+const maxSteps = Number(process.env.QA_MAX_STEPS ?? 400);
+if (!Number.isInteger(maxSteps) || maxSteps < 1) throw new Error('QA_MAX_STEPS must be a positive integer');
 mkdirSync(outDir, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const ctx = await browser.newContext({ viewport: { width: +W, height: +H } });
@@ -60,9 +62,10 @@ const goldBefore = (await save()).gold;
 let manualDone = false;
 let reloadDone = false;
 let bossSeen = false;
+let completed = false;
 const tipsShot = new Set();
 const shotStages = new Set();
-for (let guard = 0; guard < 400; guard++) {
+for (let guard = 0; guard < maxSteps; guard++) {
   const stage = await page.evaluate(() => document.querySelector('.screen--expedition')?.className ?? document.querySelector('main section')?.className ?? '');
   if (stage.includes('stage-map')) {
     const nodes = page.locator('.node.is-reachable');
@@ -194,12 +197,15 @@ for (let guard = 0; guard < 400; guard++) {
     s = await save();
     step(`возврат в гильдию: activeRun=${s.activeRun === null ? 'null' : 'есть'}, экспедиций завершено ${s.expeditionsCompleted}`);
     await shot('12-guild-after');
+    completed = s.activeRun === null;
     break;
   }
   await page.waitForTimeout(300);
 }
 if (!tipsShot.size) issues.push('подсказки обучения первого боя не показались');
 if (!steps.some((x) => x.startsWith('подготовка к боссу'))) issues.push('экран подготовки к боссу не пройден');
-writeFileSync(`${outDir}/e2e-report.json`, JSON.stringify({ viewport: `${W}x${H}`, steps, issues }, null, 2));
+if (!completed) issues.push(`полный цикл не завершён: возврат в гильдию не подтверждён (лимит ${maxSteps} шагов)`);
+writeFileSync(`${outDir}/e2e-report.json`, JSON.stringify({ viewport: `${W}x${H}`, completed, maxSteps, steps, issues }, null, 2));
 console.log(JSON.stringify({ issues }, null, 1));
 await browser.close();
+if (issues.length) process.exitCode = 1;

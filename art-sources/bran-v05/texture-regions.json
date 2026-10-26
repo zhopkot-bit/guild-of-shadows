@@ -1,0 +1,175 @@
+{
+  "imagePath": "bran_tex.webp",
+  "width": 1536,
+  "height": 1024,
+  "SubTexture": [
+    {
+      "name": "head",
+      "x": 46,
+      "y": 16,
+      "width": 182,
+      "height": 241
+    },
+    {
+      "name": "collar",
+      "x": 257,
+      "y": 87,
+      "width": 208,
+      "height": 163
+    },
+    {
+      "name": "chest",
+      "x": 477,
+      "y": 7,
+      "width": 281,
+      "height": 258
+    },
+    {
+      "name": "belt",
+      "x": 768,
+      "y": 94,
+      "width": 259,
+      "height": 151
+    },
+    {
+      "name": "tasset_back",
+      "x": 1080,
+      "y": 5,
+      "width": 146,
+      "height": 267
+    },
+    {
+      "name": "tasset_front",
+      "x": 1318,
+      "y": 5,
+      "width": 172,
+      "height": 270
+    },
+    {
+      "name": "upper_sword",
+      "x": 45,
+      "y": 261,
+      "width": 182,
+      "height": 226
+    },
+    {
+      "name": "forearm_sword",
+      "x": 282,
+      "y": 280,
+      "width": 179,
+      "height": 197
+    },
+    {
+      "name": "hand_sword",
+      "x": 553,
+      "y": 284,
+      "width": 137,
+      "height": 196
+    },
+    {
+      "name": "upper_shield",
+      "x": 792,
+      "y": 265,
+      "width": 198,
+      "height": 227
+    },
+    {
+      "name": "forearm_shield",
+      "x": 1077,
+      "y": 275,
+      "width": 166,
+      "height": 199
+    },
+    {
+      "name": "hand_shield",
+      "x": 1355,
+      "y": 282,
+      "width": 115,
+      "height": 204
+    },
+    {
+      "name": "thigh_back",
+      "x": 46,
+      "y": 495,
+      "width": 139,
+      "height": 239
+    },
+    {
+      "name": "shin_back",
+      "x": 320,
+      "y": 504,
+      "width": 105,
+      "height": 231
+    },
+    {
+      "name": "foot_back",
+      "x": 553,
+      "y": 500,
+      "width": 130,
+      "height": 240
+    },
+    {
+      "name": "thigh_front",
+      "x": 835,
+      "y": 500,
+      "width": 155,
+      "height": 235
+    },
+    {
+      "name": "shin_front",
+      "x": 1105,
+      "y": 500,
+      "width": 105,
+      "height": 239
+    },
+    {
+      "name": "foot_front",
+      "x": 1343,
+      "y": 500,
+      "width": 105,
+      "height": 237
+    },
+    {
+      "name": "sword",
+      "x": 87,
+      "y": 740,
+      "width": 77,
+      "height": 276
+    },
+    {
+      "name": "shield",
+      "x": 270,
+      "y": 740,
+      "width": 179,
+      "height": 272
+    },
+    {
+      "name": "cape_upper",
+      "x": 486,
+      "y": 757,
+      "width": 284,
+      "height": 259
+    },
+    {
+      "name": "cape_lower",
+      "x": 805,
+      "y": 747,
+      "width": 219,
+      "height": 271
+    },
+    {
+      "name": "hair",
+      "x": 1095,
+      "y": 826,
+      "width": 164,
+      "height": 118
+    },
+    {
+      "name": "scarf_tail",
+      "x": 1343,
+      "y": 751,
+      "width": 164,
+      "height": 266
+    }
+  ]
+}

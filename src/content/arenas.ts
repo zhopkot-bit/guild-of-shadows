@@ -21,6 +21,10 @@ const CRYPT_LIGHTS: ArenaSetup['lights'] = [
 ];
 
 export const ARENAS: Record<'crypt' | 'boss', ArenaSetup> = {
-  crypt: { background: './art/v17/arena/crypt.webp', lights: CRYPT_LIGHTS, wetFloor: true, mood: 'crypt' },
+  crypt: { background: './art/v17/arena/crypt.webp', lights: [
+    { u: 34 / 1672, v: 641 / 941, size: 0.035, warm: true },
+    { u: 760 / 1672, v: 646 / 941, size: 0.035, warm: true },
+    { u: 1582 / 1672, v: 561 / 941, size: 0.035, warm: true },
+  ], wetFloor: true, mood: 'crypt' },
   boss: { background: './art/v17/arena/crypt_boss.webp', lights: CRYPT_LIGHTS.map((l) => ({ ...l, size: l.size * 0.8 })), wetFloor: true, mood: 'boss' },
 };

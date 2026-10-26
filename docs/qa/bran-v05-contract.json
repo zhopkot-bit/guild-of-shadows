@@ -15,23 +15,23 @@
     "required_frame_rate": 24,
     "bone_chains": {
       "leg_back": [
-        "leg_back_thigh",
-        "leg_back_shin",
-        "leg_back_foot"
+        "thigh_back",
+        "shin_back",
+        "foot_back"
       ],
       "leg_front": [
-        "leg_front_thigh",
-        "leg_front_shin",
-        "leg_front_foot"
+        "thigh_front",
+        "shin_front",
+        "foot_front"
       ],
       "arm_sword": [
-        "arm_sword_u",
-        "arm_sword_fore",
+        "upper_sword",
+        "forearm_sword",
         "hand_sword"
       ],
       "arm_shield": [
-        "arm_shield_u",
-        "arm_shield_fore",
+        "upper_shield",
+        "forearm_shield",
         "hand_shield"
       ]
     },
@@ -52,12 +52,12 @@
     "character": "art-sources/bran-v05/bran_master.png",
     "portrait": "art-sources/bran-v05/bran_portrait_master.png",
     "project": "art-sources/bran-v05/bran.dbproj",
-    "layers": "art-sources/bran-v05/bran_layers.kra"
+    "layers": "art-sources/bran-v05/bran_layers.psd"
   },
   "arena": {
-    "far": "public/art/v17/arenas/crypt/crypt_far.webp",
-    "mid": "public/art/v17/arenas/crypt/crypt_mid.webp",
-    "floor": "public/art/v17/arenas/crypt/crypt_floor.webp",
-    "front": "public/art/v17/arenas/crypt/crypt_front.webp"
+    "far": "public/art/v17/arenas/crypt-v05/crypt_far.webp",
+    "mid": "public/art/v17/arenas/crypt-v05/crypt_mid.webp",
+    "floor": "public/art/v17/arenas/crypt-v05/crypt_floor.webp",
+    "front": "public/art/v17/arenas/crypt-v05/crypt_front.webp"
   }
 }
