@@ -1,0 +1,16 @@
+{
+ "registry": "/home/user/gos-v1.7/source/qa-fixtures/artpack-demo/art-pack.json",
+ "ok": true,
+ "errors": [],
+ "warnings": [
+  "heroes.bran (bran_anim.json): страница bran_anim.webp больше 2048 — на слабых телефонах лучше 2048",
+  "heroes.rook (mannequin_ske.json): нет рекомендуемой анимации «victory» (будет замена)",
+  "heroes.rook (mannequin_ske.json).cast: нет события «impact» в кадре удара"
+ ],
+ "info": [
+  "heroes.bran (bran_anim.json) атлас bran_anim.webp: 3200×3580 webp alpha, 1410 КБ",
+  "heroes.rook (mannequin_ske.json) атлас: 512×512 png alpha, 5 КБ",
+  "heroes.rook (mannequin_ske.json): костей 11, слотов 9, анимации idle, attack, cast, hit, death",
+  "arenas.crypt слой crypt_front.webp: 1920×1080 webp alpha, 6 КБ"
+ ]
+}

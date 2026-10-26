@@ -1,0 +1,21 @@
+
+ RUN  v2.1.9 /home/user/gos-v1.7/source
+
+ ✓ tests/modules.test.ts (16 tests) 20ms
+ ✓ tests/battle.test.ts (27 tests) 98ms
+ ✓ tests/run.test.ts (14 tests) 306ms
+ ✓ tests/migration.test.ts (7 tests) 14ms
+ ✓ tests/roster.test.ts (8 tests) 13ms
+ ✓ tests/economy.test.ts (11 tests) 28ms
+ ✓ tests/rig.test.ts (8 tests) 7ms
+ ✓ tests/encounters.test.ts (7 tests) 67ms
+ ✓ tests/save.test.ts (7 tests) 10ms
+ ✓ tests/save-resolution.test.ts (6 tests) 7ms
+ ✓ tests/map.test.ts (2 tests) 478ms
+   ✓ карта забега > гарантии структуры выполняются на 500 сидах 474ms
+
+ Test Files  11 passed (11)
+      Tests  113 passed (113)
+   Start at  19:17:04
+   Duration  1.68s (transform 459ms, setup 0ms, collect 896ms, tests 1.05s, environment 2ms, prepare 658ms)
+

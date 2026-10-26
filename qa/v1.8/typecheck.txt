@@ -1,0 +1,4 @@
+
+> guild-of-shadows@1.8.0 typecheck
+> tsc --noEmit
+

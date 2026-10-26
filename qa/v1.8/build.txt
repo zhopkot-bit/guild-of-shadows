@@ -1,0 +1,13 @@
+
+> guild-of-shadows@1.8.0 build
+> tsc --noEmit && vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 44 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.88 kB │ gzip:  0.64 kB
+dist/assets/index-BsdE3Ge-.css   36.85 kB │ gzip:  8.74 kB
+dist/assets/index-CmeXBheT.js   165.48 kB │ gzip: 61.30 kB
+✓ built in 699ms
