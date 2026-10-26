@@ -76,6 +76,32 @@ describe('Rig на тестовом манекене', () => {
   });
 });
 
+describe('DragonBones standing bounds vs swept bounds', () => {
+  const dir = 'qa-fixtures/artpack-demo/';
+  const fixture = JSON.parse(readFileSync(dir + 'mannequin_ske.json', 'utf8')) as DbSkeleton;
+  const atlas = JSON.parse(readFileSync(dir + 'mannequin_tex.json', 'utf8')) as DbAtlas;
+
+  it('keeps existing rigs backwards compatible without layoutAabb', () => {
+    const rig = new Rig(fixture, atlas);
+    expect(rig.layoutAabb).toEqual(rig.aabb);
+  });
+
+  it('uses independent standing size without clipping the full render bounds', () => {
+    const ske = structuredClone(fixture);
+    ske.armature[0]!.layoutAabb = { x: -40, y: -100, width: 80, height: 100 };
+    const rig = new Rig(ske, atlas);
+    expect(rig.layoutAabb).toEqual({ x: -40, y: -100, width: 80, height: 100 });
+    expect(rig.aabb).not.toEqual(rig.layoutAabb);
+    expect(rig.pose('attack', 0.1).length).toBeGreaterThan(0);
+  });
+
+  it('rejects zero or invalid standing bounds', () => {
+    const ske = structuredClone(fixture);
+    ske.armature[0]!.layoutAabb = { x: 0, y: -100, width: 0, height: 100 };
+    expect(() => new Rig(ske, atlas)).toThrow(/layoutAabb/);
+  });
+});
+
 describe('пакет кадровой анимации', () => {
   const base = { version: 1, frameWidth: 100, frameHeight: 200, pivot: [0.5, 0.95], clips: { idle: { frames: [0, 1], fps: 8 } } };
   it('принимает image или pages', () => {
