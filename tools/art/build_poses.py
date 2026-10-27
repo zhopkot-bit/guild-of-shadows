@@ -4,7 +4,11 @@
 
 В папке мастеров — PNG с прозрачным фоном на холсте одного размера и `poses.json`:
 
-    { "poses": { "idle": "idle.png", "strike": ["strike_1.png", "strike_2.png"], ... }, "fps": 12 }
+    { "poses": { "idle": "idle.png", "strike": ["strike_1.png", "strike_2.png"], ... }, "fps": 12,
+      "glow": { "strike": "strike_glow.png" }, "glowColor": [1, 0.6, 0.25],
+      "alternatives": { "hit": ["hit_b.png", ["hit_c1.png", "hit_c2.png"]] } }
+
+Маски свечения (`glow`) и варианты поз (`alternatives`) — необязательны (ТЗ §3.8).
 
 `pivot` и `figureHeight` можно не указывать — они вычисляются по стойке (idle): точка опоры — середина
 ступней, высота фигуры — по непрозрачной области. На выходе — WebP и готовый `poses.json` для реестра.
@@ -55,10 +59,16 @@ def main() -> int:
         print('Нет позы idle', file=sys.stderr)
         return 1
 
+    glow = spec.get('glow') or {}
+    alternatives = spec.get('alternatives') or {}
+    all_files = [f for files in poses.values() for f in as_list(files)]
+    all_files += [f for files in glow.values() for f in as_list(files)]
+    all_files += [f for alts in alternatives.values() for a in alts for f in as_list(a)]
+
     images = {}
     size = None
-    for name, files in poses.items():
-        for f in as_list(files):
+    for f in all_files:
+        if f not in images:
             im = Image.open(src / f).convert('RGBA')
             if size and im.size != size:
                 print(f'{f}: {im.size}, а холст {size} — все позы на холсте одного размера', file=sys.stderr)
@@ -78,24 +88,46 @@ def main() -> int:
     figure_h = spec.get('figureHeight') or round((box[3] - box[1]) / size[1], 4)
     figure_w = spec.get('figureWidth') or round((box[2] - box[0]) / size[0], 4)
 
-    out_poses = {}
     total = 0
-    for name, files in poses.items():
+
+    def export(name, files, check_feet=True):
+        kb_sum = 0
         names = []
         for f in as_list(files):
             im = images[f]
             b = opaque_box(im)
-            if b and name != 'down' and abs(b[3] / size[1] - pivot[1]) > 0.025:
+            if check_feet and b and name != 'down' and abs(b[3] / size[1] - pivot[1]) > 0.025:
                 print(f'Внимание: {f} — ступни на {b[3] / size[1]:.1%}, точка опоры {pivot[1]:.1%}', file=sys.stderr)
             dst = Path(f).with_suffix('.webp').name
             (im.resize((w, h), Image.LANCZOS) if scale < 1 else im).save(out / dst, 'WEBP', quality=args.quality, method=6)
-            total += (out / dst).stat().st_size
+            kb_sum += (out / dst).stat().st_size
             names.append(dst)
-        out_poses[name] = names[0] if len(names) == 1 else names
+        return (names[0] if len(names) == 1 else names), kb_sum
+
+    out_poses = {}
+    for name, files in poses.items():
+        out_poses[name], kb = export(name, files)
+        total += kb
+    out_glow = {}
+    for name, files in glow.items():
+        out_glow[name], kb = export(name, files, check_feet=False)
+        total += kb
+    out_alts = {}
+    for name, alts in alternatives.items():
+        out_alts[name] = []
+        for a in alts:
+            res, kb = export(name, a)
+            out_alts[name].append(res)
+            total += kb
 
     pack = {'version': 1, 'frameWidth': w, 'frameHeight': h, 'pivot': pivot, 'figureHeight': figure_h, 'figureWidth': figure_w, 'poses': out_poses}
-    if spec.get('fps'):
-        pack['fps'] = spec['fps']
+    for key in ('fps', 'glowColor', 'glowStrength'):
+        if spec.get(key) is not None:
+            pack[key] = spec[key]
+    if out_glow:
+        pack['glow'] = out_glow
+    if out_alts:
+        pack['alternatives'] = out_alts
     (out / 'poses.json').write_text(json.dumps(pack, ensure_ascii=False, indent=1), encoding='utf-8')
     print(json.dumps({'frame': [w, h], 'pivot': pivot, 'figureHeight': figure_h, 'figureWidth': figure_w, 'images': len(images), 'kb': round(total / 1024)}, ensure_ascii=False))
     return 0

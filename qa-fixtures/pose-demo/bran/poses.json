@@ -10,11 +10,32 @@
  "figureWidth": 0.4167,
  "poses": {
   "idle": "idle.webp",
+  "wounded": "wounded.webp",
   "windup": "windup.webp",
-  "strike": "strike.webp",
+  "strike": [
+   "strike.webp",
+   "strike_2.webp"
+  ],
   "cast": "cast.webp",
   "hit": "hit.webp",
   "down": "down.webp",
   "victory": "victory.webp"
+ },
+ "fps": 12,
+ "glowColor": [
+  1.0,
+  0.78,
+  0.45
+ ],
+ "glow": {
+  "strike": [
+   "strike_glow.webp",
+   "strike_2_glow.webp"
+  ]
+ },
+ "alternatives": {
+  "hit": [
+   "hit_b.webp"
+  ]
  }
 }
