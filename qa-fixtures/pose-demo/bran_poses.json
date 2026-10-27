@@ -1,0 +1,20 @@
+{
+ "version": 1,
+ "frameWidth": 1231,
+ "frameHeight": 1024,
+ "pivot": [
+  0.2414,
+  1
+ ],
+ "figureHeight": 0.9793,
+ "figureWidth": 0.4194,
+ "poses": {
+  "idle": "bran_idle.webp",
+  "windup": "bran_windup.webp",
+  "strike": "bran_strike.webp",
+  "cast": "bran_cast.webp",
+  "hit": "bran_hit.webp",
+  "down": "bran_down.webp",
+  "victory": "bran_victory.webp"
+ }
+}

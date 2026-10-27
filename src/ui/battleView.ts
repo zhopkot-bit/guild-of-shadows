@@ -191,6 +191,7 @@ export function battleScreen(ctx: Ctx): HTMLElement {
       sprite2: pack?.phase2Sprite ?? null,
       anim2: pack?.phase2Anim ?? null,
       rig: pack?.rig ?? null,
+      poses: pack?.poses ?? null,
       rig2: pack?.phase2Rig ?? null,
       id: u.id,
       side: u.side,

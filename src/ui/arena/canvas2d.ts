@@ -10,6 +10,7 @@ export class Canvas2DBackend implements Backend {
   private w = 1;
   private h = 1;
   private scratch = document.createElement('canvas');
+  private view: [number, number, number] = [1, 0, 0];
 
   constructor(private canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext('2d');
@@ -28,6 +29,16 @@ export class Canvas2DBackend implements Backend {
     return { w, h, handle: source, source };
   }
 
+  setView(zoom: number, cx: number, cy: number): void {
+    this.view = [zoom, cx, cy];
+  }
+
+  /** Камера кадра поверх единичного преобразования. */
+  private applyView(): void {
+    const [z, cx, cy] = this.view;
+    this.ctx.setTransform(z, 0, 0, z, cx - cx * z, cy - cy * z);
+  }
+
   begin(): void {
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx.globalAlpha = 1;
@@ -38,6 +49,7 @@ export class Canvas2DBackend implements Backend {
 
   drawBackground(tex: Tex, p: BackgroundParams): void {
     const c = this.ctx;
+    this.applyView();
     const t = coverTransform(this.w, this.h, tex.w, tex.h, p.zoom, p.offsetX, p.offsetY);
     c.filter = `contrast(${p.contrast}) saturate(${p.saturation}) brightness(${p.brightness * (p.tint[0] + p.tint[1] + p.tint[2]) / 3})`;
     c.drawImage(tex.source, t.x0, t.y0, t.drawW, t.drawH);
@@ -57,6 +69,7 @@ export class Canvas2DBackend implements Backend {
 
   drawSprite(d: SpriteDraw): void {
     const c = this.ctx;
+    this.applyView();
     const breath = 1 + d.breath * Math.sin((d.time + d.phase) * 1.9);
     c.save();
     c.translate(d.x, d.y);
@@ -107,6 +120,7 @@ export class Canvas2DBackend implements Backend {
 
   drawQuads(tex: Tex, quads: QuadDraw[]): void {
     const c = this.ctx;
+    this.applyView();
     const sw = tex.w;
     const sh = tex.h;
     for (const q of quads) {
@@ -149,6 +163,7 @@ export class Canvas2DBackend implements Backend {
     if (a <= 0) return;
     const c = this.ctx;
     c.save();
+    c.setTransform(1, 0, 0, 1, 0, 0);
     c.globalCompositeOperation = additive ? 'lighter' : 'source-over';
     c.fillStyle = `rgba(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)},${a})`;
     c.fillRect(0, 0, this.w, this.h);

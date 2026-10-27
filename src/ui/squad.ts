@@ -160,7 +160,7 @@ function heroSheet(hero: Hero): void {
     const pack = hero.identity ? artFor('heroes', hero.identity) : null;
     scene = new ArenaScene(stage, { ...ARENAS.crypt, showcase: true }, [{
       id: hero.id, side: 'hero', sprite: art.sprite, flip: false, style: art.attackStyle, boss: false, wide: false,
-      anim: pack?.anim ?? null, rig: pack?.rig ?? null,
+      anim: pack?.anim ?? null, rig: pack?.rig ?? null, poses: pack?.poses ?? null,
       idle: { breath: 0.014, sway: 1.2, bob: 0.8, hover: 0, speed: 0.9 },
     }]);
     scene.showcaseLoop(hero.id, ROLE_GLOW[hero.cls] ?? [1, 1, 1]);
