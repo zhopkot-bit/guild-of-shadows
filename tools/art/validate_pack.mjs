@@ -221,6 +221,13 @@ function checkPoses(group, id, rel, base) {
       if (!im) continue;
       totalKb += statSync(ip).size / 1024;
       if (im.w !== pack.frameWidth || im.h !== pack.frameHeight) errors.push(`${L}.${n} ${f}: ${im.w}×${im.h}, а холст ${pack.frameWidth}×${pack.frameHeight} — все позы на холсте одного размера`);
+      if (im.format === 'png' && im.buf && n === 'down') {
+        // Павший не должен ложиться на соседа: между бойцами около половины роста.
+        const box = pngOpaqueBox(im.buf, im.w, im.h);
+        const figH = pack.figureHeight * im.h;
+        const px = pack.pivot[0] * im.w;
+        if (box && Math.max(px - box.x0, box.x1 - px) > 0.6 * figH) warnings.push(`${L}.down ${f}: павший тянется на ${(Math.max(px - box.x0, box.x1 - px) / figH).toFixed(2)} роста от точки опоры (до 0,6) — ляжет на соседа`);
+      }
       if (im.format === 'png' && im.buf && n !== 'down') {
         // Ступни на одной линии: низ фигуры (кроме лежачей позы) совпадает с точкой опоры.
         const box = pngOpaqueBox(im.buf, im.w, im.h);
