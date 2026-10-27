@@ -54,17 +54,25 @@ export interface PosePack {
   figureHeight: number;
   /** Доля ширины холста под фигуру в стойке (для области выбора и тени); по умолчанию — 0,48 роста. */
   figureWidth?: number;
-  /** Путь к картинке каждой позы относительно json. */
-  poses: Partial<Record<PoseName, string>> & { idle: string };
+  /**
+   * Картинка позы (путь относительно json) или короткая серия 2–4 картинок. Серия действия проигрывается
+   * один раз и держит последний кадр; серия стойки и «готовлю удар» медленно качается туда-обратно.
+   */
+  poses: Partial<Record<PoseName, string | string[]>> & { idle: string | string[] };
+  /** Скорость серий, кадров в секунду (по умолчанию 12). */
+  fps?: number;
   /** Разрешённые URL поз (заполняется загрузчиком). */
-  poseUrls?: Partial<Record<PoseName, string>>;
+  poseUrls?: Partial<Record<PoseName, string[]>>;
 }
+
+const asList = (v: string | string[] | undefined): string[] => (typeof v === 'string' ? [v] : Array.isArray(v) ? v.filter((x) => typeof x === 'string') : []);
 
 export function isPosePack(v: unknown): v is PosePack {
   if (!v || typeof v !== 'object') return false;
   const p = v as PosePack;
   return p.version === 1 && p.frameWidth > 0 && p.frameHeight > 0 && Array.isArray(p.pivot) && p.pivot.length === 2
-    && p.figureHeight > 0 && p.figureHeight <= 1 && !!p.poses && typeof p.poses.idle === 'string';
+    && p.figureHeight > 0 && p.figureHeight <= 1 && !!p.poses && asList(p.poses.idle).length > 0
+    && (p.fps === undefined || (p.fps >= 2 && p.fps <= 30));
 }
 
 /** Поза, которая реально будет показана: сама или ближайшая замена из имеющихся. */
@@ -88,6 +96,8 @@ export interface ArenaLayer {
 export interface ArtPackEntry {
   /** Набор поз (`*_poses.json`) — основной формат для генеративного арта. */
   poses?: string;
+  /** Набор поз II фазы босса. */
+  phase2Poses?: string;
   anim?: string;
   /** Скелет DragonBones (`*_ske.json`) и его атлас (`*_tex.json`). */
   rig?: string;
@@ -159,15 +169,18 @@ export async function loadArtPack(timeoutMs = 2500): Promise<ArtPackRegistry> {
     if (isAnimPack(pack)) packs.set(rel, { ...pack, pageUrls: (pack.pages ?? [pack.image as string]).map((pg) => resolve(u, pg)) });
     else console.error(`Пакет анимации не прошёл проверку: ${u}`);
   }));
-  await Promise.all(entries.map((e) => e.poses).filter((x): x is string => !!x).map(async (rel) => {
+  await Promise.all(entries.flatMap((e) => [e.poses, e.phase2Poses]).filter((x): x is string => !!x).map(async (rel) => {
     const u = resolve(base, rel);
     const pack = await fetchJson(u, timeoutMs);
     if (!isPosePack(pack)) {
       console.error(`Набор поз не прошёл проверку: ${u}`);
       return;
     }
-    const poseUrls: Partial<Record<PoseName, string>> = {};
-    for (const n of POSE_NAMES) if (pack.poses[n]) poseUrls[n] = resolve(u, pack.poses[n] as string);
+    const poseUrls: Partial<Record<PoseName, string[]>> = {};
+    for (const n of POSE_NAMES) {
+      const list = asList(pack.poses[n]);
+      if (list.length) poseUrls[n] = list.map((x) => resolve(u, x));
+    }
     posePacks.set(rel, { ...pack, poseUrls });
   }));
   // Скелеты DragonBones.
@@ -192,10 +205,11 @@ export async function loadArtPack(timeoutMs = 2500): Promise<ArtPackRegistry> {
   return registry;
 }
 
-export function artFor(group: 'heroes' | 'enemies', id: string): { poses: PosePack | null; anim: AnimPack | null; phase2Sprite: string | null; phase2Anim: AnimPack | null; rig: LoadedRig | null; phase2Rig: LoadedRig | null } {
+export function artFor(group: 'heroes' | 'enemies', id: string): { poses: PosePack | null; phase2Poses: PosePack | null; anim: AnimPack | null; phase2Sprite: string | null; phase2Anim: AnimPack | null; rig: LoadedRig | null; phase2Rig: LoadedRig | null } {
   const e = registry[group][id];
   return {
     poses: e?.poses ? posePacks.get(e.poses) ?? null : null,
+    phase2Poses: e?.phase2Poses ? posePacks.get(e.phase2Poses) ?? null : null,
     anim: e?.anim ? packs.get(e.anim) ?? null : null,
     phase2Sprite: e?.phase2Sprite ?? null,
     phase2Anim: e?.phase2Anim ? packs.get(e.phase2Anim) ?? null : null,

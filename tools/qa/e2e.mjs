@@ -17,7 +17,8 @@ const shot = (name) => page.screenshot({ path: `${outDir}/${name}.png` });
 const tab = (name) => page.locator('.tab', { hasText: name }).click();
 const save = () => page.evaluate(() => JSON.parse(localStorage.getItem('gos.save') ?? 'null'));
 
-await page.goto(`${base}?qa=1`, { waitUntil: 'networkidle' });
+// ARTPACK=/путь/к/art-pack.json — прогон с тестовым артом (нужен dev-сервер: qa-fixtures не входит в сборку).
+await page.goto(`${base}?qa=1${process.env.ARTPACK ? `&artpack=${process.env.ARTPACK}` : ''}`, { waitUntil: 'networkidle' });
 await page.evaluate(() => localStorage.clear());
 await page.reload({ waitUntil: 'networkidle' });
 await page.waitForTimeout(800);

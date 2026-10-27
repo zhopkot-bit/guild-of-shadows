@@ -37,6 +37,8 @@ export interface ActorSpec {
   rig2?: LoadedRig | null;
   /** Набор поз (цельные иллюстрации): переключаются на фазах действия. */
   poses?: PosePack | null;
+  /** Набор поз II фазы босса. */
+  poses2?: PosePack | null;
   /** Номер экземпляра среди одинаковых врагов: лёгкие различия роста, тона и ритма, чтобы не было «клонов». */
   variant?: number;
   /** Уже выбыл (восстановление боя из сохранения). */
@@ -107,7 +109,8 @@ class Actor {
   animTex2: Tex[] = [];
   /** Набор поз: загруженные текстуры, текущая и предыдущая поза (для «призрака» при смене). */
   posePack: PosePack | null = null;
-  poseTex: Partial<Record<PoseName, Tex>> = {};
+  poseTex: Partial<Record<PoseName, Tex[]>> = {};
+  poseTex2: Partial<Record<PoseName, Tex[]>> = {};
   pose: PoseName = 'idle';
   prevPose: PoseName | null = null;
   poseAt = -10;
@@ -373,13 +376,15 @@ export class ArenaScene {
         a.rig = a.spec.rig;
       }
       if (a.spec.rig2) a.rigAtlas2 = this.texFrom(await get(a.spec.rig2.atlasUrl));
-      if (a.spec.poses?.poseUrls) {
-        const urls = a.spec.poses.poseUrls;
+      const loadPoses = async (pack: PosePack | null | undefined, into: Partial<Record<PoseName, Tex[]>>) => {
+        const urls = pack?.poseUrls ?? {};
         await Promise.all((Object.keys(urls) as PoseName[]).map(async (n) => {
-          a.poseTex[n] = this.texFrom(await get(urls[n] as string));
+          into[n] = await Promise.all((urls[n] ?? []).map(async (u) => this.texFrom(await get(u))));
         }));
-        if (a.poseTex.idle) a.posePack = a.spec.poses;
-      }
+      };
+      await loadPoses(a.spec.poses, a.poseTex);
+      if (a.poseTex.idle?.length) a.posePack = a.spec.poses ?? null;
+      await loadPoses(a.spec.poses2, a.poseTex2);
     });
     const layerJobs = (this.setup.layers ?? []).map(async (l) => ({ layer: l, tex: this.texFrom(await get(l.src)) }));
     this.bgTex = this.texFrom(await bg);
@@ -762,10 +767,7 @@ export class ArenaScene {
   /** Текущий кадр: для рига — перерисованная цель, для листа кадров — страница и прямоугольник. */
   private frameRect(a: Actor): { tex: Tex; uv: [number, number, number, number]; pivot: [number, number] } | null {
     if (a.rig && a.rigAtlas) return this.rigFrame(a);
-    if (a.posePack && !a.anim) {
-      const tex = a.poseTex[this.shownPose(a)] as Tex;
-      return { tex, uv: [0, 0, 1, 1], pivot: a.posePack.pivot };
-    }
+    if (a.posePack && !a.anim) return { tex: this.poseFrame(a, this.shownPose(a)), uv: [0, 0, 1, 1], pivot: a.posePack.pivot };
     const pack = a.anim;
     if (!pack || !a.animTex.length) return null;
     if (!a.clip) a.clip = { name: 'idle', start: this.time, def: pack.clips.idle };
@@ -906,7 +908,8 @@ export class ArenaScene {
     // Смена позы: прежняя поза коротко тает и «отстаёт» по ходу движения — глаз читает рывок, а не подмену.
     const ghostK = (this.time - a.poseAt) * this.speed / POSE_GHOST;
     if (posed && mode === 0 && a.prevPose && ghostK < 1) {
-      const gTex = a.poseTex[a.prevPose];
+      const prevList = a.poseTex[a.prevPose];
+      const gTex = prevList?.[prevList.length - 1];
       if (gTex && gTex !== baseTex) {
         const back = (1 - ghostK) * 0.06 * dw * -a.dir() * (a.spec.flip ? -1 : 1);
         this.backend.drawSprite({ ...d, tex: gTex, x: d.x + back, alpha: d.alpha * 0.55 * (1 - ghostK), outline: 0, rim: 0, flash: 0 });
@@ -918,13 +921,29 @@ export class ArenaScene {
   /** Какую позу показать: заказанную хореографией, «готовлю удар» при заряде или ближайшую замену. */
   private shownPose(a: Actor): PoseName {
     const want: PoseName = a.pose === 'idle' && a.status.charging && !a.dead ? 'prepare' : a.pose;
-    return resolvePose((n) => !!a.poseTex[n], want);
+    return resolvePose((n) => !!a.poseTex[n]?.length, want);
+  }
+
+  /** Кадр позы: серия действия идёт один раз и держит последний кадр, серия стойки качается туда-обратно. */
+  private poseFrame(a: Actor, name: PoseName): Tex {
+    const list = a.poseTex[name] as Tex[];
+    const n = list.length;
+    if (n <= 1) return list[0] as Tex;
+    const fps = a.posePack?.fps ?? 12;
+    const t = Math.max(0, (this.time - a.poseAt) * this.speed);
+    if (name === 'idle' || name === 'prepare') {
+      const period = 2 * (n - 1);
+      let k = Math.floor(t * Math.min(fps, 4)) % period;
+      if (k >= n) k = period - k;
+      return list[k] as Tex;
+    }
+    return list[Math.min(n - 1, Math.floor(t * fps))] as Tex;
   }
 
   /** Сменить позу (если у персонажа есть набор поз). */
   setPose(id: string, name: PoseName): void {
     const a = this.actors.get(id);
-    if (!a || !a.spec.poses) return;
+    if (!a || (!a.spec.poses && !a.spec.poses2)) return;
     const before = a.posePack ? this.shownPose(a) : a.pose;
     a.pose = name;
     const after = a.posePack ? this.shownPose(a) : name;
@@ -1503,6 +1522,13 @@ export class ArenaScene {
       a.rig = a.spec.rig2;
       a.rigAtlas = a.rigAtlas2;
       a.clip = null;
+    }
+    if (a.spec.poses2 && a.poseTex2.idle?.length) {
+      a.posePack = a.spec.poses2;
+      a.poseTex = a.poseTex2;
+      a.prevPose = null;
+      // Холст II фазы может отличаться — пересчитать размеры.
+      this.layout();
     }
     a.spec.idle = { ...a.spec.idle, hover: 6, breath: a.spec.idle.breath * 1.3, sway: a.spec.idle.sway * 1.6 };
     this.ensureShards(a);

@@ -13,6 +13,13 @@ describe('набор поз', () => {
     expect(isPosePack(null)).toBe(false);
   });
 
+  it('поза может быть серией картинок; скорость серий — в разумных пределах', () => {
+    expect(isPosePack({ ...base, poses: { idle: ['a.webp', 'b.webp'], strike: ['s1.webp', 's2.webp', 's3.webp'] }, fps: 12 })).toBe(true);
+    expect(isPosePack({ ...base, poses: { idle: [] } })).toBe(false);
+    expect(isPosePack({ ...base, fps: 60 })).toBe(false);
+    expect(isPosePack({ ...base, fps: 1 })).toBe(false);
+  });
+
   it('отсутствующая поза заменяется по цепочке, в конце — стойка', () => {
     const have = (list: PoseName[]) => (n: PoseName) => list.includes(n);
     expect(resolvePose(have(['idle', 'windup', 'strike']), 'aim')).toBe('windup');

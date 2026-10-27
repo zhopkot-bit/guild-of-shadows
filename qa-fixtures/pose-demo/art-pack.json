@@ -1,10 +1,6 @@
 {
  "version": 1,
- "heroes": {
-  "bran": {
-   "poses": "bran_poses.json"
-  }
- },
+ "heroes": { "bran": { "poses": "bran/poses.json" } },
  "enemies": {},
  "arenas": {}
 }

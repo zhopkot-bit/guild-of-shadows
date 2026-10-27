@@ -192,12 +192,13 @@ export function battleScreen(ctx: Ctx): HTMLElement {
       anim2: pack?.phase2Anim ?? null,
       rig: pack?.rig ?? null,
       poses: pack?.poses ?? null,
+      poses2: pack?.phase2Poses ?? null,
       rig2: pack?.phase2Rig ?? null,
       id: u.id,
       side: u.side,
       sprite: spriteFor(u),
       emissive: u.boss ? BOSS_EMISSIVE : undefined,
-      flip: k === 'goblinRaider' && !pack?.rig && !pack?.anim, // текущий спрайт гоблина смотрит вправо; финальный арт врагов рисуется лицом влево
+      flip: k === 'goblinRaider' && !pack?.rig && !pack?.anim && !pack?.poses, // текущий спрайт гоблина смотрит вправо; финальный арт врагов рисуется лицом влево
       style: attackStyle(u),
       boss: !!u.boss,
       wide: k === 'ashWolf',
