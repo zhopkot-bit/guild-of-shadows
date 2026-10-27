@@ -1,5 +1,6 @@
-import type { AnimClip, AnimPack, ArenaLayer, ClipName, LoadedRig } from '../../content/artpack';
-import type { Backend, QuadDraw, RenderTarget, Rgb, Tex } from './backend';
+import type { AnimClip, AnimPack, ArenaLayer, ClipName, LoadedRig, PoseName, PosePack } from '../../content/artpack';
+import { resolvePose } from '../../content/artpack';
+import type { Backend, QuadDraw, RenderTarget, Rgb, SpriteDraw, Tex } from './backend';
 import { coverTransform } from './backend';
 import { Canvas2DBackend } from './canvas2d';
 import { computeLayout, type Slot } from './layout';
@@ -34,6 +35,10 @@ export interface ActorSpec {
   /** Скелетный персонаж DragonBones (основной формат финальной анимации). */
   rig?: LoadedRig | null;
   rig2?: LoadedRig | null;
+  /** Набор поз (цельные иллюстрации): переключаются на фазах действия. */
+  poses?: PosePack | null;
+  /** Набор поз II фазы босса. */
+  poses2?: PosePack | null;
   /** Номер экземпляра среди одинаковых врагов: лёгкие различия роста, тона и ритма, чтобы не было «клонов». */
   variant?: number;
   /** Уже выбыл (восстановление боя из сохранения). */
@@ -102,6 +107,16 @@ class Actor {
   clip: { name: ClipName; start: number; def: AnimClip } | null = null;
   tex2: Tex | null = null;
   animTex2: Tex[] = [];
+  /** Набор поз: загруженные текстуры, текущая и предыдущая поза (для «призрака» при смене). */
+  posePack: PosePack | null = null;
+  poseTex: Partial<Record<PoseName, Tex[]>> = {};
+  poseTex2: Partial<Record<PoseName, Tex[]>> = {};
+  pose: PoseName = 'idle';
+  prevPose: PoseName | null = null;
+  poseAt = -10;
+  /** Размер холста позы на экране (холст больше фигуры: запас под оружие). */
+  drawW = 1;
+  drawH = 1;
   slot: Slot = { x: 0.5, y: 0.9, h: 0.4, z: 1 };
   x = 0;
   y = 0;
@@ -123,6 +138,13 @@ class Actor {
   }
   setFallenPose(): void {
     this.fallen = true;
+    if (this.spec.poses) {
+      // Лежачая поза нарисована художником: без процедурного сплющивания.
+      this.pose = 'down';
+      this.p.desat = 0.55;
+      this.p.alpha = 0.85;
+      return;
+    }
     this.p.sy = 0.82;
     this.p.lean = -0.05;
     this.p.desat = 0.85;
@@ -200,6 +222,8 @@ export const ease = {
 };
 
 const WARM: Rgb = [1.0, 0.62, 0.28];
+/** Сколько секунд тает прежняя поза при смене. */
+const POSE_GHOST = 0.13;
 const COLD: Rgb = [0.45, 0.68, 1.0];
 export const DANGER: Rgb = [1.0, 0.24, 0.16];
 export const SPECTRAL: Rgb = [0.35, 0.7, 1.0];
@@ -275,6 +299,11 @@ export class ArenaScene {
   private resizeObs: ResizeObserver | null = null;
   private layerTex: Array<{ layer: ArenaLayer; tex: Tex }> = [];
   private frameListeners: Array<(list: ActorScreen[]) => void> = [];
+  /** Камера: текущее состояние, цель и «толчок» удара; стоп-кадр удара (по реальному времени). */
+  private cam = { z: 1, x: 0, y: 0 };
+  private camGoal = { z: 1, x: 0, y: 0 };
+  private camPunch = 0;
+  private freezeUntil = 0;
   private destroyed = false;
 
   constructor(private container: HTMLElement, private setup: ArenaSetup, specs: ActorSpec[]) {
@@ -347,6 +376,15 @@ export class ArenaScene {
         a.rig = a.spec.rig;
       }
       if (a.spec.rig2) a.rigAtlas2 = this.texFrom(await get(a.spec.rig2.atlasUrl));
+      const loadPoses = async (pack: PosePack | null | undefined, into: Partial<Record<PoseName, Tex[]>>) => {
+        const urls = pack?.poseUrls ?? {};
+        await Promise.all((Object.keys(urls) as PoseName[]).map(async (n) => {
+          into[n] = await Promise.all((urls[n] ?? []).map(async (u) => this.texFrom(await get(u))));
+        }));
+      };
+      await loadPoses(a.spec.poses, a.poseTex);
+      if (a.poseTex.idle?.length) a.posePack = a.spec.poses ?? null;
+      await loadPoses(a.spec.poses2, a.poseTex2);
     });
     const layerJobs = (this.setup.layers ?? []).map(async (l) => ({ layer: l, tex: this.texFrom(await get(l.src)) }));
     this.bgTex = this.texFrom(await bg);
@@ -395,6 +433,13 @@ export class ArenaScene {
       a.h = s.h * H * (v === 1 ? 0.93 : v === 2 ? 0.97 : 1);
       const box = a.rig?.rig.aabb;
       a.w = box ? (a.h * box.width) / box.height : a.anim ? (a.h * a.anim.frameWidth) / a.anim.frameHeight : a.tex ? (a.h * a.tex.w) / a.tex.h : a.h * 0.45;
+      const pp = a.posePack;
+      if (pp && !a.rig && !a.anim) {
+        // Рост фигуры в стойке = высота слота; холст позы крупнее на запас под замах.
+        a.drawH = a.h / pp.figureHeight;
+        a.drawW = (a.drawH * pp.frameWidth) / pp.frameHeight;
+        a.w = pp.figureWidth ? a.drawW * pp.figureWidth : a.h * 0.48;
+      }
     };
     if (this.setup.showcase) {
       heroes.forEach((a) => place(a, { x: 0.5, y: 0.97, h: 0.9, z: 10 }));
@@ -404,6 +449,8 @@ export class ArenaScene {
     }
     this.order = [...this.actors.values()].sort((a, b) => a.slot.z - b.slot.z || a.y - b.y);
     this.container.classList.toggle('arena--portrait', L.portrait);
+    this.camGoal = this.restCam();
+    this.cam = { ...this.camGoal };
   }
 
   // ---------- Время и твины ----------
@@ -414,6 +461,11 @@ export class ArenaScene {
     const dtReal = Math.min(0.05, Math.max(0, (now - this.last) / 1000));
     this.last = now;
     if (this.paused) return;
+    if (now < this.freezeUntil) {
+      // Стоп-кадр удара: мир замер, кадр перерисовывается (дрожание камеры остаётся).
+      this.render();
+      return;
+    }
     const dt = dtReal * this.speed;
     this.time += dtReal;
     this.update(dt, dtReal);
@@ -457,6 +509,11 @@ export class ArenaScene {
     g.brightness += (gt.brightness - g.brightness) * k;
     g.saturation += (gt.saturation - g.saturation) * k;
     for (const a of this.actors.values()) a.p.flash = Math.max(0, a.p.flash - dtReal * 3.2);
+    const ck = Math.min(1, dtReal * 6 * Math.max(1, this.speed * 0.6));
+    this.cam.z += (this.camGoal.z - this.cam.z) * ck;
+    this.cam.x += (this.camGoal.x - this.cam.x) * ck;
+    this.cam.y += (this.camGoal.y - this.cam.y) * ck;
+    this.camPunch *= Math.exp(-dtReal * 7 * Math.max(1, this.speed * 0.6));
     this.shakeAmp = Math.max(0, this.shakeAmp - dtReal * 26 * this.dpr);
     this.overlayFlash.a = Math.max(0, this.overlayFlash.a - dtReal * 2.4);
 
@@ -546,6 +603,8 @@ export class ArenaScene {
     const W = this.cssW * this.dpr;
     const H = this.cssH * this.dpr;
     b.begin();
+    const view = this.view();
+    b.setView(view.z, view.x, view.y);
     const shakeX = (Math.random() - 0.5) * this.shakeAmp;
     const shakeY = (Math.random() - 0.5) * this.shakeAmp;
     if (this.bgTex) {
@@ -681,14 +740,16 @@ export class ArenaScene {
     b.end();
 
     const list: ActorScreen[] = [];
+    const vx = (x: number) => ((x - view.x) * view.z + view.x) / this.dpr;
+    const vy = (y: number) => ((y - view.y) * view.z + view.y) / this.dpr;
     for (const a of this.actors.values()) {
       list.push({
         id: a.spec.id,
-        x: (a.x + a.p.offX) / this.dpr,
-        y: (a.y + a.p.offY) / this.dpr,
-        top: (a.y + a.p.offY - a.h * a.p.sy * (a.spec.boss ? 0.93 : 0.98)) / this.dpr,
-        w: a.w / this.dpr,
-        h: a.h / this.dpr,
+        x: vx(a.x + a.p.offX),
+        y: vy(a.y + a.p.offY),
+        top: vy(a.y + a.p.offY - a.h * a.p.sy * (a.spec.boss ? 0.93 : 0.98)),
+        w: (a.w * view.z) / this.dpr,
+        h: (a.h * view.z) / this.dpr,
         alive: !a.dead,
       });
     }
@@ -706,6 +767,7 @@ export class ArenaScene {
   /** Текущий кадр: для рига — перерисованная цель, для листа кадров — страница и прямоугольник. */
   private frameRect(a: Actor): { tex: Tex; uv: [number, number, number, number]; pivot: [number, number] } | null {
     if (a.rig && a.rigAtlas) return this.rigFrame(a);
+    if (a.posePack && !a.anim) return { tex: this.poseFrame(a, this.shownPose(a)), uv: [0, 0, 1, 1], pivot: a.posePack.pivot };
     const pack = a.anim;
     if (!pack || !a.animTex.length) return null;
     if (!a.clip) a.clip = { name: 'idle', start: this.time, def: pack.clips.idle };
@@ -793,9 +855,14 @@ export class ArenaScene {
     // Риг перерисовывается один раз за кадр (в проходе фигуры), отражение и тень берут ту же текстуру.
     const rect = mode === 0 || !a.rigTarget ? this.frameRect(a) : { tex: a.rigTarget.tex, uv: [0, 0, 1, 1] as [number, number, number, number], pivot: this.rigPivot(a) };
     const baseTex = rect ? rect.tex : a.phase2 && a.tex2 ? a.tex2 : a.tex;
-    // При покадровой/скелетной анимации процедурная деформация лишь «дышит» поверх.
-    const animScale = rect ? 0.25 : 1;
+    const posed = !!rect && !!a.posePack && !a.rig && !a.anim;
+    const shown = posed ? this.shownPose(a) : 'idle';
+    // При покадровой/скелетной анимации процедурная деформация лишь «дышит» поверх;
+    // у набора поз стойка живёт как обычный спрайт, остальные позы — почти неподвижны (их держит хореография).
+    const animScale = posed ? (shown === 'idle' || shown === 'prepare' ? 0.8 : 0.2) : rect ? 0.25 : 1;
     const pivot = rect ? rect.pivot : [0.5, 1];
+    const dw = posed ? a.drawW : a.w;
+    const dh = posed ? a.drawH : a.h;
     const idle = a.spec.idle;
     const dead = a.dead && a.spec.side === 'enemy' && a.p.dissolve >= 1;
     if (dead) return;
@@ -805,14 +872,14 @@ export class ArenaScene {
     const outlineColor: Rgb = a.status.targetable === 'ally' ? HEAL : a.status.targetable === 'foe' || a.status.threatened ? DANGER : GOLD;
     const breath = a.fallen ? idle.breath * 0.3 : idle.breath;
     const chargeLean = charging ? -0.04 - 0.015 * Math.sin(this.time * 5) : 0;
-    this.backend.drawSprite({
+    const d: SpriteDraw = {
       tex: baseTex,
       emissive: rect || (a.phase2 && a.tex2) ? null : a.emi,
       uv: rect ? rect.uv : [0, 0, 1, 1],
-      x: a.x + a.p.offX + shakeX + (0.5 - (pivot[0] ?? 0.5)) * a.w,
-      y: a.y + a.p.offY + shakeY + (mode === 0 ? hover : 0) + (1 - (pivot[1] ?? 1)) * a.h,
-      w: a.w,
-      h: a.h,
+      x: a.x + a.p.offX + shakeX + (0.5 - (pivot[0] ?? 0.5)) * dw,
+      y: a.y + a.p.offY + shakeY + (mode === 0 ? hover : 0) + (1 - (pivot[1] ?? 1)) * dh,
+      w: dw,
+      h: dh,
       flip: a.spec.flip,
       time: this.time * idle.speed * (1 + (a.spec.variant ?? 0) * 0.13),
       phase: a.phase,
@@ -837,15 +904,99 @@ export class ArenaScene {
       outline: mode === 0 ? outline : 0,
       outlineColor,
       mode,
-    });
+    };
+    // Смена позы: прежняя поза коротко тает и «отстаёт» по ходу движения — глаз читает рывок, а не подмену.
+    const ghostK = (this.time - a.poseAt) * this.speed / POSE_GHOST;
+    if (posed && mode === 0 && a.prevPose && ghostK < 1) {
+      const prevList = a.poseTex[a.prevPose];
+      const gTex = prevList?.[prevList.length - 1];
+      if (gTex && gTex !== baseTex) {
+        const back = (1 - ghostK) * 0.06 * dw * -a.dir() * (a.spec.flip ? -1 : 1);
+        this.backend.drawSprite({ ...d, tex: gTex, x: d.x + back, alpha: d.alpha * 0.55 * (1 - ghostK), outline: 0, rim: 0, flash: 0 });
+      }
+    }
+    this.backend.drawSprite(d);
+  }
+
+  /** Какую позу показать: заказанную хореографией, «готовлю удар» при заряде или ближайшую замену. */
+  private shownPose(a: Actor): PoseName {
+    const want: PoseName = a.pose === 'idle' && a.status.charging && !a.dead ? 'prepare' : a.pose;
+    return resolvePose((n) => !!a.poseTex[n]?.length, want);
+  }
+
+  /** Кадр позы: серия действия идёт один раз и держит последний кадр, серия стойки качается туда-обратно. */
+  private poseFrame(a: Actor, name: PoseName): Tex {
+    const list = a.poseTex[name] as Tex[];
+    const n = list.length;
+    if (n <= 1) return list[0] as Tex;
+    const fps = a.posePack?.fps ?? 12;
+    const t = Math.max(0, (this.time - a.poseAt) * this.speed);
+    if (name === 'idle' || name === 'prepare') {
+      const period = 2 * (n - 1);
+      let k = Math.floor(t * Math.min(fps, 4)) % period;
+      if (k >= n) k = period - k;
+      return list[k] as Tex;
+    }
+    return list[Math.min(n - 1, Math.floor(t * fps))] as Tex;
+  }
+
+  /** Сменить позу (если у персонажа есть набор поз). */
+  setPose(id: string, name: PoseName): void {
+    const a = this.actors.get(id);
+    if (!a || (!a.spec.poses && !a.spec.poses2)) return;
+    const before = a.posePack ? this.shownPose(a) : a.pose;
+    a.pose = name;
+    const after = a.posePack ? this.shownPose(a) : name;
+    if (after !== before) {
+      a.prevPose = before;
+      a.poseAt = this.time;
+    }
+  }
+
+  // ---------- Камера и стоп-кадр ----------
+
+  private restCam(): { z: number; x: number; y: number } {
+    return { z: 1, x: (this.cssW * this.dpr) / 2, y: this.cssH * this.dpr * 0.62 };
+  }
+
+  private view(): { z: number; x: number; y: number } {
+    return { z: this.cam.z * (1 + this.camPunch), x: this.cam.x, y: this.cam.y };
+  }
+
+  /** Камера наезжает на пару «атакующий — цель» (как в Darkest Dungeon), без потери обоих из кадра. */
+  focusCam(aId: string, tId: string, zoom = 1.06): void {
+    if (this.fast || this.setup.showcase) return;
+    const a = this.actors.get(aId);
+    const t = this.actors.get(tId);
+    if (!a || !t) return;
+    const W = this.cssW * this.dpr;
+    const H = this.cssH * this.dpr;
+    const x = (a.x + t.x) / 2;
+    const y = (a.y - a.h * 0.45 + t.y - t.h * 0.45) / 2;
+    // Не уводим центр дальше, чем позволяет масштаб: края фона не должны показаться.
+    const mx = W * 0.5 * (1 - 1 / zoom) * 2.2;
+    this.camGoal = { z: zoom, x: Math.max(W / 2 - mx, Math.min(W / 2 + mx, x)), y: Math.max(H * 0.3, Math.min(H * 0.75, y)) };
+  }
+
+  releaseCam(): void {
+    this.camGoal = this.restCam();
+  }
+
+  /** Толчок камеры и стоп-кадр в момент удара: главное, что даёт удару «вес». */
+  impactFeel(strength: 'light' | 'heavy' | 'crit'): void {
+    if (this.fast) return;
+    const ms = strength === 'crit' ? 140 : strength === 'heavy' ? 105 : 60;
+    this.freezeUntil = Math.max(this.freezeUntil, performance.now() + ms / Math.max(1, this.speed * 0.75));
+    this.camPunch = Math.max(this.camPunch, strength === 'crit' ? 0.07 : strength === 'heavy' ? 0.05 : 0.028);
   }
 
   // ---------- Взаимодействие ----------
 
   hitTest(clientX: number, clientY: number): string | null {
     const rect = this.canvas.getBoundingClientRect();
-    const x = (clientX - rect.left) * this.dpr;
-    const y = (clientY - rect.top) * this.dpr;
+    const v = this.view();
+    const x = ((clientX - rect.left) * this.dpr - v.x) / v.z + v.x;
+    const y = ((clientY - rect.top) * this.dpr - v.y) / v.z + v.y;
     const sorted = [...this.order].reverse();
     for (const a of sorted) {
       if (a.dead && a.spec.side === 'enemy') continue;
@@ -946,6 +1097,8 @@ export class ArenaScene {
     const color = opts.color ?? (a.spec.side === 'hero' ? [1, 0.85, 0.6] as Rgb : [1, 0.5, 0.35] as Rgb);
     const heavy = !!opts.heavy;
     this.play(actorId, 'attack');
+    this.setPose(actorId, 'windup');
+    this.focusCam(actorId, targetId, heavy ? 1.08 : 1.06);
     await this.tween(heavy ? 420 : 240, (k) => {
       a.p.lean = -0.1 * k * dir;
       a.p.sx = 1 - 0.05 * k;
@@ -962,9 +1115,17 @@ export class ArenaScene {
     const c = t.chest();
     this.slashFx(c.x, c.y, (t.spec.boss ? t.w * 0.55 : t.w * 1.05) * (heavy ? 1.4 : 1), color, -dir, -0.4);
     if (opts.double) this.slashFx(c.x, c.y - t.h * 0.08, t.w * 1.0, [1, 1, 1], dir, 0.6);
+    this.setPose(actorId, 'strike');
+    this.impactFeel(heavy || a.spec.boss ? 'heavy' : 'light');
     impact();
-    await this.wait(heavy ? 120 : 70);
+    await this.wait(heavy ? 160 : 110);
+    let back = false;
     await this.tween(300, (k) => {
+      if (!back && k > 0.45) {
+        back = true;
+        this.setPose(actorId, 'idle');
+        this.releaseCam();
+      }
       a.p.offX = dx * (1 - k);
       a.p.offY = dy * (1 - k);
       a.p.lean = 0.16 * dir * (1 - k);
@@ -974,6 +1135,8 @@ export class ArenaScene {
     a.p.lean = 0;
     a.p.sx = 1;
     a.p.sy = 1;
+    this.setPose(actorId, 'idle');
+    this.releaseCam();
   }
 
   /** Прыжок волка: дуга к цели и обратно. */
@@ -984,6 +1147,8 @@ export class ArenaScene {
     const dx = (t.x - a.x) + t.w * 0.45 * -dir;
     const dy = t.y - a.y;
     this.play(actorId, 'attack');
+    this.setPose(actorId, 'windup');
+    this.focusCam(actorId, targetId, 1.06);
     await this.tween(260, (k) => {
       a.p.sy = 1 - 0.12 * k;
       a.p.sx = 1 + 0.06 * k;
@@ -997,6 +1162,8 @@ export class ArenaScene {
     }, ease.linear);
     const c = t.chest();
     this.slashFx(c.x, c.y, t.w * 0.9, [1, 0.6, 0.4], dir, 0.2);
+    this.setPose(actorId, 'strike');
+    this.impactFeel('light');
     impact();
     await this.tween(340, (k) => {
       a.p.offX = dx * (1 - k);
@@ -1004,6 +1171,8 @@ export class ArenaScene {
       a.p.sy = 1;
       a.p.rot = 0;
     }, ease.outCubic);
+    this.setPose(actorId, 'idle');
+    this.releaseCam();
   }
 
   /** Выстрел: натяжение, снаряд по дуге, попадание (impact). */
@@ -1013,6 +1182,8 @@ export class ArenaScene {
     const dir = a.dir();
     const color: Rgb = kind === 'ash' ? ASH : kind === 'light' ? [0.7, 0.85, 1] : empowered ? GOLD : [1, 0.95, 0.85];
     this.play(actorId, 'shoot');
+    this.setPose(actorId, 'aim');
+    if (empowered) this.focusCam(actorId, targetId, 1.05);
     if (empowered) {
       const c = a.chest();
       this.glowFx(c.x + a.w * 0.3 * dir, c.y, a.w * 1.2, GOLD, 0.6);
@@ -1028,7 +1199,8 @@ export class ArenaScene {
     const dist = Math.hypot(to.x - from.x, to.y - from.y);
     const speed = (kind === 'bolt' ? 2600 : kind === 'arrow' ? 1900 : 1100) * this.dpr;
     const arc = kind === 'arrow' ? dist * 0.12 : kind === 'ash' ? dist * 0.06 : dist * 0.02;
-    // Отдача после выстрела.
+    // Выпуск и отдача.
+    this.setPose(actorId, 'shoot');
     void this.tween(220, (k) => {
       a.p.offX = -6 * this.dpr * dir - 8 * this.dpr * dir * Math.sin(Math.PI * k);
       a.p.lean = -0.05 * dir * (1 - k);
@@ -1052,12 +1224,15 @@ export class ArenaScene {
     }
     this.sparks(to.x, to.y, color, empowered ? 26 : 14, empowered ? 1.4 : 1);
     if (kind === 'ash') this.glowFx(to.x, to.y, t.w * 1.6, ASH, 0.5);
+    if (empowered) this.impactFeel('heavy');
     impact();
     await this.tween(200, (k) => {
       a.p.offX = -6 * this.dpr * dir * (1 - k);
     });
     a.p.offX = 0;
     a.p.lean = 0;
+    this.setPose(actorId, 'idle');
+    this.releaseCam();
   }
 
   /** Попадание: отдача, вспышка, искры. */
@@ -1075,7 +1250,13 @@ export class ArenaScene {
       this.sparks(c.x, c.y, COLD, 16, 1.1);
     }
     const kb = (heavy ? 30 : 16) * this.dpr * (t.spec.boss ? 0.35 : 1) * dir;
-    if (!t.dead) this.play(targetId, 'hit');
+    if (!t.dead) {
+      this.play(targetId, 'hit');
+      this.setPose(targetId, 'hit');
+      void this.wait(heavy ? 420 : 340).then(() => {
+        if (!t.dead && t.pose === 'hit') this.setPose(targetId, 'idle');
+      });
+    }
     void this.tween(90, (k) => {
       t.p.offX = kb * k;
       t.p.lean = 0.06 * dir * k;
@@ -1096,8 +1277,17 @@ export class ArenaScene {
     t.status.threatened = null;
     t.status.targetable = null;
     this.play(targetId, 'death');
+    this.setPose(targetId, 'down');
     if (t.spec.side === 'hero') {
       t.fallen = true;
+      if (t.spec.poses) {
+        // Лежачая поза уже нарисована: только гаснут цвет и яркость.
+        await this.tween(600, (k) => {
+          t.p.desat = 0.55 * k;
+          t.p.alpha = 1 - 0.15 * k;
+        });
+        return;
+      }
       await this.tween(600, (k) => {
         t.p.sy = 1 - 0.18 * k;
         t.p.lean = -0.05 * k;
@@ -1129,6 +1319,7 @@ export class ArenaScene {
     if (!t) return;
     t.dead = false;
     t.fallen = false;
+    this.setPose(targetId, 'idle');
     const c = t.chest();
     this.glowFx(c.x, c.y, t.w * 2.4, GOLD, 0.9);
     await this.tween(500, (k) => {
@@ -1143,6 +1334,7 @@ export class ArenaScene {
   async gesture(actorId: string, color: Rgb): Promise<void> {
     const a = this.actor(actorId);
     this.play(actorId, 'cast');
+    this.setPose(actorId, 'cast');
     const c = a.chest();
     this.glowFx(c.x, c.y - a.h * 0.15, a.w * 1.8, color, 0.7, 0.8);
     if (!this.fast) {
@@ -1159,6 +1351,7 @@ export class ArenaScene {
       a.p.sy = 1.05 - 0.05 * k;
       a.p.lean = -0.03 * a.dir() * (1 - k);
     });
+    this.setPose(actorId, 'idle');
   }
 
   async heal(fromId: string, targetId: string, amount: number): Promise<void> {
@@ -1227,6 +1420,8 @@ export class ArenaScene {
     const c = a.chest();
     this.flashScreen(SPECTRAL, 0.6);
     this.shake(14);
+    this.setPose(actorId, 'strike');
+    this.impactFeel('crit');
     await this.tween(360, (k) => {
       a.p.sy = 1 + 0.06 * k;
       a.p.lean = 0.08 * a.dir() * -k;
@@ -1251,6 +1446,7 @@ export class ArenaScene {
       a.p.sy = 1.06 - 0.06 * k;
       a.p.lean = -0.08 * a.dir() * (1 - k);
     });
+    this.setPose(actorId, 'idle');
   }
 
   private ensureShards(a: Actor): void {
@@ -1327,6 +1523,13 @@ export class ArenaScene {
       a.rigAtlas = a.rigAtlas2;
       a.clip = null;
     }
+    if (a.spec.poses2 && a.poseTex2.idle?.length) {
+      a.posePack = a.spec.poses2;
+      a.poseTex = a.poseTex2;
+      a.prevPose = null;
+      // Холст II фазы может отличаться — пересчитать размеры.
+      this.layout();
+    }
     a.spec.idle = { ...a.spec.idle, hover: 6, breath: a.spec.idle.breath * 1.3, sway: a.spec.idle.sway * 1.6 };
     this.ensureShards(a);
     this.shards = Array.from({ length: 9 }, (_, i) => {
@@ -1369,6 +1572,7 @@ export class ArenaScene {
       const a = this.actors.get(id);
       if (!a || a.dead) return Promise.resolve();
       this.play(id, 'victory');
+      this.setPose(id, 'victory');
       return this.wait(i * 90).then(() => this.tween(520, (k) => {
         a.p.offY = -Math.sin(Math.PI * k) * 22 * this.dpr;
         a.p.sy = 1 + 0.04 * Math.sin(Math.PI * k);
@@ -1408,6 +1612,9 @@ export class ArenaScene {
   /** Досчёт боя: все текущие анимации мгновенно завершаются. */
   finishAll(): void {
     this.fast = true;
+    this.freezeUntil = 0;
+    this.camPunch = 0;
+    this.releaseCam();
     for (const tw of this.tweens) {
       tw.fn(1);
       tw.resolve();
@@ -1426,6 +1633,7 @@ export class ArenaScene {
       if (a.spec.side === 'enemy') a.p.dissolve = 1;
       else a.setFallenPose();
     }
+    if (alive && a.pose === 'down') a.pose = 'idle';
   }
 
   setPhase2(id: string): void {

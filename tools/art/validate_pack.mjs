@@ -168,6 +168,86 @@ function checkRig(group, id, skeRel, atlRel, armName, base) {
   info.push(`${L}: костей ${bones.size}, слотов ${(arm.slot ?? []).length}, анимации ${[...anims.keys()].join(', ')}`);
 }
 
+// ---------- Наборы поз (основной формат для генеративного арта) ----------
+const POSES = ['idle', 'windup', 'strike', 'aim', 'shoot', 'cast', 'prepare', 'hit', 'down', 'victory'];
+/** Какие позы реально нужны каждому персонажу (по его действиям в бою). */
+const POSE_REQUIRED = {
+  bran: ['idle', 'windup', 'strike', 'cast', 'hit', 'down', 'victory'],
+  mira: ['idle', 'aim', 'shoot', 'windup', 'strike', 'hit', 'down', 'victory'],
+  rook: ['idle', 'aim', 'shoot', 'hit', 'down', 'victory'],
+  nora: ['idle', 'aim', 'shoot', 'cast', 'hit', 'down', 'victory'],
+  goblinRaider: ['idle', 'windup', 'strike', 'hit', 'down'],
+  ashWolf: ['idle', 'windup', 'strike', 'hit', 'down'],
+  boneGuard: ['idle', 'windup', 'strike', 'prepare', 'hit', 'down'],
+  ashMage: ['idle', 'aim', 'shoot', 'prepare', 'hit', 'down'],
+  boneKing: ['idle', 'windup', 'strike', 'prepare', 'hit', 'down'],
+};
+const POSE_BUDGET_KB = { image: 160, character: 1200 };
+
+/** Границы непрозрачной области PNG (альфа > 24). */
+function pngOpaqueBox(buf, w, h) {
+  const alpha = pngAlphaRows(buf, w, h);
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) if (alpha(x, y) > 24) {
+    if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+  }
+  return x1 < 0 ? null : { x0, y0, x1, y1 };
+}
+
+function checkPoses(group, id, rel, base) {
+  const p = join(base, rel);
+  const L = `${group}.${id} (${rel})`;
+  if (!existsSync(p)) { errors.push(`${L}: нет файла`); return; }
+  let pack;
+  try { pack = JSON.parse(readFileSync(p, 'utf8')); } catch (e) { errors.push(`${L}: JSON не читается (${e.message})`); return; }
+  if (pack.version !== 1) errors.push(`${L}: version должен быть 1`);
+  if (!(pack.frameWidth > 0 && pack.frameHeight > 0)) { errors.push(`${L}: нужны frameWidth/frameHeight`); return; }
+  if (!Array.isArray(pack.pivot) || pack.pivot.length !== 2 || pack.pivot.some((v) => !(v >= 0 && v <= 1))) errors.push(`${L}: pivot — две доли 0..1 (точка между ступнями)`);
+  if (!(pack.figureHeight > 0 && pack.figureHeight <= 1)) errors.push(`${L}: figureHeight — доля 0..1 высоты холста под стоящую фигуру`);
+  if (pack.fps !== undefined && !(pack.fps >= 2 && pack.fps <= 30)) errors.push(`${L}: fps 2..30`);
+  if (pack.frameHeight > 2048 || pack.frameWidth > 2048) errors.push(`${L}: холст ${pack.frameWidth}×${pack.frameHeight} больше 2048`);
+  else if (pack.frameHeight > 1024) warnings.push(`${L}: холст выше 1024 px — хватит 768 (видеопамять телефона: ~20 МБ на персонажа)`);
+  const poses = pack.poses ?? {};
+  for (const n of Object.keys(poses)) if (!POSES.includes(n)) warnings.push(`${L}: неизвестная поза «${n}» (игнорируется)`);
+  for (const n of POSE_REQUIRED[id] ?? ['idle']) if (!poses[n]) errors.push(`${L}: нет позы «${n}» — она нужна этому персонажу в бою`);
+  let totalKb = 0;
+  for (const n of POSES) {
+    const list = typeof poses[n] === 'string' ? [poses[n]] : Array.isArray(poses[n]) ? poses[n] : [];
+    if (poses[n] !== undefined && !list.length) errors.push(`${L}.${n}: пустая серия`);
+    if (list.length > 4) warnings.push(`${L}.${n}: ${list.length} картинок — серия длиннее 4 читается как дёрганый мультфильм`);
+    for (const f of list) {
+      const ip = join(dirname(p), f);
+      const im = checkImage(ip, `${L}.${n} ${f}`, POSE_BUDGET_KB.image, true);
+      if (!im) continue;
+      totalKb += statSync(ip).size / 1024;
+      if (im.w !== pack.frameWidth || im.h !== pack.frameHeight) errors.push(`${L}.${n} ${f}: ${im.w}×${im.h}, а холст ${pack.frameWidth}×${pack.frameHeight} — все позы на холсте одного размера`);
+      if (im.format === 'png' && im.buf && n === 'down') {
+        // Павший не должен ложиться на соседа: между бойцами около половины роста.
+        const box = pngOpaqueBox(im.buf, im.w, im.h);
+        const figH = pack.figureHeight * im.h;
+        const px = pack.pivot[0] * im.w;
+        if (box && Math.max(px - box.x0, box.x1 - px) > 0.6 * figH) warnings.push(`${L}.down ${f}: павший тянется на ${(Math.max(px - box.x0, box.x1 - px) / figH).toFixed(2)} роста от точки опоры (до 0,6) — ляжет на соседа`);
+      }
+      if (im.format === 'png' && im.buf && n !== 'down') {
+        // Ступни на одной линии: низ фигуры (кроме лежачей позы) совпадает с точкой опоры.
+        const box = pngOpaqueBox(im.buf, im.w, im.h);
+        if (box) {
+          const feet = (box.y1 + 1) / im.h;
+          if (Math.abs(feet - pack.pivot[1]) > 0.025) errors.push(`${L}.${n} ${f}: ступни на ${(feet * 100).toFixed(1)}% высоты, а pivot — ${(pack.pivot[1] * 100).toFixed(1)}% (фигура «прыгнет» при смене позы)`);
+          if (n === 'idle') {
+            const fh = (box.y1 - box.y0 + 1) / im.h;
+            if (Math.abs(fh - pack.figureHeight) > 0.06) errors.push(`${L}.idle: фигура занимает ${(fh * 100).toFixed(0)}% высоты, а figureHeight — ${(pack.figureHeight * 100).toFixed(0)}%`);
+            const cx = (box.x0 + box.x1) / 2 / im.w;
+            if (Math.abs(cx - pack.pivot[0]) > 0.12) warnings.push(`${L}.idle: центр фигуры (${(cx * 100).toFixed(0)}%) далеко от pivot по горизонтали (${(pack.pivot[0] * 100).toFixed(0)}%)`);
+          }
+        }
+      } else if (im.format !== 'png') info.push(`${L}.${n} ${f}: WebP — проверка ступней только по PNG-мастерам`);
+    }
+  }
+  if (totalKb > POSE_BUDGET_KB.character) (strict ? errors : warnings).push(`${L}: ${Math.round(totalKb)} КБ на персонажа больше бюджета ${POSE_BUDGET_KB.character} КБ`);
+  info.push(`${L}: поз ${Object.keys(poses).length}, ${Math.round(totalKb)} КБ`);
+}
+
 if (!existsSync(regPath)) {
   console.error(`Нет реестра ${regPath}`);
   process.exit(2);
@@ -179,12 +259,20 @@ const KNOWN = { heroes: ['bran', 'mira', 'rook', 'nora'], enemies: ['goblinRaide
 for (const group of ['heroes', 'enemies']) {
   for (const [id, e] of Object.entries(reg[group] ?? {})) {
     if (!KNOWN[group].includes(id)) errors.push(`${group}.${id}: неизвестный id (ожидается ${KNOWN[group].join(', ')})`);
+    if (e.portrait) {
+      // Портрет из поставки: герои 256×320, враги 256×256 (ТЗ §4).
+      const im = checkImage(join(base, e.portrait), `${group}.${id} портрет`, 40, false);
+      const want = group === 'heroes' ? [256, 320] : [256, 256];
+      if (im && (im.w !== want[0] || im.h !== want[1])) warnings.push(`${group}.${id} портрет: ${im.w}×${im.h}, ожидается ${want[0]}×${want[1]}`);
+    }
+    if (e.poses) checkPoses(group, id, e.poses, base);
+    if (e.phase2Poses) checkPoses(group, id, e.phase2Poses, base);
     if (e.anim) checkAnim(group, id, e.anim, base);
     if (e.phase2Anim) checkAnim(group, id, e.phase2Anim, base);
     if (e.rig) checkRig(group, id, e.rig, e.rigAtlas, e.rigArmature, base);
     if (e.phase2Rig) checkRig(group, id, e.phase2Rig, e.phase2RigAtlas, e.rigArmature, base);
     if (e.anim && e.rig) warnings.push(`${group}.${id}: заданы и anim, и rig — игра возьмёт rig`);
-    if ((e.phase2Rig || e.phase2Anim || e.phase2Sprite) && id !== 'boneKing') warnings.push(`${group}.${id}: II фаза есть только у boneKing`);
+    if ((e.phase2Rig || e.phase2Anim || e.phase2Sprite || e.phase2Poses) && id !== 'boneKing') warnings.push(`${group}.${id}: II фаза есть только у boneKing`);
     if (e.phase2Sprite) checkImage(join(base, e.phase2Sprite), `${group}.${id} спрайт фазы II`, BUDGET_KB.sprite, true);
   }
 }

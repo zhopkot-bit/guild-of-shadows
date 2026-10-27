@@ -100,6 +100,11 @@ export interface Backend {
   readonly kind: 'webgl' | 'canvas2d';
   resize(width: number, height: number): void;
   createTexture(source: TexImageSource & CanvasImageSource, w: number, h: number): Tex;
+  /**
+   * Камера кадра: масштаб zoom вокруг точки (cx, cy) в пикселях канваса. Действует на фон, фигуры
+   * и кванты; не действует на полноэкранные заливки и рендер в текстуру.
+   */
+  setView(zoom: number, cx: number, cy: number): void;
   begin(): void;
   drawBackground(tex: Tex, p: BackgroundParams): void;
   drawSprite(d: SpriteDraw): void;

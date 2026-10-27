@@ -12,6 +12,7 @@ const SPRITE_VS = `
 precision highp float;
 attribute vec2 a_uv;
 uniform vec2 u_res, u_pos, u_size, u_scale;
+uniform vec3 u_view;
 uniform vec4 u_uvRect;
 uniform float u_flip, u_time, u_phase, u_breath, u_sway, u_bob, u_lean, u_rot, u_mode;
 varying vec2 v_uv;
@@ -45,6 +46,7 @@ void main() {
   }
   float c = cos(u_rot), s = sin(u_rot);
   vec2 p = vec2(c * x - s * y, s * x + c * y) + u_pos;
+  p = (p - u_view.yz) * u_view.x + u_view.yz;
   vec2 clip = p / u_res * 2.0 - 1.0;
   gl_Position = vec4(clip.x, -clip.y, 0.0, 1.0);
   v_uv = mix(u_uvRect.xy, u_uvRect.zw, a_uv);
@@ -150,11 +152,13 @@ attribute vec2 a_pos;
 attribute vec2 a_uv;
 attribute vec4 a_col;
 uniform vec2 u_res;
+uniform vec3 u_view;
 uniform float u_yflip;
 varying vec2 v_uv;
 varying vec4 v_col;
 void main() {
-  vec2 clip = a_pos / u_res * 2.0 - 1.0;
+  vec2 p = (a_pos - u_view.yz) * u_view.x + u_view.yz;
+  vec2 clip = p / u_res * 2.0 - 1.0;
   gl_Position = vec4(clip.x, clip.y * u_yflip, 0.0, 1.0);
   v_uv = a_uv;
   v_col = a_col;
@@ -222,6 +226,10 @@ export class WebGLBackend implements Backend {
   private targetW: number | null = null;
   private targetH: number | null = null;
   private fbos = new Map<Tex, WebGLFramebuffer>();
+  /** Камера: [масштаб, центр x, центр y]. */
+  private view: [number, number, number] = [1, 0, 0];
+  /** Полноэкранная заливка рисуется без камеры. */
+  private screenSpace = false;
 
   constructor(private canvas: HTMLCanvasElement, noiseCanvas: HTMLCanvasElement) {
     const gl = canvas.getContext('webgl', { premultipliedAlpha: true, alpha: false, antialias: true, preserveDrawingBuffer: true }) as WebGLRenderingContext | null;
@@ -295,6 +303,10 @@ export class WebGLBackend implements Backend {
     return { w, h, handle: t, source };
   }
 
+  setView(zoom: number, cx: number, cy: number): void {
+    this.view = [zoom, cx, cy];
+  }
+
   begin(): void {
     const gl = this.gl;
     gl.clearColor(0.03, 0.035, 0.05, 1);
@@ -322,8 +334,15 @@ export class WebGLBackend implements Backend {
     gl.uniform1i(u.u_noise as WebGLUniformLocation, 1);
     gl.uniform2f(u.u_res as WebGLUniformLocation, this.w, this.h);
     gl.uniform2f(u.u_tex as WebGLUniformLocation, tex.w, tex.h);
-    gl.uniform2f(u.u_off as WebGLUniformLocation, p.offsetX, p.offsetY);
-    gl.uniform1f(u.u_zoom as WebGLUniformLocation, p.zoom);
+    // Камера для фона: тот же масштаб вокруг (cx, cy), выраженный через zoom/offset обложки.
+    const [z, cx, cy] = this.view;
+    const t = coverTransform(this.w, this.h, tex.w, tex.h, p.zoom, p.offsetX, p.offsetY);
+    const dw = t.drawW * z;
+    const dh = t.drawH * z;
+    const offX = ((this.w - dw) / 2 - ((t.x0 - cx) * z + cx)) / dw;
+    const offY = ((this.h - dh) / 2 - ((t.y0 - cy) * z + cy)) / dh;
+    gl.uniform2f(u.u_off as WebGLUniformLocation, offX, offY);
+    gl.uniform1f(u.u_zoom as WebGLUniformLocation, p.zoom * z);
     gl.uniform1f(u.u_time as WebGLUniformLocation, p.time);
     gl.uniform1f(u.u_fog as WebGLUniformLocation, p.fog);
     gl.uniform1f(u.u_vig as WebGLUniformLocation, p.vignette);
@@ -354,6 +373,7 @@ export class WebGLBackend implements Backend {
     gl.uniform1i(u.u_emi as WebGLUniformLocation, 1);
     gl.uniform1i(u.u_noise as WebGLUniformLocation, 2);
     gl.uniform2f(u.u_res as WebGLUniformLocation, this.w, this.h);
+    gl.uniform3fv(u.u_view as WebGLUniformLocation, this.view);
     gl.uniform2f(u.u_pos as WebGLUniformLocation, d.x, d.y);
     gl.uniform2f(u.u_size as WebGLUniformLocation, d.w, d.h);
     gl.uniform2f(u.u_scale as WebGLUniformLocation, d.sx, d.sy);
@@ -395,6 +415,7 @@ export class WebGLBackend implements Backend {
     gl.uniform1i(u.u_tex as WebGLUniformLocation, 0);
     gl.uniform2f(u.u_res as WebGLUniformLocation, this.targetW ?? this.w, this.targetH ?? this.h);
     gl.uniform1f(u.u_yflip as WebGLUniformLocation, this.targetW ? 1 : -1);
+    gl.uniform3fv(u.u_view as WebGLUniformLocation, this.targetW || this.screenSpace ? [1, 0, 0] : this.view);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuf);
     const pos = attr('a_pos');
     const uvl = attr('a_uv');
@@ -498,7 +519,9 @@ export class WebGLBackend implements Backend {
 
   overlay(r: number, g: number, b: number, a: number, additive: boolean): void {
     if (a <= 0) return;
+    this.screenSpace = true;
     this.drawQuads(this.white, [{ x: this.w / 2, y: this.h / 2, w: this.w, h: this.h, rot: 0, r, g, b, a, uv: [0, 0, 1, 1], additive }]);
+    this.screenSpace = false;
   }
 
   end(): void {

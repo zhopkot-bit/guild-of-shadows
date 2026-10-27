@@ -13,7 +13,7 @@ const p = await ctx.newPage();
 const errors = [];
 p.on('pageerror', (e) => errors.push(e.message));
 p.on('response', (r) => { if (r.status() >= 400 && !r.url().endsWith('/sdk.js')) errors.push(`http ${r.status()} ${r.url()}`); });
-await p.goto(`${base}?qa=1&artpack=/qa-fixtures/artpack-demo/art-pack.json`, { waitUntil: 'networkidle' });
+await p.goto(`${base}?qa=1&artpack=${process.env.ARTPACK ?? '/qa-fixtures/artpack-demo/art-pack.json'}`, { waitUntil: 'networkidle' });
 await p.waitForTimeout(1500);
 const claim = p.getByRole('button', { name: 'Забрать' });
 if (await claim.count()) await claim.click();

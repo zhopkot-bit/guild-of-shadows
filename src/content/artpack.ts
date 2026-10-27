@@ -33,6 +33,58 @@ export interface AnimPack {
   pageUrls?: string[];
 }
 
+/**
+ * Набор поз: несколько цельных иллюстраций персонажа на холсте одного размера. Движок не «гнёт» картинку,
+ * а мгновенно переключает позы на фазах действия и добавляет движение, стоп-кадр удара и камеру.
+ * Основной формат для генеративного арта: целую позу сгенерировать согласованно гораздо проще, чем части рига.
+ */
+export type PoseName = 'idle' | 'windup' | 'strike' | 'aim' | 'shoot' | 'cast' | 'prepare' | 'hit' | 'down' | 'victory';
+export const POSE_NAMES: readonly PoseName[] = ['idle', 'windup', 'strike', 'aim', 'shoot', 'cast', 'prepare', 'hit', 'down', 'victory'];
+/** Чем заменить отсутствующую позу (по цепочке, последняя замена — idle). */
+export const POSE_FALLBACK: Partial<Record<PoseName, PoseName>> = { aim: 'windup', shoot: 'strike', cast: 'windup', prepare: 'windup', victory: 'idle', down: 'hit', hit: 'idle', windup: 'idle', strike: 'idle' };
+export const REQUIRED_POSES: readonly PoseName[] = ['idle', 'windup', 'strike', 'hit', 'down'];
+
+export interface PosePack {
+  version: 1;
+  frameWidth: number;
+  frameHeight: number;
+  /** Точка опоры (между ступнями в стойке) в долях холста — одинакова для всех поз. */
+  pivot: [number, number];
+  /** Доля высоты холста, которую занимает стоящая фигура (запас сверху/сбоку — под оружие и замах). */
+  figureHeight: number;
+  /** Доля ширины холста под фигуру в стойке (для области выбора и тени); по умолчанию — 0,48 роста. */
+  figureWidth?: number;
+  /**
+   * Картинка позы (путь относительно json) или короткая серия 2–4 картинок. Серия действия проигрывается
+   * один раз и держит последний кадр; серия стойки и «готовлю удар» медленно качается туда-обратно.
+   */
+  poses: Partial<Record<PoseName, string | string[]>> & { idle: string | string[] };
+  /** Скорость серий, кадров в секунду (по умолчанию 12). */
+  fps?: number;
+  /** Разрешённые URL поз (заполняется загрузчиком). */
+  poseUrls?: Partial<Record<PoseName, string[]>>;
+}
+
+const asList = (v: string | string[] | undefined): string[] => (typeof v === 'string' ? [v] : Array.isArray(v) ? v.filter((x) => typeof x === 'string') : []);
+
+export function isPosePack(v: unknown): v is PosePack {
+  if (!v || typeof v !== 'object') return false;
+  const p = v as PosePack;
+  return p.version === 1 && p.frameWidth > 0 && p.frameHeight > 0 && Array.isArray(p.pivot) && p.pivot.length === 2
+    && p.figureHeight > 0 && p.figureHeight <= 1 && !!p.poses && asList(p.poses.idle).length > 0
+    && (p.fps === undefined || (p.fps >= 2 && p.fps <= 30));
+}
+
+/** Поза, которая реально будет показана: сама или ближайшая замена из имеющихся. */
+export function resolvePose(have: (n: PoseName) => boolean, want: PoseName): PoseName {
+  let n: PoseName | undefined = want;
+  for (let guard = 0; n && guard < 6; guard++) {
+    if (have(n)) return n;
+    n = POSE_FALLBACK[n];
+  }
+  return 'idle';
+}
+
 export interface ArenaLayer {
   src: string;
   /** 0 — неподвижный дальний план, 1 — движется вместе с камерой. */
@@ -42,6 +94,12 @@ export interface ArenaLayer {
 }
 
 export interface ArtPackEntry {
+  /** Портрет для интерфейса из поставки художника (если облик героя меняется). */
+  portrait?: string;
+  /** Набор поз (`*_poses.json`) — основной формат для генеративного арта. */
+  poses?: string;
+  /** Набор поз II фазы босса. */
+  phase2Poses?: string;
   anim?: string;
   /** Скелет DragonBones (`*_ske.json`) и его атлас (`*_tex.json`). */
   rig?: string;
@@ -64,6 +122,7 @@ export interface ArtPackRegistry {
 const EMPTY: ArtPackRegistry = { version: 1, heroes: {}, enemies: {}, arenas: {} };
 let registry: ArtPackRegistry = EMPTY;
 const packs = new Map<string, AnimPack>();
+const posePacks = new Map<string, PosePack>();
 export interface LoadedRig {
   rig: Rig;
   atlasUrl: string;
@@ -105,12 +164,32 @@ export async function loadArtPack(timeoutMs = 2500): Promise<ArtPackRegistry> {
   const reg = raw as ArtPackRegistry;
   registry = { version: 1, heroes: reg.heroes ?? {}, enemies: reg.enemies ?? {}, arenas: reg.arenas ?? {} };
   const base = override ?? `${ART_ROOT}art-pack.json`;
+  // Resolve portrait URLs before the UI constructs character cards.
+  for (const group of [registry.heroes, registry.enemies]) {
+    for (const e of Object.values(group)) {
+      if (e.portrait) e.portrait = new URL(e.portrait, new URL(base, window.location.href)).href;
+    }
+  }
   const entries = [...Object.values(registry.heroes), ...Object.values(registry.enemies)];
   await Promise.all(entries.flatMap((e) => [e.anim, e.phase2Anim]).filter((x): x is string => !!x).map(async (rel) => {
     const u = resolve(base, rel);
     const pack = await fetchJson(u, timeoutMs);
     if (isAnimPack(pack)) packs.set(rel, { ...pack, pageUrls: (pack.pages ?? [pack.image as string]).map((pg) => resolve(u, pg)) });
     else console.error(`Пакет анимации не прошёл проверку: ${u}`);
+  }));
+  await Promise.all(entries.flatMap((e) => [e.poses, e.phase2Poses]).filter((x): x is string => !!x).map(async (rel) => {
+    const u = resolve(base, rel);
+    const pack = await fetchJson(u, timeoutMs);
+    if (!isPosePack(pack)) {
+      console.error(`Набор поз не прошёл проверку: ${u}`);
+      return;
+    }
+    const poseUrls: Partial<Record<PoseName, string[]>> = {};
+    for (const n of POSE_NAMES) {
+      const list = asList(pack.poses[n]);
+      if (list.length) poseUrls[n] = list.map((x) => resolve(u, x));
+    }
+    posePacks.set(rel, { ...pack, poseUrls });
   }));
   // Скелеты DragonBones.
   await Promise.all(entries.flatMap((e) => [[e.rig, e.rigAtlas, e.rigArmature], [e.phase2Rig, e.phase2RigAtlas, e.rigArmature]] as Array<[string | undefined, string | undefined, string | undefined]>)
@@ -134,9 +213,15 @@ export async function loadArtPack(timeoutMs = 2500): Promise<ArtPackRegistry> {
   return registry;
 }
 
-export function artFor(group: 'heroes' | 'enemies', id: string): { anim: AnimPack | null; phase2Sprite: string | null; phase2Anim: AnimPack | null; rig: LoadedRig | null; phase2Rig: LoadedRig | null } {
+export function artPortraitFor(group: 'heroes' | 'enemies', id: string): string | null {
+  return registry[group][id]?.portrait ?? null;
+}
+
+export function artFor(group: 'heroes' | 'enemies', id: string): { poses: PosePack | null; phase2Poses: PosePack | null; anim: AnimPack | null; phase2Sprite: string | null; phase2Anim: AnimPack | null; rig: LoadedRig | null; phase2Rig: LoadedRig | null } {
   const e = registry[group][id];
   return {
+    poses: e?.poses ? posePacks.get(e.poses) ?? null : null,
+    phase2Poses: e?.phase2Poses ? posePacks.get(e.phase2Poses) ?? null : null,
     anim: e?.anim ? packs.get(e.anim) ?? null : null,
     phase2Sprite: e?.phase2Sprite ?? null,
     phase2Anim: e?.phase2Anim ? packs.get(e.phase2Anim) ?? null : null,
