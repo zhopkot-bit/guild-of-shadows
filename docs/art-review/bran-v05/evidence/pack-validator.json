@@ -4,7 +4,7 @@
  "errors": [],
  "warnings": [],
  "info": [
-  "heroes.bran (rigs/bran-v05/bran_ske.json) атлас: 1536×1024 webp alpha, 433 КБ",
+  "heroes.bran (rigs/bran-v05/bran_ske.json) атлас: 2048×1111 webp alpha, 558 КБ",
   "heroes.bran (rigs/bran-v05/bran_ske.json): костей 24, слотов 23, анимации idle, attack, cast, hit, death, victory",
   "arenas.crypt слой arenas/crypt-v05/crypt_far.webp: 1920×1080 webp, 181 КБ",
   "arenas.crypt слой arenas/crypt-v05/crypt_mid.webp: 1920×1080 webp alpha, 133 КБ",

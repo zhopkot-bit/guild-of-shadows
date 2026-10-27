@@ -1,16 +1,18 @@
 {
-  "sourceCommit": "decbf2c040fb3c295a9ba3701cc27187bbfeea41",
-  "e2eCommit": "5be6a95",
-  "note": "E2E before final boot-region adjustment; all final pose/viewport checks repeated.",
+  "sourceCommit": "9b2410a1caeb68bc1a0947c4207db7f7e0eb9d95",
+  "e2eCommit": "9b2410a1caeb68bc1a0947c4207db7f7e0eb9d95",
+  "note": "Armor seam and secondary-motion iteration, 2026-10-27. All final browser/pose/PSD and completed E2E checks use the resources hashed below.",
   "sha256": {
-    "public/art/v17/rigs/bran-v05/bran_ske.json": "30d2be5f89e54bca060febd89864905b753b40427ba676ccd522ccfb0b67d16f",
-    "public/art/v17/rigs/bran-v05/bran_tex.json": "7b965576606bbd81bb4bd26a525029ca2b06f907e98104a72b415ce678cd4eaf",
-    "public/art/v17/rigs/bran-v05/bran_tex.webp": "824914ca7a6ce94496d1d7806fb6a24c2ca864a2b571abee1ce14123dc689d06",
+    "public/art/v17/rigs/bran-v05/bran_ske.json": "ef2fcf0802e2a0e19c9965fcb0d158af6ba083f59c6e322300c1f5310a6897d2",
+    "public/art/v17/rigs/bran-v05/bran_tex.json": "0fc7dafadbf7eb4a84c46961ac8e95087c781b8562807a9796c9e15ea5fd7b14",
+    "public/art/v17/rigs/bran-v05/bran_tex.webp": "4218a8cde1b43269907ecc6040eabeebbe82eeff4495582272814e94dd3be9e8",
     "public/art/v17/arenas/crypt-v05/crypt_far.webp": "ad0336757dda32ccbafe5373898a3d1ba1f66595be66704b1abcbb8e35e255af",
     "public/art/v17/arenas/crypt-v05/crypt_mid.webp": "0537ea9e62be3934b9919c9e553b8b0fbc01494727564da051c8cb0f6ed689df",
     "public/art/v17/arenas/crypt-v05/crypt_floor.webp": "64830e634dc9eae5ff09829b136efdc16417caa2af9265c260113ef47f7901b6",
     "public/art/v17/arenas/crypt-v05/crypt_front.webp": "230877bee4a627219ce876207a9a8a2a1137228dd461b51ddab42c4434b6b1f7",
     "art-sources/crypt-v05/crypt_layers.psd": "75715996d4bfc0829b42ded17ed4ae2d5156d18b439c19ef9b3ccab583eba22a",
-    "art-sources/bran-v05/bran_layers.psd": "eb333169a959968a66e41bc9495079e80e560208c6f6f1658b267070bb8fc584"
+    "art-sources/bran-v05/bran_layers.psd": "a33b5896ddd59100605ca635caa6e408dd1787a1673f6930d2807143fd3fcfc9",
+    "art-sources/bran-v05/packed-atlas.png": "9286e1dfd13b8d6443dd7942d4545ae49525f561cdb520dabaaa0c3135db3350",
+    "art-sources/bran-v05/seam-parts.png": "766f8539a2c91d2fe8c289149bd2220daea88c6602162506c104d3dad2ce0f7d"
   }
 }

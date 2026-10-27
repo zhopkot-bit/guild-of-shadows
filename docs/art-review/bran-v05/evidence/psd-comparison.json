@@ -2,24 +2,24 @@
   "ok": true,
   "rows": [
     {
-      "asset": "bran",
-      "maxChannelDifference": 1,
-      "mean": [
-        0.0025625,
-        0.0024005208333333335,
-        0.0023744791666666667,
-        9.21875e-05
-      ]
+      "name": "bran",
+      "maxChannelDifference": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "ok": true
     },
     {
-      "asset": "crypt",
-      "maxChannelDifference": 1,
-      "mean": [
-        0.0024342931524541232,
-        0.002405691796876986,
-        0.0027228490509434633,
-        0.0
-      ]
+      "name": "crypt",
+      "maxChannelDifference": [
+        1,
+        1,
+        1,
+        0
+      ],
+      "ok": true
     }
   ]
 }
