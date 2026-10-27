@@ -9,9 +9,9 @@
       "name": "bran",
       "frameRate": 24,
       "aabb": {
-        "x": -425,
+        "x": -449,
         "y": -1547,
-        "width": 1818,
+        "width": 1860,
         "height": 1547
       },
       "bone": [
@@ -265,16 +265,16 @@
           "parent": "torso"
         },
         {
-          "name": "belt",
-          "parent": "pelvis"
-        },
-        {
           "name": "tasset_back",
           "parent": "tasset_back"
         },
         {
           "name": "tasset_front",
           "parent": "tasset_front"
+        },
+        {
+          "name": "belt",
+          "parent": "pelvis"
         },
         {
           "name": "head",
@@ -520,23 +520,8 @@
                   "transform": {
                     "x": 0,
                     "y": -20,
-                    "scX": 1.601423487544484,
-                    "scY": 1.627906976744186
-                  }
-                }
-              ]
-            },
-            {
-              "name": "belt",
-              "display": [
-                {
-                  "name": "belt",
-                  "type": "image",
-                  "transform": {
-                    "x": 0,
-                    "y": 0,
-                    "scX": 1.4285714285714286,
-                    "scY": 0.9933774834437086
+                    "scX": 1.1278195488721805,
+                    "scY": 0.8936170212765957
                   }
                 }
               ]
@@ -550,8 +535,8 @@
                   "transform": {
                     "x": 0,
                     "y": 180,
-                    "scX": 1.2328767123287672,
-                    "scY": 1.647940074906367
+                    "scX": 0.7692307692307693,
+                    "scY": 0.8163265306122449
                   }
                 }
               ]
@@ -565,8 +550,23 @@
                   "transform": {
                     "x": 0,
                     "y": 180,
-                    "scX": 1.0465116279069768,
-                    "scY": 1.6296296296296295
+                    "scX": 0.6666666666666666,
+                    "scY": 0.831758034026465
+                  }
+                }
+              ]
+            },
+            {
+              "name": "belt",
+              "display": [
+                {
+                  "name": "belt",
+                  "type": "image",
+                  "transform": {
+                    "x": 0,
+                    "y": 0,
+                    "scX": 0.5614567526555387,
+                    "scY": 0.5590062111801242
                   }
                 }
               ]
@@ -1200,6 +1200,66 @@
               ]
             },
             {
+              "name": "cape_lower",
+              "rotateFrame": [
+                {
+                  "duration": 6,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": 4
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": -9
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 3
+                },
+                {
+                  "duration": 0,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                }
+              ]
+            },
+            {
+              "name": "scarf_tail",
+              "rotateFrame": [
+                {
+                  "duration": 7,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": 5
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": -12
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": 3
+                },
+                {
+                  "duration": 0,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                }
+              ]
+            },
+            {
               "name": "root",
               "translateFrame": [
                 {
@@ -1785,24 +1845,34 @@
               "name": "root",
               "rotateFrame": [
                 {
-                  "duration": 6,
+                  "duration": 4,
                   "tweenEasing": 0,
                   "rotate": 0
                 },
                 {
-                  "duration": 8,
+                  "duration": 4,
                   "tweenEasing": 0,
-                  "rotate": 12
+                  "rotate": -3
                 },
                 {
                   "duration": 6,
                   "tweenEasing": 0,
-                  "rotate": 50
+                  "rotate": 14
                 },
                 {
-                  "duration": 4,
+                  "duration": 5,
                   "tweenEasing": 0,
-                  "rotate": 84
+                  "rotate": 52
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": 92
+                },
+                {
+                  "duration": 2,
+                  "tweenEasing": 0,
+                  "rotate": 88
                 },
                 {
                   "duration": 0,
@@ -1821,19 +1891,19 @@
                   "duration": 1,
                   "tweenEasing": 0,
                   "x": -3.333333333333333,
-                  "y": -7.093106027732309
+                  "y": -8.993708245914622
                 },
                 {
                   "duration": 1,
                   "tweenEasing": 0,
                   "x": -6.666666666666666,
-                  "y": -9.468341775378116
+                  "y": -12.763978064975868
                 },
                 {
                   "duration": 1,
                   "tweenEasing": 0,
                   "x": -10,
-                  "y": -10
+                  "y": -13.309914976013133
                 },
                 {
                   "duration": 1,
@@ -1917,43 +1987,43 @@
                   "duration": 1,
                   "tweenEasing": 0,
                   "x": -115,
-                  "y": -145
+                  "y": -155.72000265123492
                 },
                 {
                   "duration": 1,
                   "tweenEasing": 0,
                   "x": -123.33333333333333,
-                  "y": -160
+                  "y": -246.2048408344037
                 },
                 {
                   "duration": 1,
                   "tweenEasing": 0,
                   "x": -131.66666666666669,
-                  "y": -175
+                  "y": -349.19761467041315
                 },
                 {
                   "duration": 1,
                   "tweenEasing": 0,
                   "x": -140,
-                  "y": -222.37161652393917
+                  "y": -321.3497087094954
                 },
                 {
                   "duration": 1,
                   "tweenEasing": 0,
                   "x": -142.5,
-                  "y": -233.622324933471
+                  "y": -302.6238361160207
                 },
                 {
                   "duration": 1,
                   "tweenEasing": 0,
                   "x": -145,
-                  "y": -247.7756533668469
+                  "y": -279.1921333812011
                 },
                 {
                   "duration": 1,
                   "tweenEasing": 0,
                   "x": -147.5,
-                  "y": -273.1915514822984
+                  "y": -288.53954244471527
                 },
                 {
                   "duration": 0,
@@ -2194,17 +2264,62 @@
               ]
             },
             {
-              "name": "head",
+              "name": "torso",
               "rotateFrame": [
                 {
-                  "duration": 14,
+                  "duration": 4,
                   "tweenEasing": 0,
                   "rotate": 0
                 },
                 {
-                  "duration": 10,
+                  "duration": 4,
                   "tweenEasing": 0,
-                  "rotate": 10
+                  "rotate": -4
+                },
+                {
+                  "duration": 6,
+                  "tweenEasing": 0,
+                  "rotate": 5
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": 3
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": -3
+                },
+                {
+                  "duration": 0,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                }
+              ]
+            },
+            {
+              "name": "head",
+              "rotateFrame": [
+                {
+                  "duration": 8,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 7,
+                  "tweenEasing": 0,
+                  "rotate": -6
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": 12
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": 22
                 },
                 {
                   "duration": 0,
@@ -2217,19 +2332,59 @@
               "name": "cape_lower",
               "rotateFrame": [
                 {
-                  "duration": 14,
+                  "duration": 8,
                   "tweenEasing": 0,
                   "rotate": 0
                 },
                 {
-                  "duration": 10,
+                  "duration": 8,
                   "tweenEasing": 0,
-                  "rotate": -20
+                  "rotate": 10
+                },
+                {
+                  "duration": 5,
+                  "tweenEasing": 0,
+                  "rotate": -22
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": -45
                 },
                 {
                   "duration": 0,
                   "tweenEasing": 0,
                   "rotate": -40
+                }
+              ]
+            },
+            {
+              "name": "scarf_tail",
+              "rotateFrame": [
+                {
+                  "duration": 8,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 9,
+                  "tweenEasing": 0,
+                  "rotate": 8
+                },
+                {
+                  "duration": 4,
+                  "tweenEasing": 0,
+                  "rotate": -25
+                },
+                {
+                  "duration": 3,
+                  "tweenEasing": 0,
+                  "rotate": -38
+                },
+                {
+                  "duration": 0,
+                  "tweenEasing": 0,
+                  "rotate": -30
                 }
               ]
             }
@@ -2307,6 +2462,56 @@
                   "duration": 10,
                   "tweenEasing": 0,
                   "rotate": -5
+                },
+                {
+                  "duration": 0,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                }
+              ]
+            },
+            {
+              "name": "cape_lower",
+              "rotateFrame": [
+                {
+                  "duration": 12,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 10,
+                  "tweenEasing": 0,
+                  "rotate": -5
+                },
+                {
+                  "duration": 8,
+                  "tweenEasing": 0,
+                  "rotate": 3
+                },
+                {
+                  "duration": 0,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                }
+              ]
+            },
+            {
+              "name": "scarf_tail",
+              "rotateFrame": [
+                {
+                  "duration": 12,
+                  "tweenEasing": 0,
+                  "rotate": 0
+                },
+                {
+                  "duration": 11,
+                  "tweenEasing": 0,
+                  "rotate": -7
+                },
+                {
+                  "duration": 7,
+                  "tweenEasing": 0,
+                  "rotate": 4
                 },
                 {
                   "duration": 0,

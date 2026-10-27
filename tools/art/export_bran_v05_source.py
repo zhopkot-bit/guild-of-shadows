@@ -24,7 +24,7 @@ def export(src,name,size,layers):
 
 src=Path('art-sources/bran-v05');out=Path('public/art/v17/rigs/bran-v05')
 arm=json.loads((out/'bran_ske.json').read_text())['armature'][0];atlas=json.loads((out/'bran_tex.json').read_text());subs={s['name']:s for s in atlas['SubTexture']}
-im=Image.open(src/'cutout-atlas.png').convert('RGBA');world={};layers=[]
+im=Image.open(src/'packed-atlas.png').convert('RGBA');world={};layers=[]
 for b in arm['bone']:
  parent=world.get(b.get('parent'),(0,0));t=b.get('transform',{});world[b['name']]=(parent[0]+t.get('x',0),parent[1]+t.get('y',0))
 for slot,skin in zip(arm['slot'],arm['skin'][0]['slot']):
