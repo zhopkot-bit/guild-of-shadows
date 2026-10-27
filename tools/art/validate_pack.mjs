@@ -259,6 +259,12 @@ const KNOWN = { heroes: ['bran', 'mira', 'rook', 'nora'], enemies: ['goblinRaide
 for (const group of ['heroes', 'enemies']) {
   for (const [id, e] of Object.entries(reg[group] ?? {})) {
     if (!KNOWN[group].includes(id)) errors.push(`${group}.${id}: неизвестный id (ожидается ${KNOWN[group].join(', ')})`);
+    if (e.portrait) {
+      // Портрет из поставки: герои 256×320, враги 256×256 (ТЗ §4).
+      const im = checkImage(join(base, e.portrait), `${group}.${id} портрет`, 40, false);
+      const want = group === 'heroes' ? [256, 320] : [256, 256];
+      if (im && (im.w !== want[0] || im.h !== want[1])) warnings.push(`${group}.${id} портрет: ${im.w}×${im.h}, ожидается ${want[0]}×${want[1]}`);
+    }
     if (e.poses) checkPoses(group, id, e.poses, base);
     if (e.phase2Poses) checkPoses(group, id, e.phase2Poses, base);
     if (e.anim) checkAnim(group, id, e.anim, base);
