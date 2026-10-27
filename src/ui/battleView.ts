@@ -4,7 +4,7 @@ import { ENEMIES } from '../combat/data';
 import type { Action, Battle, BattleEvent, HitInfo, Intent, Unit } from '../combat/types';
 import { ARENAS } from '../content/arenas';
 import { BOSS_EMISSIVE, ENEMY_ART, heroArt, roleName } from '../content/roster';
-import { artFor, arenaLayers } from '../content/artpack';
+import { WOUNDED_HP, artFor, arenaLayers, vfxPacksLoaded } from '../content/artpack';
 import type { HeroClass } from '../core/types';
 import { finishBattle } from '../expedition/run';
 import { ASH, ArenaScene, DANGER, SPECTRAL, type ActorScreen, type ActorSpec, type AttackStyle } from './arena/scene';
@@ -186,30 +186,33 @@ export function battleScreen(ctx: Ctx): HTMLElement {
   const specs: ActorSpec[] = battle.units.map((u) => {
     const k = u.side === 'enemy' ? enemyKind(u) : null;
     const pack = u.side === 'hero' ? (u.identity ? artFor('heroes', u.identity) : null) : k ? artFor('enemies', k) : null;
+    // Двойник «Б», «В»… получает свой облик, если художник его нарисовал.
+    const variant = dupSuffix.has(u) ? DUP_LETTERS.indexOf(dupSuffix.get(u) as string) : 0;
+    const poses = (variant > 0 ? pack?.posesVariants[variant - 1] : undefined) ?? pack?.poses ?? null;
     return {
       anim: pack?.anim ?? null,
       sprite2: pack?.phase2Sprite ?? null,
       anim2: pack?.phase2Anim ?? null,
       rig: pack?.rig ?? null,
-      poses: pack?.poses ?? null,
+      poses,
       poses2: pack?.phase2Poses ?? null,
       rig2: pack?.phase2Rig ?? null,
       id: u.id,
       side: u.side,
       sprite: spriteFor(u),
       emissive: u.boss ? BOSS_EMISSIVE : undefined,
-      flip: k === 'goblinRaider' && !pack?.rig && !pack?.anim && !pack?.poses, // текущий спрайт гоблина смотрит вправо; финальный арт врагов рисуется лицом влево
+      flip: k === 'goblinRaider' && !pack?.rig && !pack?.anim && !poses, // текущий спрайт гоблина смотрит вправо; финальный арт врагов рисуется лицом влево
       style: attackStyle(u),
       boss: !!u.boss,
       wide: k === 'ashWolf',
       idle: idleFor(u),
-      variant: dupSuffix.has(u) ? DUP_LETTERS.indexOf(dupSuffix.get(u) as string) : 0,
+      variant,
       dead: !u.alive,
       phase2: !!u.boss && u.bossPhase === 2,
     } as ActorSpec;
   });
   const arenaId = isBoss ? 'boss' : 'crypt';
-  const scene = new ArenaScene(arenaEl, { ...ARENAS[arenaId], layers: arenaLayers(arenaId) }, specs);
+  const scene = new ArenaScene(arenaEl, { ...ARENAS[arenaId], layers: arenaLayers(arenaId), vfx: vfxPacksLoaded() }, specs);
   scene.speed = battlePrefs.speed;
 
   const view: View = { dead: false, fast: false, scene, choice: null, pending: null, cleanup: [] };
@@ -406,6 +409,7 @@ export function battleScreen(ctx: Ctx): HTMLElement {
   const paintAll = () => {
     for (const u of battle.units) {
       const pct = `${Math.max(0, (u.hp / u.stats.maxHp) * 100)}%`;
+      view.scene.setWounded(u.id, u.alive && u.hp / u.stats.maxHp < WOUNDED_HP);
       const p = plates.get(u.id);
       if (p) {
         p.fill.style.width = pct;

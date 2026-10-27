@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { POSE_NAMES, REQUIRED_POSES, isPosePack, resolvePose, type PoseName } from '../src/content/artpack';
+import { POSE_NAMES, REQUIRED_POSES, WOUNDED_HP, isPosePack, isVfxPack, resolvePose, type PoseName } from '../src/content/artpack';
 
 const base = { version: 1, frameWidth: 1200, frameHeight: 1000, pivot: [0.24, 0.98], figureHeight: 0.9, poses: { idle: 'idle.webp' } };
 
@@ -33,5 +33,30 @@ describe('набор поз', () => {
   it('у каждой позы есть путь к стойке (нет циклов замен)', () => {
     for (const n of POSE_NAMES) expect(resolvePose((x) => x === 'idle', n)).toBe('idle');
     expect(REQUIRED_POSES).toContain('idle');
+  });
+});
+
+describe('доработки поз (свечение, варианты, раненая стойка, эффекты)', () => {
+  it('раненая стойка заменяется обычной, порог — 30% здоровья', () => {
+    expect(resolvePose((n) => n === 'idle', 'wounded')).toBe('idle');
+    expect(resolvePose((n) => n === 'idle' || n === 'wounded', 'wounded')).toBe('wounded');
+    expect(WOUNDED_HP).toBe(0.3);
+  });
+
+  it('маски свечения и варианты не ломают проверку пакета; цвет и сила — в пределах', () => {
+    expect(isPosePack({ ...base, glow: { strike: 'strike_glow.webp' }, glowColor: [1, 0.6, 0.2], glowStrength: 1.2, alternatives: { hit: ['hit_b.webp', ['hit_c1.webp', 'hit_c2.webp']] } })).toBe(true);
+    expect(isPosePack({ ...base, glowColor: [1, 0.5] })).toBe(false);
+    expect(isPosePack({ ...base, glowColor: [5, 0, 0] })).toBe(false);
+    expect(isPosePack({ ...base, glowStrength: 9 })).toBe(false);
+  });
+
+  it('лист эффекта: страницы, число кадров и скорость', () => {
+    const vfx = { version: 1, image: 'slash.webp', frameWidth: 256, frameHeight: 256, frames: 8, fps: 24 };
+    expect(isVfxPack(vfx)).toBe(true);
+    expect(isVfxPack({ ...vfx, image: undefined, pages: ['a.webp', 'b.webp'] })).toBe(true);
+    expect(isVfxPack({ ...vfx, frames: 0 })).toBe(false);
+    expect(isVfxPack({ ...vfx, fps: 120 })).toBe(false);
+    expect(isVfxPack({ ...vfx, scale: 0 })).toBe(false);
+    expect(isVfxPack({ ...vfx, image: undefined })).toBe(false);
   });
 });

@@ -1,6 +1,13 @@
 {
  "version": 1,
  "heroes": { "bran": { "poses": "bran/poses.json" } },
- "enemies": {},
- "arenas": {}
+ "enemies": { "goblinRaider": { "poses": "goblin_a/poses.json", "posesVariants": ["goblin_b/poses.json"] } },
+ "arenas": {},
+ "vfx": {
+  "slash": "vfx/slash.json",
+  "ashBurst": "vfx/ashBurst.json",
+  "heal": "vfx/heal.json",
+  "wave": "vfx/wave.json",
+  "cover": "vfx/cover.json"
+ }
 }

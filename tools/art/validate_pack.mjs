@@ -169,7 +169,7 @@ function checkRig(group, id, skeRel, atlRel, armName, base) {
 }
 
 // ---------- Наборы поз (основной формат для генеративного арта) ----------
-const POSES = ['idle', 'windup', 'strike', 'aim', 'shoot', 'cast', 'prepare', 'hit', 'down', 'victory'];
+const POSES = ['idle', 'wounded', 'windup', 'strike', 'aim', 'shoot', 'cast', 'prepare', 'hit', 'down', 'victory'];
 /** Какие позы реально нужны каждому персонажу (по его действиям в бою). */
 const POSE_REQUIRED = {
   bran: ['idle', 'windup', 'strike', 'cast', 'hit', 'down', 'victory'],
@@ -210,42 +210,92 @@ function checkPoses(group, id, rel, base) {
   const poses = pack.poses ?? {};
   for (const n of Object.keys(poses)) if (!POSES.includes(n)) warnings.push(`${L}: неизвестная поза «${n}» (игнорируется)`);
   for (const n of POSE_REQUIRED[id] ?? ['idle']) if (!poses[n]) errors.push(`${L}: нет позы «${n}» — она нужна этому персонажу в бою`);
+  if (pack.glowColor !== undefined && !(Array.isArray(pack.glowColor) && pack.glowColor.length === 3 && pack.glowColor.every((c) => c >= 0 && c <= 2))) errors.push(`${L}: glowColor — три числа 0..2`);
+  if (pack.glowStrength !== undefined && !(pack.glowStrength >= 0 && pack.glowStrength <= 3)) errors.push(`${L}: glowStrength 0..3`);
+  const asList = (v) => (typeof v === 'string' ? [v] : Array.isArray(v) ? v : []);
   let totalKb = 0;
-  for (const n of POSES) {
-    const list = typeof poses[n] === 'string' ? [poses[n]] : Array.isArray(poses[n]) ? poses[n] : [];
-    if (poses[n] !== undefined && !list.length) errors.push(`${L}.${n}: пустая серия`);
-    if (list.length > 4) warnings.push(`${L}.${n}: ${list.length} картинок — серия длиннее 4 читается как дёрганый мультфильм`);
-    for (const f of list) {
-      const ip = join(dirname(p), f);
-      const im = checkImage(ip, `${L}.${n} ${f}`, POSE_BUDGET_KB.image, true);
-      if (!im) continue;
-      totalKb += statSync(ip).size / 1024;
-      if (im.w !== pack.frameWidth || im.h !== pack.frameHeight) errors.push(`${L}.${n} ${f}: ${im.w}×${im.h}, а холст ${pack.frameWidth}×${pack.frameHeight} — все позы на холсте одного размера`);
-      if (im.format === 'png' && im.buf && n === 'down') {
-        // Павший не должен ложиться на соседа: между бойцами около половины роста.
-        const box = pngOpaqueBox(im.buf, im.w, im.h);
-        const figH = pack.figureHeight * im.h;
-        const px = pack.pivot[0] * im.w;
-        if (box && Math.max(px - box.x0, box.x1 - px) > 0.6 * figH) warnings.push(`${L}.down ${f}: павший тянется на ${(Math.max(px - box.x0, box.x1 - px) / figH).toFixed(2)} роста от точки опоры (до 0,6) — ляжет на соседа`);
-      }
-      if (im.format === 'png' && im.buf && n !== 'down') {
-        // Ступни на одной линии: низ фигуры (кроме лежачей позы) совпадает с точкой опоры.
-        const box = pngOpaqueBox(im.buf, im.w, im.h);
-        if (box) {
-          const feet = (box.y1 + 1) / im.h;
-          if (Math.abs(feet - pack.pivot[1]) > 0.025) errors.push(`${L}.${n} ${f}: ступни на ${(feet * 100).toFixed(1)}% высоты, а pivot — ${(pack.pivot[1] * 100).toFixed(1)}% (фигура «прыгнет» при смене позы)`);
-          if (n === 'idle') {
-            const fh = (box.y1 - box.y0 + 1) / im.h;
-            if (Math.abs(fh - pack.figureHeight) > 0.06) errors.push(`${L}.idle: фигура занимает ${(fh * 100).toFixed(0)}% высоты, а figureHeight — ${(pack.figureHeight * 100).toFixed(0)}%`);
-            const cx = (box.x0 + box.x1) / 2 / im.w;
-            if (Math.abs(cx - pack.pivot[0]) > 0.12) warnings.push(`${L}.idle: центр фигуры (${(cx * 100).toFixed(0)}%) далеко от pivot по горизонтали (${(pack.pivot[0] * 100).toFixed(0)}%)`);
-          }
-        }
-      } else if (im.format !== 'png') info.push(`${L}.${n} ${f}: WebP — проверка ступней только по PNG-мастерам`);
+  /** Одна картинка позы: файл, холст, альфа; для PNG — линия ступней, рост в стойке, размах павшего. */
+  const checkFrame = (n, f, kind) => {
+    const ip = join(dirname(p), f);
+    const im = checkImage(ip, `${L}.${n} ${f}`, POSE_BUDGET_KB.image, true);
+    if (!im) return;
+    totalKb += statSync(ip).size / 1024;
+    if (im.w !== pack.frameWidth || im.h !== pack.frameHeight) errors.push(`${L}.${n} ${f}: ${im.w}×${im.h}, а холст ${pack.frameWidth}×${pack.frameHeight} — все позы и маски на холсте одного размера`);
+    if (kind === 'glow' || im.format !== 'png' || !im.buf) {
+      if (im.format !== 'png' && kind !== 'glow') info.push(`${L}.${n} ${f}: WebP — проверка ступней только по PNG-мастерам`);
+      return;
     }
+    const box = pngOpaqueBox(im.buf, im.w, im.h);
+    if (!box) return;
+    if (n === 'down') {
+      // Павший не должен ложиться на соседа: между бойцами около половины роста.
+      const figH = pack.figureHeight * im.h;
+      const px = pack.pivot[0] * im.w;
+      const reach = Math.max(px - box.x0, box.x1 - px) / figH;
+      if (reach > 0.6) warnings.push(`${L}.down ${f}: павший тянется на ${reach.toFixed(2)} роста от точки опоры (до 0,6) — ляжет на соседа`);
+      return;
+    }
+    // Ступни на одной линии: низ фигуры совпадает с точкой опоры.
+    const feet = (box.y1 + 1) / im.h;
+    if (Math.abs(feet - pack.pivot[1]) > 0.025) errors.push(`${L}.${n} ${f}: ступни на ${(feet * 100).toFixed(1)}% высоты, а pivot — ${(pack.pivot[1] * 100).toFixed(1)}% (фигура «прыгнет» при смене позы)`);
+    if (n === 'idle' && kind === 'pose') {
+      const fh = (box.y1 - box.y0 + 1) / im.h;
+      if (Math.abs(fh - pack.figureHeight) > 0.06) errors.push(`${L}.idle: фигура занимает ${(fh * 100).toFixed(0)}% высоты, а figureHeight — ${(pack.figureHeight * 100).toFixed(0)}%`);
+      const cx = (box.x0 + box.x1) / 2 / im.w;
+      if (Math.abs(cx - pack.pivot[0]) > 0.12) warnings.push(`${L}.idle: центр фигуры (${(cx * 100).toFixed(0)}%) далеко от pivot по горизонтали (${(pack.pivot[0] * 100).toFixed(0)}%)`);
+    }
+  };
+  const checkSeries = (n, list, kind) => {
+    if (!list.length) errors.push(`${L}.${n}: пустая серия`);
+    if (list.length > 4) warnings.push(`${L}.${n}: ${list.length} картинок — серия длиннее 4 читается как дёрганый мультфильм`);
+    for (const f of list) checkFrame(n, f, kind);
+  };
+  for (const n of POSES) if (poses[n] !== undefined) checkSeries(n, asList(poses[n]), 'pose');
+  // Варианты позы: каждая — картинка или серия на том же холсте.
+  for (const [n, alts] of Object.entries(pack.alternatives ?? {})) {
+    if (!POSES.includes(n)) { warnings.push(`${L}: варианты для неизвестной позы «${n}»`); continue; }
+    if (!poses[n]) errors.push(`${L}: есть варианты «${n}», но нет основной позы`);
+    if (!Array.isArray(alts) || !alts.length) { errors.push(`${L}.alternatives.${n}: нужен список вариантов`); continue; }
+    if (alts.length > 3) warnings.push(`${L}.alternatives.${n}: ${alts.length} вариантов — обычно хватает 1–2`);
+    for (const a of alts) checkSeries(n, asList(a), 'alt');
+  }
+  // Маски свечения: тот же холст; серия маски — длиной как поза или одна картинка на все кадры.
+  for (const [n, g] of Object.entries(pack.glow ?? {})) {
+    if (!poses[n]) { errors.push(`${L}: маска свечения для «${n}», но такой позы нет`); continue; }
+    const gl = asList(g);
+    const pl = asList(poses[n]);
+    if (gl.length !== 1 && gl.length !== pl.length) errors.push(`${L}.glow.${n}: ${gl.length} масок на ${pl.length} кадров — нужна одна или по одной на кадр`);
+    checkSeries(n, gl, 'glow');
   }
   if (totalKb > POSE_BUDGET_KB.character) (strict ? errors : warnings).push(`${L}: ${Math.round(totalKb)} КБ на персонажа больше бюджета ${POSE_BUDGET_KB.character} КБ`);
-  info.push(`${L}: поз ${Object.keys(poses).length}, ${Math.round(totalKb)} КБ`);
+  info.push(`${L}: поз ${Object.keys(poses).length}, вариантов ${Object.values(pack.alternatives ?? {}).flat().length}, масок ${Object.keys(pack.glow ?? {}).length}, ${Math.round(totalKb)} КБ`);
+}
+
+const VFX = ['slash', 'ashBurst', 'heal', 'wave', 'cover'];
+/** Лист эффекта: страницы одного размера, кадры помещаются, скорость и бюджет. */
+function checkVfx(id, rel, base) {
+  const p = join(base, rel);
+  const L = `vfx.${id} (${rel})`;
+  if (!VFX.includes(id)) { warnings.push(`vfx.${id}: игра использует ${VFX.join(', ')}`); return; }
+  if (!existsSync(p)) { errors.push(`${L}: нет файла`); return; }
+  let pack;
+  try { pack = JSON.parse(readFileSync(p, 'utf8')); } catch (e) { errors.push(`${L}: JSON не читается (${e.message})`); return; }
+  if (pack.version !== 1) errors.push(`${L}: version должен быть 1`);
+  if (!(pack.frameWidth > 0 && pack.frameHeight > 0)) { errors.push(`${L}: нужны frameWidth/frameHeight`); return; }
+  if (!(Number.isInteger(pack.frames) && pack.frames > 0)) errors.push(`${L}: frames — число кадров`);
+  if (!(pack.fps >= 4 && pack.fps <= 60)) errors.push(`${L}: fps 4..60`);
+  if (pack.scale !== undefined && !(pack.scale > 0 && pack.scale <= 4)) errors.push(`${L}: scale 0..4`);
+  const pages = Array.isArray(pack.pages) && pack.pages.length ? pack.pages : pack.image ? [pack.image] : [];
+  if (!pages.length) { errors.push(`${L}: нужен image или pages`); return; }
+  let capacity = 0;
+  for (const pg of pages) {
+    const im = checkImage(join(dirname(p), pg), `${L} ${pg}`, BUDGET_KB.atlas, pack.additive === false);
+    if (!im) return;
+    if (im.w % pack.frameWidth || im.h % pack.frameHeight) errors.push(`${L} ${pg}: ${im.w}×${im.h} не делится на кадр ${pack.frameWidth}×${pack.frameHeight}`);
+    capacity += Math.floor(im.w / pack.frameWidth) * Math.floor(im.h / pack.frameHeight);
+  }
+  if (pack.frames > capacity) errors.push(`${L}: кадров ${pack.frames}, а в листе помещается ${capacity}`);
+  if (pack.frames / pack.fps > 1.5) warnings.push(`${L}: эффект длится ${(pack.frames / pack.fps).toFixed(2)} с — дольше 1,5 с будет мешать следующему ходу`);
 }
 
 if (!existsSync(regPath)) {
@@ -266,6 +316,11 @@ for (const group of ['heroes', 'enemies']) {
       if (im && (im.w !== want[0] || im.h !== want[1])) warnings.push(`${group}.${id} портрет: ${im.w}×${im.h}, ожидается ${want[0]}×${want[1]}`);
     }
     if (e.poses) checkPoses(group, id, e.poses, base);
+    for (const [i, v] of (e.posesVariants ?? []).entries()) {
+      if (group !== 'enemies') warnings.push(`${group}.${id}: облик для двойников бывает только у врагов`);
+      checkPoses(group, `${id}`, v, base);
+      if (!e.poses) errors.push(`${group}.${id}: posesVariants[${i}] без основного набора poses`);
+    }
     if (e.phase2Poses) checkPoses(group, id, e.phase2Poses, base);
     if (e.anim) checkAnim(group, id, e.anim, base);
     if (e.phase2Anim) checkAnim(group, id, e.phase2Anim, base);
@@ -276,6 +331,7 @@ for (const group of ['heroes', 'enemies']) {
     if (e.phase2Sprite) checkImage(join(base, e.phase2Sprite), `${group}.${id} спрайт фазы II`, BUDGET_KB.sprite, true);
   }
 }
+for (const [id, rel] of Object.entries(reg.vfx ?? {})) checkVfx(id, rel, base);
 for (const [id, a] of Object.entries(reg.arenas ?? {})) {
   if (!['crypt', 'boss'].includes(id)) warnings.push(`arenas.${id}: игра использует crypt и boss`);
   for (const l of a.layers ?? []) {

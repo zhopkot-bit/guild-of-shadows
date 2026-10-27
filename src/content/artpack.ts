@@ -38,10 +38,12 @@ export interface AnimPack {
  * а мгновенно переключает позы на фазах действия и добавляет движение, стоп-кадр удара и камеру.
  * Основной формат для генеративного арта: целую позу сгенерировать согласованно гораздо проще, чем части рига.
  */
-export type PoseName = 'idle' | 'windup' | 'strike' | 'aim' | 'shoot' | 'cast' | 'prepare' | 'hit' | 'down' | 'victory';
-export const POSE_NAMES: readonly PoseName[] = ['idle', 'windup', 'strike', 'aim', 'shoot', 'cast', 'prepare', 'hit', 'down', 'victory'];
+export type PoseName = 'idle' | 'wounded' | 'windup' | 'strike' | 'aim' | 'shoot' | 'cast' | 'prepare' | 'hit' | 'down' | 'victory';
+export const POSE_NAMES: readonly PoseName[] = ['idle', 'wounded', 'windup', 'strike', 'aim', 'shoot', 'cast', 'prepare', 'hit', 'down', 'victory'];
 /** Чем заменить отсутствующую позу (по цепочке, последняя замена — idle). */
-export const POSE_FALLBACK: Partial<Record<PoseName, PoseName>> = { aim: 'windup', shoot: 'strike', cast: 'windup', prepare: 'windup', victory: 'idle', down: 'hit', hit: 'idle', windup: 'idle', strike: 'idle' };
+export const POSE_FALLBACK: Partial<Record<PoseName, PoseName>> = { wounded: 'idle', aim: 'windup', shoot: 'strike', cast: 'windup', prepare: 'windup', victory: 'idle', down: 'hit', hit: 'idle', windup: 'idle', strike: 'idle' };
+/** Доля здоровья, ниже которой стойку сменяет «раненая» (`wounded`). */
+export const WOUNDED_HP = 0.3;
 export const REQUIRED_POSES: readonly PoseName[] = ['idle', 'windup', 'strike', 'hit', 'down'];
 
 export interface PosePack {
@@ -61,8 +63,49 @@ export interface PosePack {
   poses: Partial<Record<PoseName, string | string[]>> & { idle: string | string[] };
   /** Скорость серий, кадров в секунду (по умолчанию 12). */
   fps?: number;
-  /** Разрешённые URL поз (заполняется загрузчиком). */
+  /**
+   * Маски свечения: на тех же холстах, что и поза; яркость альфы — сила свечения (глаза, клинок, ядро).
+   * Серия маски совпадает по длине с серией позы или состоит из одной картинки на все кадры.
+   */
+  glow?: Partial<Record<PoseName, string | string[]>>;
+  /** Цвет свечения (0..1); по умолчанию — тлеющий оранжевый, во II фазе босса — призрачный голубой. */
+  glowColor?: [number, number, number];
+  /** Сила свечения (по умолчанию 1). */
+  glowStrength?: number;
+  /** Дополнительные варианты позы (картинка или серия): игра выбирает случайный, не повторяя подряд. */
+  alternatives?: Partial<Record<PoseName, Array<string | string[]>>>;
+  /** Разрешённые URL (заполняется загрузчиком). */
   poseUrls?: Partial<Record<PoseName, string[]>>;
+  glowUrls?: Partial<Record<PoseName, string[]>>;
+  altUrls?: Partial<Record<PoseName, string[][]>>;
+}
+
+/** Листы эффектов, которые игра проигрывает в конкретных местах боя. */
+export type VfxId = 'slash' | 'ashBurst' | 'heal' | 'wave' | 'cover';
+export const VFX_IDS: readonly VfxId[] = ['slash', 'ashBurst', 'heal', 'wave', 'cover'];
+
+export interface VfxPack {
+  version: 1;
+  image?: string;
+  pages?: string[];
+  frameWidth: number;
+  frameHeight: number;
+  /** Сколько кадров в листе (по порядку слева направо, сверху вниз, сквозь страницы). */
+  frames: number;
+  fps: number;
+  /** Аддитивное смешивание (свет, огонь) — по умолчанию да; false — обычное (дым, осколки). */
+  additive?: boolean;
+  /** Множитель размера относительно цели (по умолчанию 1 = рост цели). */
+  scale?: number;
+  pageUrls?: string[];
+}
+
+export function isVfxPack(v: unknown): v is VfxPack {
+  if (!v || typeof v !== 'object') return false;
+  const p = v as VfxPack;
+  return p.version === 1 && (typeof p.image === 'string' || (Array.isArray(p.pages) && p.pages.length > 0))
+    && p.frameWidth > 0 && p.frameHeight > 0 && Number.isInteger(p.frames) && p.frames > 0 && p.fps >= 4 && p.fps <= 60
+    && (p.scale === undefined || (p.scale > 0 && p.scale <= 4));
 }
 
 const asList = (v: string | string[] | undefined): string[] => (typeof v === 'string' ? [v] : Array.isArray(v) ? v.filter((x) => typeof x === 'string') : []);
@@ -72,7 +115,9 @@ export function isPosePack(v: unknown): v is PosePack {
   const p = v as PosePack;
   return p.version === 1 && p.frameWidth > 0 && p.frameHeight > 0 && Array.isArray(p.pivot) && p.pivot.length === 2
     && p.figureHeight > 0 && p.figureHeight <= 1 && !!p.poses && asList(p.poses.idle).length > 0
-    && (p.fps === undefined || (p.fps >= 2 && p.fps <= 30));
+    && (p.fps === undefined || (p.fps >= 2 && p.fps <= 30))
+    && (p.glowColor === undefined || (Array.isArray(p.glowColor) && p.glowColor.length === 3 && p.glowColor.every((c) => c >= 0 && c <= 2)))
+    && (p.glowStrength === undefined || (p.glowStrength >= 0 && p.glowStrength <= 3));
 }
 
 /** Поза, которая реально будет показана: сама или ближайшая замена из имеющихся. */
@@ -100,6 +145,8 @@ export interface ArtPackEntry {
   poses?: string;
   /** Набор поз II фазы босса. */
   phase2Poses?: string;
+  /** Другой облик для двойников (враг «Б», «В»…): пути к наборам поз по порядку. */
+  posesVariants?: string[];
   anim?: string;
   /** Скелет DragonBones (`*_ske.json`) и его атлас (`*_tex.json`). */
   rig?: string;
@@ -117,12 +164,15 @@ export interface ArtPackRegistry {
   heroes: Record<string, ArtPackEntry>;
   enemies: Record<string, ArtPackEntry>;
   arenas: Record<string, { layers: ArenaLayer[] }>;
+  /** Листы эффектов умений (путь к json листа). */
+  vfx?: Partial<Record<VfxId, string>>;
 }
 
 const EMPTY: ArtPackRegistry = { version: 1, heroes: {}, enemies: {}, arenas: {} };
 let registry: ArtPackRegistry = EMPTY;
 const packs = new Map<string, AnimPack>();
 const posePacks = new Map<string, PosePack>();
+const vfxPacks: Partial<Record<VfxId, VfxPack>> = {};
 export interface LoadedRig {
   rig: Rig;
   atlasUrl: string;
@@ -162,7 +212,7 @@ export async function loadArtPack(timeoutMs = 2500): Promise<ArtPackRegistry> {
   const raw = await fetchJson(url, timeoutMs);
   if (!raw || typeof raw !== 'object' || (raw as ArtPackRegistry).version !== 1) return registry;
   const reg = raw as ArtPackRegistry;
-  registry = { version: 1, heroes: reg.heroes ?? {}, enemies: reg.enemies ?? {}, arenas: reg.arenas ?? {} };
+  registry = { version: 1, heroes: reg.heroes ?? {}, enemies: reg.enemies ?? {}, arenas: reg.arenas ?? {}, vfx: reg.vfx ?? {} };
   const base = override ?? `${ART_ROOT}art-pack.json`;
   // Resolve portrait URLs before the UI constructs character cards.
   for (const group of [registry.heroes, registry.enemies]) {
@@ -177,7 +227,7 @@ export async function loadArtPack(timeoutMs = 2500): Promise<ArtPackRegistry> {
     if (isAnimPack(pack)) packs.set(rel, { ...pack, pageUrls: (pack.pages ?? [pack.image as string]).map((pg) => resolve(u, pg)) });
     else console.error(`Пакет анимации не прошёл проверку: ${u}`);
   }));
-  await Promise.all(entries.flatMap((e) => [e.poses, e.phase2Poses]).filter((x): x is string => !!x).map(async (rel) => {
+  await Promise.all(entries.flatMap((e) => [e.poses, e.phase2Poses, ...(e.posesVariants ?? [])]).filter((x): x is string => !!x).map(async (rel) => {
     const u = resolve(base, rel);
     const pack = await fetchJson(u, timeoutMs);
     if (!isPosePack(pack)) {
@@ -185,11 +235,23 @@ export async function loadArtPack(timeoutMs = 2500): Promise<ArtPackRegistry> {
       return;
     }
     const poseUrls: Partial<Record<PoseName, string[]>> = {};
+    const glowUrls: Partial<Record<PoseName, string[]>> = {};
+    const altUrls: Partial<Record<PoseName, string[][]>> = {};
     for (const n of POSE_NAMES) {
       const list = asList(pack.poses[n]);
       if (list.length) poseUrls[n] = list.map((x) => resolve(u, x));
+      const glow = asList(pack.glow?.[n]);
+      if (list.length && glow.length) glowUrls[n] = glow.map((x) => resolve(u, x));
+      const alts = (pack.alternatives?.[n] ?? []).map((a) => asList(a)).filter((a) => a.length);
+      if (list.length && alts.length) altUrls[n] = alts.map((a) => a.map((x) => resolve(u, x)));
     }
-    posePacks.set(rel, { ...pack, poseUrls });
+    posePacks.set(rel, { ...pack, poseUrls, glowUrls, altUrls });
+  }));
+  await Promise.all((Object.entries(registry.vfx ?? {}) as Array<[VfxId, string]>).filter(([id]) => VFX_IDS.includes(id)).map(async ([id, rel]) => {
+    const u = resolve(base, rel);
+    const pack = await fetchJson(u, timeoutMs);
+    if (isVfxPack(pack)) vfxPacks[id] = { ...pack, pageUrls: (pack.pages ?? [pack.image as string]).map((pg) => resolve(u, pg)) };
+    else console.error(`Лист эффекта не прошёл проверку: ${u}`);
   }));
   // Скелеты DragonBones.
   await Promise.all(entries.flatMap((e) => [[e.rig, e.rigAtlas, e.rigArmature], [e.phase2Rig, e.phase2RigAtlas, e.rigArmature]] as Array<[string | undefined, string | undefined, string | undefined]>)
@@ -217,17 +279,23 @@ export function artPortraitFor(group: 'heroes' | 'enemies', id: string): string 
   return registry[group][id]?.portrait ?? null;
 }
 
-export function artFor(group: 'heroes' | 'enemies', id: string): { poses: PosePack | null; phase2Poses: PosePack | null; anim: AnimPack | null; phase2Sprite: string | null; phase2Anim: AnimPack | null; rig: LoadedRig | null; phase2Rig: LoadedRig | null } {
+export function artFor(group: 'heroes' | 'enemies', id: string): { poses: PosePack | null; phase2Poses: PosePack | null; posesVariants: PosePack[]; anim: AnimPack | null; phase2Sprite: string | null; phase2Anim: AnimPack | null; rig: LoadedRig | null; phase2Rig: LoadedRig | null } {
   const e = registry[group][id];
   return {
     poses: e?.poses ? posePacks.get(e.poses) ?? null : null,
     phase2Poses: e?.phase2Poses ? posePacks.get(e.phase2Poses) ?? null : null,
+    posesVariants: (e?.posesVariants ?? []).map((rel) => posePacks.get(rel)).filter((x): x is PosePack => !!x),
     anim: e?.anim ? packs.get(e.anim) ?? null : null,
     phase2Sprite: e?.phase2Sprite ?? null,
     phase2Anim: e?.phase2Anim ? packs.get(e.phase2Anim) ?? null : null,
     rig: e?.rig ? rigs.get(e.rig) ?? null : null,
     phase2Rig: e?.phase2Rig ? rigs.get(e.phase2Rig) ?? null : null,
   };
+}
+
+/** Загруженные листы эффектов умений. */
+export function vfxPacksLoaded(): Partial<Record<VfxId, VfxPack>> {
+  return { ...vfxPacks };
 }
 
 export function arenaLayers(id: string): ArenaLayer[] {

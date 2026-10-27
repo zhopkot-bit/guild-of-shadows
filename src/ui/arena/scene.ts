@@ -1,4 +1,4 @@
-import type { AnimClip, AnimPack, ArenaLayer, ClipName, LoadedRig, PoseName, PosePack } from '../../content/artpack';
+import type { AnimClip, AnimPack, ArenaLayer, ClipName, LoadedRig, PoseName, PosePack, VfxId, VfxPack } from '../../content/artpack';
 import { resolvePose } from '../../content/artpack';
 import type { Backend, QuadDraw, RenderTarget, Rgb, SpriteDraw, Tex } from './backend';
 import { coverTransform } from './backend';
@@ -56,6 +56,8 @@ export interface ArenaSetup {
   showcase?: boolean;
   /** Слои окружения от художника (дальний/средний план, передний план поверх бойцов). */
   layers?: ArenaLayer[];
+  /** Листы эффектов умений от художника. */
+  vfx?: Partial<Record<VfxId, VfxPack>>;
 }
 
 export interface ActorScreen {
@@ -110,9 +112,18 @@ class Actor {
   /** Набор поз: загруженные текстуры, текущая и предыдущая поза (для «призрака» при смене). */
   posePack: PosePack | null = null;
   poseTex: Partial<Record<PoseName, Tex[]>> = {};
+  poseGlow: Partial<Record<PoseName, Tex[]>> = {};
+  poseAlt: Partial<Record<PoseName, Tex[][]>> = {};
   poseTex2: Partial<Record<PoseName, Tex[]>> = {};
+  poseGlow2: Partial<Record<PoseName, Tex[]>> = {};
+  poseAlt2: Partial<Record<PoseName, Tex[][]>> = {};
+  /** Выбранный вариант позы: 0 — основной, 1… — из alternatives. */
+  poseChoice: Partial<Record<PoseName, number>> = {};
+  /** Последний показанный кадр прежней позы — для «призрака» при смене. */
+  prevTex: Tex | null = null;
+  /** Здоровье ниже порога: вместо стойки — раненая стойка (если нарисована). */
+  wounded = false;
   pose: PoseName = 'idle';
-  prevPose: PoseName | null = null;
   poseAt = -10;
   /** Размер холста позы на экране (холст больше фигуры: запас под оружие). */
   drawW = 1;
@@ -301,6 +312,9 @@ export class ArenaScene {
   private frameListeners: Array<(list: ActorScreen[]) => void> = [];
   /** Камера: текущее состояние, цель и «толчок» удара; стоп-кадр удара (по реальному времени). */
   private cam = { z: 1, x: 0, y: 0 };
+  /** Листы эффектов художника: текстуры страниц и проигрываемые экземпляры. */
+  private vfxTex: Partial<Record<VfxId, Tex[]>> = {};
+  private vfxActive: Array<{ id: VfxId; t: number; x: number; y: number; size: number; flip: boolean; rot: number }> = [];
   private camGoal = { z: 1, x: 0, y: 0 };
   private camPunch = 0;
   private freezeUntil = 0;
@@ -376,20 +390,30 @@ export class ArenaScene {
         a.rig = a.spec.rig;
       }
       if (a.spec.rig2) a.rigAtlas2 = this.texFrom(await get(a.spec.rig2.atlasUrl));
-      const loadPoses = async (pack: PosePack | null | undefined, into: Partial<Record<PoseName, Tex[]>>) => {
-        const urls = pack?.poseUrls ?? {};
-        await Promise.all((Object.keys(urls) as PoseName[]).map(async (n) => {
-          into[n] = await Promise.all((urls[n] ?? []).map(async (u) => this.texFrom(await get(u))));
+      const loadList = async (urls: Partial<Record<PoseName, string[]>> | undefined, into: Partial<Record<PoseName, Tex[]>>) => {
+        await Promise.all((Object.keys(urls ?? {}) as PoseName[]).map(async (n) => {
+          into[n] = await Promise.all((urls?.[n] ?? []).map(async (u) => this.texFrom(await get(u))));
         }));
       };
-      await loadPoses(a.spec.poses, a.poseTex);
+      const loadPoses = async (pack: PosePack | null | undefined, tex: Partial<Record<PoseName, Tex[]>>, glow: Partial<Record<PoseName, Tex[]>>, alt: Partial<Record<PoseName, Tex[][]>>) => {
+        await loadList(pack?.poseUrls, tex);
+        await loadList(pack?.glowUrls, glow);
+        await Promise.all((Object.keys(pack?.altUrls ?? {}) as PoseName[]).map(async (n) => {
+          alt[n] = await Promise.all((pack?.altUrls?.[n] ?? []).map((list) => Promise.all(list.map(async (u) => this.texFrom(await get(u))))));
+        }));
+      };
+      await loadPoses(a.spec.poses, a.poseTex, a.poseGlow, a.poseAlt);
       if (a.poseTex.idle?.length) a.posePack = a.spec.poses ?? null;
-      await loadPoses(a.spec.poses2, a.poseTex2);
+      await loadPoses(a.spec.poses2, a.poseTex2, a.poseGlow2, a.poseAlt2);
     });
     const layerJobs = (this.setup.layers ?? []).map(async (l) => ({ layer: l, tex: this.texFrom(await get(l.src)) }));
+    const vfxJobs = (Object.entries(this.setup.vfx ?? {}) as Array<[VfxId, VfxPack]>).map(async ([id, pack]) => {
+      this.vfxTex[id] = await Promise.all((pack.pageUrls ?? []).map(async (u) => this.texFrom(await get(u))));
+    });
     this.bgTex = this.texFrom(await bg);
     await Promise.all(jobs);
     this.layerTex = await Promise.all(layerJobs);
+    await Promise.all(vfxJobs);
     this.layout();
     const boss = [...this.actors.values()].find((a) => a.spec.boss && a.phase2);
     if (boss) this.enterPhase2Visuals(boss, true);
@@ -541,6 +565,11 @@ export class ArenaScene {
     this.particles = this.particles.filter((p) => p.life < p.max && p.size > 0.2);
     for (const f of this.fx) f.t += dt;
     this.fx = this.fx.filter((f) => f.t < f.max);
+    for (const v of this.vfxActive) v.t += dt;
+    this.vfxActive = this.vfxActive.filter((v) => {
+      const pack = this.setup.vfx?.[v.id];
+      return !!pack && v.t * pack.fps < pack.frames;
+    });
 
     this.ambient(dt);
   }
@@ -726,6 +755,7 @@ export class ArenaScene {
     }
     for (const [tex, list] of shardQ) b.drawQuads(tex, list);
     b.drawQuads(this.atlasTex, fxq);
+    this.drawVfx();
 
     this.drawLayers(true, W, H);
     // Передний туман у пола: даёт глубину и прячет стык фигур с фоном.
@@ -767,7 +797,7 @@ export class ArenaScene {
   /** Текущий кадр: для рига — перерисованная цель, для листа кадров — страница и прямоугольник. */
   private frameRect(a: Actor): { tex: Tex; uv: [number, number, number, number]; pivot: [number, number] } | null {
     if (a.rig && a.rigAtlas) return this.rigFrame(a);
-    if (a.posePack && !a.anim) return { tex: this.poseFrame(a, this.shownPose(a)), uv: [0, 0, 1, 1], pivot: a.posePack.pivot };
+    if (a.posePack && !a.anim) return { tex: this.poseFrame(a, this.shownPose(a)).tex, uv: [0, 0, 1, 1], pivot: a.posePack.pivot };
     const pack = a.anim;
     if (!pack || !a.animTex.length) return null;
     if (!a.clip) a.clip = { name: 'idle', start: this.time, def: pack.clips.idle };
@@ -863,6 +893,7 @@ export class ArenaScene {
     const pivot = rect ? rect.pivot : [0.5, 1];
     const dw = posed ? a.drawW : a.w;
     const dh = posed ? a.drawH : a.h;
+    const glow = posed && mode === 0 ? this.poseGlowFrame(a, shown) : null;
     const idle = a.spec.idle;
     const dead = a.dead && a.spec.side === 'enemy' && a.p.dissolve >= 1;
     if (dead) return;
@@ -874,7 +905,7 @@ export class ArenaScene {
     const chargeLean = charging ? -0.04 - 0.015 * Math.sin(this.time * 5) : 0;
     const d: SpriteDraw = {
       tex: baseTex,
-      emissive: rect || (a.phase2 && a.tex2) ? null : a.emi,
+      emissive: glow ? glow.tex : rect || (a.phase2 && a.tex2) ? null : a.emi,
       uv: rect ? rect.uv : [0, 0, 1, 1],
       x: a.x + a.p.offX + shakeX + (0.5 - (pivot[0] ?? 0.5)) * dw,
       y: a.y + a.p.offY + shakeY + (mode === 0 ? hover : 0) + (1 - (pivot[1] ?? 1)) * dh,
@@ -897,8 +928,8 @@ export class ArenaScene {
       flashColor: a.flashColor,
       dissolve: a.p.dissolve,
       desat: a.p.desat,
-      emissiveStrength: a.p.emissive * 1.6,
-      emissiveColor: charging && a.spec.boss && !a.phase2 ? DANGER : SPECTRAL,
+      emissiveStrength: glow ? glow.strength : a.p.emissive * 1.6,
+      emissiveColor: glow ? glow.color : charging && a.spec.boss && !a.phase2 ? DANGER : SPECTRAL,
       rim: charging ? 1.1 + 0.5 * Math.sin(this.time * 7) : a.phase2 ? 0.9 : 0.75,
       rimColor: charging ?? (a.phase2 ? SPECTRAL : a.spec.side === 'hero' ? WARM : [0.55, 0.65, 0.85]),
       outline: mode === 0 ? outline : 0,
@@ -907,10 +938,9 @@ export class ArenaScene {
     };
     // Смена позы: прежняя поза коротко тает и «отстаёт» по ходу движения — глаз читает рывок, а не подмену.
     const ghostK = (this.time - a.poseAt) * this.speed / POSE_GHOST;
-    if (posed && mode === 0 && a.prevPose && ghostK < 1) {
-      const prevList = a.poseTex[a.prevPose];
-      const gTex = prevList?.[prevList.length - 1];
-      if (gTex && gTex !== baseTex) {
+    if (posed && mode === 0 && a.prevTex && ghostK < 1) {
+      const gTex = a.prevTex;
+      if (gTex !== baseTex) {
         const back = (1 - ghostK) * 0.06 * dw * -a.dir() * (a.spec.flip ? -1 : 1);
         this.backend.drawSprite({ ...d, tex: gTex, x: d.x + back, alpha: d.alpha * 0.55 * (1 - ghostK), outline: 0, rim: 0, flash: 0 });
       }
@@ -918,38 +948,127 @@ export class ArenaScene {
     this.backend.drawSprite(d);
   }
 
-  /** Какую позу показать: заказанную хореографией, «готовлю удар» при заряде или ближайшую замену. */
+  /** Какую позу показать: заказанную хореографией, «готовлю удар» при заряде, раненую стойку или ближайшую замену. */
   private shownPose(a: Actor): PoseName {
-    const want: PoseName = a.pose === 'idle' && a.status.charging && !a.dead ? 'prepare' : a.pose;
+    let want: PoseName = a.pose;
+    if (a.pose === 'idle' && !a.dead) {
+      if (a.status.charging) want = 'prepare';
+      else if (a.wounded) want = 'wounded';
+    }
     return resolvePose((n) => !!a.poseTex[n]?.length, want);
   }
 
+  /** Кадры позы с учётом выбранного варианта. */
+  private poseFrames(a: Actor, name: PoseName): Tex[] {
+    const choice = a.poseChoice[name] ?? 0;
+    return (choice > 0 ? a.poseAlt[name]?.[choice - 1] : undefined) ?? (a.poseTex[name] as Tex[]);
+  }
+
   /** Кадр позы: серия действия идёт один раз и держит последний кадр, серия стойки качается туда-обратно. */
-  private poseFrame(a: Actor, name: PoseName): Tex {
-    const list = a.poseTex[name] as Tex[];
+  private poseFrame(a: Actor, name: PoseName): { tex: Tex; index: number } {
+    const list = this.poseFrames(a, name);
     const n = list.length;
-    if (n <= 1) return list[0] as Tex;
+    if (n <= 1) return { tex: list[0] as Tex, index: 0 };
     const fps = a.posePack?.fps ?? 12;
     const t = Math.max(0, (this.time - a.poseAt) * this.speed);
-    if (name === 'idle' || name === 'prepare') {
+    if (name === 'idle' || name === 'wounded' || name === 'prepare') {
       const period = 2 * (n - 1);
       let k = Math.floor(t * Math.min(fps, 4)) % period;
       if (k >= n) k = period - k;
-      return list[k] as Tex;
+      return { tex: list[k] as Tex, index: k };
     }
-    return list[Math.min(n - 1, Math.floor(t * fps))] as Tex;
+    const k = Math.min(n - 1, Math.floor(t * fps));
+    return { tex: list[k] as Tex, index: k };
   }
 
-  /** Сменить позу (если у персонажа есть набор поз). */
+  /** Маска свечения текущего кадра (только у основного варианта позы); пульсацию добавляет шейдер. */
+  private poseGlowFrame(a: Actor, name: PoseName): { tex: Tex; strength: number; color: Rgb } | null {
+    if ((a.poseChoice[name] ?? 0) > 0) return null;
+    const list = a.poseGlow[name];
+    if (!list?.length) return null;
+    const { index } = this.poseFrame(a, name);
+    const pack = a.posePack;
+    const dying = a.dead ? 1 - Math.min(1, a.p.dissolve * 1.5) : 1;
+    return {
+      tex: list[Math.min(list.length - 1, index)] as Tex,
+      strength: (pack?.glowStrength ?? 1) * 1.4 * dying,
+      color: (pack?.glowColor as Rgb | undefined) ?? (a.phase2 ? SPECTRAL : ASH),
+    };
+  }
+
+  /** Сменить позу (если у персонажа есть набор поз). Если у позы есть варианты — выбрать случайный, не повторяя подряд. */
   setPose(id: string, name: PoseName): void {
     const a = this.actors.get(id);
     if (!a || (!a.spec.poses && !a.spec.poses2)) return;
-    const before = a.posePack ? this.shownPose(a) : a.pose;
+    const posed = !!a.posePack;
+    const beforeName = posed ? this.shownPose(a) : a.pose;
+    const beforeTex = posed ? this.poseFrame(a, beforeName).tex : null;
+    const beforeChoice = a.poseChoice[name] ?? 0;
     a.pose = name;
-    const after = a.posePack ? this.shownPose(a) : name;
-    if (after !== before) {
-      a.prevPose = before;
+    const alts = a.poseAlt[name]?.length ?? 0;
+    if (alts > 0) {
+      let pick = Math.floor(Math.random() * (alts + 1));
+      if (pick === beforeChoice) pick = (pick + 1 + Math.floor(Math.random() * alts)) % (alts + 1);
+      a.poseChoice[name] = pick;
+    }
+    const after = posed ? this.shownPose(a) : name;
+    if (after !== beforeName || (a.poseChoice[name] ?? 0) !== beforeChoice) {
+      a.prevTex = beforeTex;
       a.poseAt = this.time;
+    }
+  }
+
+  /** Раненая стойка при низком здоровье (смена — с тем же «призраком», что и у остальных поз). */
+  setWounded(id: string, wounded: boolean): void {
+    const a = this.actors.get(id);
+    if (!a || a.wounded === wounded) return;
+    if (!a.posePack) {
+      a.wounded = wounded;
+      return;
+    }
+    const beforeName = this.shownPose(a);
+    const beforeTex = this.poseFrame(a, beforeName).tex;
+    a.wounded = wounded;
+    if (this.shownPose(a) !== beforeName) {
+      a.prevTex = beforeTex;
+      a.poseAt = this.time;
+    }
+  }
+
+  // ---------- Листы эффектов художника ----------
+
+  /** Проиграть лист эффекта (если он есть в поставке): центр в (x, y), высота кадра = size × scale листа. */
+  playVfx(id: VfxId, x: number, y: number, size: number, flip = false, rot = 0): void {
+    if (this.fast || !this.setup.vfx?.[id] || !this.vfxTex[id]?.length) return;
+    this.vfxActive.push({ id, t: 0, x, y, size, flip, rot });
+  }
+
+  private drawVfx(): void {
+    const byTex = new Map<Tex, { additive: QuadDraw[]; normal: QuadDraw[] }>();
+    for (const v of this.vfxActive) {
+      const pack = this.setup.vfx?.[v.id];
+      const pages = this.vfxTex[v.id];
+      if (!pack || !pages?.length) continue;
+      const first = pages[0] as Tex;
+      const cols = Math.max(1, Math.floor(first.w / pack.frameWidth));
+      const rows = Math.max(1, Math.floor(first.h / pack.frameHeight));
+      const frame = Math.min(pack.frames - 1, Math.floor(v.t * pack.fps));
+      const tex = pages[Math.min(pages.length - 1, Math.floor(frame / (cols * rows)))] as Tex;
+      const local = frame % (cols * rows);
+      const fx = (local % cols) * pack.frameWidth;
+      const fy = Math.floor(local / cols) * pack.frameHeight;
+      const h = v.size * (pack.scale ?? 1);
+      const w = (h * pack.frameWidth) / pack.frameHeight;
+      const u0 = fx / tex.w;
+      const u1 = (fx + pack.frameWidth) / tex.w;
+      const q: QuadDraw = { x: v.x, y: v.y, w, h, rot: v.rot, r: 1, g: 1, b: 1, a: 1, uv: v.flip ? [u1, fy / tex.h, u0, (fy + pack.frameHeight) / tex.h] : [u0, fy / tex.h, u1, (fy + pack.frameHeight) / tex.h], additive: pack.additive !== false };
+      const bucket = byTex.get(tex) ?? { additive: [], normal: [] };
+      (q.additive ? bucket.additive : bucket.normal).push(q);
+      byTex.set(tex, bucket);
+    }
+    for (const [tex, { additive, normal }] of byTex) {
+      if (normal.length) this.backend.drawQuads(tex, normal);
+      if (additive.length) this.backend.drawQuads(tex, additive);
     }
   }
 
@@ -1115,6 +1234,7 @@ export class ArenaScene {
     const c = t.chest();
     this.slashFx(c.x, c.y, (t.spec.boss ? t.w * 0.55 : t.w * 1.05) * (heavy ? 1.4 : 1), color, -dir, -0.4);
     if (opts.double) this.slashFx(c.x, c.y - t.h * 0.08, t.w * 1.0, [1, 1, 1], dir, 0.6);
+    this.playVfx('slash', c.x, c.y, t.h * (heavy ? 1.2 : 0.95), dir < 0);
     this.setPose(actorId, 'strike');
     this.impactFeel(heavy || a.spec.boss ? 'heavy' : 'light');
     impact();
@@ -1162,6 +1282,7 @@ export class ArenaScene {
     }, ease.linear);
     const c = t.chest();
     this.slashFx(c.x, c.y, t.w * 0.9, [1, 0.6, 0.4], dir, 0.2);
+    this.playVfx('slash', c.x, c.y, t.h * 0.9, dir < 0);
     this.setPose(actorId, 'strike');
     this.impactFeel('light');
     impact();
@@ -1223,7 +1344,10 @@ export class ArenaScene {
       }
     }
     this.sparks(to.x, to.y, color, empowered ? 26 : 14, empowered ? 1.4 : 1);
-    if (kind === 'ash') this.glowFx(to.x, to.y, t.w * 1.6, ASH, 0.5);
+    if (kind === 'ash') {
+      this.glowFx(to.x, to.y, t.w * 1.6, ASH, 0.5);
+      this.playVfx('ashBurst', to.x, to.y, t.h * 0.9);
+    }
     if (empowered) this.impactFeel('heavy');
     impact();
     await this.tween(200, (k) => {
@@ -1367,6 +1491,7 @@ export class ArenaScene {
       }
     }
     const c = t.chest();
+    this.playVfx('heal', c.x, t.y - t.h * 0.5, t.h * 1.1);
     if (!this.fast) {
       this.fx.push({ t: 0, max: 1.0, draw: (k, out, at) => {
         out.push({ x: c.x, y: t.y - t.h * 0.5, w: t.w * 0.9, h: t.h * 1.3, rot: 0, r: HEAL[0], g: HEAL[1], b: HEAL[2], a: Math.sin(Math.PI * k) * 0.55, uv: at.regions.beam, additive: true });
@@ -1392,6 +1517,7 @@ export class ArenaScene {
       });
     }
     this.ringFx(to.x, to.y, t.w * 1.6, COLD, 0.7, 1, 'shield');
+    this.playVfx('cover', to.x, to.y, t.h);
     t.status.cover = true;
   }
 
@@ -1438,6 +1564,8 @@ export class ArenaScene {
     for (const t of sorted) {
       const delay = (Math.abs(a.x - t.x) / reach) * 750;
       void this.wait(delay).then(() => {
+        const tc = t.chest();
+        this.playVfx('wave', tc.x, tc.y, t.h);
         impactAt(t.spec.id);
       });
     }
@@ -1526,7 +1654,10 @@ export class ArenaScene {
     if (a.spec.poses2 && a.poseTex2.idle?.length) {
       a.posePack = a.spec.poses2;
       a.poseTex = a.poseTex2;
-      a.prevPose = null;
+      a.poseGlow = a.poseGlow2;
+      a.poseAlt = a.poseAlt2;
+      a.poseChoice = {};
+      a.prevTex = null;
       // Холст II фазы может отличаться — пересчитать размеры.
       this.layout();
     }
