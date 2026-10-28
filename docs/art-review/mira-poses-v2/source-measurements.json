@@ -1,0 +1,154 @@
+[
+  {
+    "pose": "aim",
+    "size": [
+      1086,
+      1448
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      117,
+      7,
+      1065,
+      1392
+    ],
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "15bc01ace22e29afd0de4bb11a6e508f57d9faf92aff199859c191b0f616cd18"
+  },
+  {
+    "pose": "down",
+    "size": [
+      1086,
+      1448
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      26,
+      364,
+      1064,
+      1369
+    ],
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "ca932dfecdfb373a5e6716a3574118391fb8918101999c55335a045841de61cf"
+  },
+  {
+    "pose": "hit",
+    "size": [
+      1086,
+      1448
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      24,
+      38,
+      1076,
+      1385
+    ],
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "27b93f6f713667d2e9dfe8cd84d78242e93bb9264e3e8d46d4b844ee8e18b502"
+  },
+  {
+    "pose": "idle",
+    "size": [
+      1086,
+      1448
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      180,
+      91,
+      989,
+      1407
+    ],
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "c05099e45b7d7ef2767e89f202586dab0aa29c5d053afe8f77cd3400d7b21fd2"
+  },
+  {
+    "pose": "shoot",
+    "size": [
+      1086,
+      1448
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      51,
+      12,
+      1052,
+      1422
+    ],
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "cba8a9cb0fa58979de4204adf7f5e339a2de5ef83c7cff3b15cdee743264f329"
+  },
+  {
+    "pose": "strike",
+    "size": [
+      1086,
+      1448
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      41,
+      40,
+      1054,
+      1404
+    ],
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "c4828923dd41bd18ab95c0fb2160ef4c72547d475f115b1abde4c3f410c98f76"
+  },
+  {
+    "pose": "victory",
+    "size": [
+      1086,
+      1448
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      187,
+      18,
+      1042,
+      1429
+    ],
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "8861ca54bd424613e2becf37fdac849e1d45bec4f544156b7909ee69517165b9"
+  },
+  {
+    "pose": "windup",
+    "size": [
+      1086,
+      1448
+    ],
+    "mode": "RGBA",
+    "bbox": [
+      59,
+      24,
+      1046,
+      1393
+    ],
+    "alphaRange": [
+      0,
+      255
+    ],
+    "sha256": "6ffb236b4c8d9f5fd405a2523fe0b2d32a856207b67b623adddb3c355209a3fa"
+  }
+]

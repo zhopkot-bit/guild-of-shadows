@@ -15,6 +15,8 @@
                                   встали на линию стойки; маски свечения сдвигаются вместе с позой;
     "poseScale": {"victory": 1.09} — масштаб позы от точки между ступнями (если фигура нарисована мельче/крупнее).
 Холст при необходимости расширяется одинаково для всех поз, чтобы ничего не обрезалось.
+    "canvasPadding": [32, 24, 32, 24] — дополнительные общие поля [left, top, right, bottom]
+                                      в пикселях мастера; исходные PNG не изменяются.
 
 `pivot` и `figureHeight` можно не указывать — они вычисляются по стойке (idle): точка опоры — середина
 ступней, высота фигуры — по непрозрачной области. На выходе — WebP и готовый `poses.json` для реестра.
@@ -133,6 +135,12 @@ def main() -> int:
         pad_l, pad_r = max(pad_l, -x0), max(pad_r, x1 - W0)
         pad_t, pad_b = max(pad_t, -y0), max(pad_b, y1 - H0)
     pad_l, pad_t, pad_r, pad_b = (int(round(v)) + (4 if v > 0 else 0) for v in (pad_l, pad_t, pad_r, pad_b))
+    # Явные поля в пикселях мастера: одинаковые для всех поз, без правки исходных PNG.
+    extra = spec.get('canvasPadding', [0, 0, 0, 0])
+    if not isinstance(extra, list) or len(extra) != 4 or any(type(v) is not int or v < 0 for v in extra):
+        print('canvasPadding: нужны четыре целых неотрицательных числа [left, top, right, bottom]', file=sys.stderr)
+        return 1
+    pad_l, pad_t, pad_r, pad_b = [a + b for a, b in zip((pad_l, pad_t, pad_r, pad_b), extra)]
     CW, CH = W0 + pad_l + pad_r, H0 + pad_t + pad_b
     if pad_l or pad_t or pad_r or pad_b:
         print(f'Холст расширен до {CW}×{CH} (поля: слева {pad_l}, сверху {pad_t}, справа {pad_r}, снизу {pad_b})', file=sys.stderr)
