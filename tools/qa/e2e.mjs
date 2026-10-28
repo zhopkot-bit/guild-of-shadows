@@ -1,4 +1,5 @@
 // Сквозной игровой цикл в настоящем браузере: node tools/qa/e2e.mjs <baseUrl> <outDir> [w] [h]
+// Только альбомные разрешения: 1920×1080, 1366×768, 1024×768, 844×390, 667×375.
 import { chromium } from 'playwright-core';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
@@ -98,6 +99,14 @@ for (let guard = 0; guard < 400; guard++) {
       // Ручной ход: атака → выбор цели на арене (плашка врага), затем умение.
       await page.waitForSelector('.action--attack', { timeout: 30000 });
       await shot('05-battle-manual-turn');
+      // Бой целиком на экране: арена и управление без прокрутки страницы (альбомная ориентация).
+      const fit = await page.evaluate(() => {
+        const r = (sel) => document.querySelector(sel)?.getBoundingClientRect();
+        const dock = r('.battle-dock');
+        const act = r('.action--attack');
+        return { scroll: document.documentElement.scrollHeight - innerHeight, xscroll: document.documentElement.scrollWidth - innerWidth, dockBottom: dock?.bottom ?? 0, actRight: act?.right ?? 0, w: innerWidth, h: innerHeight };
+      });
+      if (fit.scroll > 1 || fit.xscroll > 1 || fit.dockBottom > fit.h + 1 || fit.actRight > fit.w + 1) issues.push(`бой не помещается на экран: ${JSON.stringify(fit)}`);
       await page.locator('.action--attack').click();
       await page.waitForTimeout(300);
       await shot('06-battle-target-select');
@@ -199,6 +208,14 @@ for (let guard = 0; guard < 400; guard++) {
   }
   await page.waitForTimeout(300);
 }
+// Портретная ориентация не поддерживается: на повёрнутом телефоне — заставка «Поверните устройство».
+await page.setViewportSize({ width: 390, height: 844 });
+await page.waitForTimeout(300);
+if (!(await page.locator('.rotate-hint').isVisible())) issues.push('в портретной ориентации нет заставки «Поверните устройство»');
+await shot('13-portrait-rotate');
+await page.setViewportSize({ width: +W, height: +H });
+await page.waitForTimeout(300);
+if (await page.locator('.rotate-hint').isVisible()) issues.push(`заставка «Поверните устройство» видна на ${W}×${H}`);
 if (!tipsShot.size) issues.push('подсказки обучения первого боя не показались');
 if (!steps.some((x) => x.startsWith('подготовка к боссу'))) issues.push('экран подготовки к боссу не пройден');
 writeFileSync(`${outDir}/e2e-report.json`, JSON.stringify({ viewport: `${W}x${H}`, steps, issues }, null, 2));

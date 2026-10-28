@@ -15,20 +15,18 @@ import { expeditionScreen } from './expedition';
 import { guildScreen } from './guild';
 import { squadScreen } from './squad';
 import { totalIncome } from '../core/economy';
+import { fill, SHARDS_NAME } from '../content/text';
+import T from '../content/ui-text.json';
 
 type Tab = 'guild' | 'squad' | 'expedition';
-const TABS: Array<{ id: Tab; label: string }> = [
-  { id: 'guild', label: 'Гильдия' },
-  { id: 'squad', label: 'Отряд' },
-  { id: 'expedition', label: 'Экспедиция' },
-];
+const TABS: Tab[] = ['guild', 'squad', 'expedition'];
 
 const AUTOSAVE_MS = 15_000;
 const TICK_MS = 250;
 const BACKUP_KEY = 'gos_corrupt_backup';
 
 export async function startApp(platform: Platform, root: HTMLElement): Promise<void> {
-  root.replaceChildren(h('div', { class: 'loading' }, 'Гильдия просыпается…'));
+  root.replaceChildren(h('div', { class: 'loading' }, T.loading));
 
   // Финальный арт художника (если поставлен): реестр art-pack.json и пакеты анимаций.
   await loadArtPack();
@@ -48,10 +46,10 @@ export async function startApp(platform: Platform, root: HTMLElement): Promise<v
       } catch {
         /* хранилище недоступно — резервной копии не будет */
       }
-      startNotice = { title: 'Сохранение повреждено', text: 'Начата новая игра. Старые данные отложены в резервную копию браузера.' };
+      startNotice = T.notices.corrupt;
     } else if (loaded.reason === 'newer') {
       saveEnabled = false;
-      startNotice = { title: 'Сохранение от новой версии', text: 'Игра не будет перезаписывать его. Откройте обновлённую версию, чтобы продолжить.' };
+      startNotice = T.notices.newer;
     }
   }
 
@@ -68,15 +66,15 @@ export async function startApp(platform: Platform, root: HTMLElement): Promise<v
   const goldEl = h('strong', { class: 'num' });
   const rateEl = h('span', { class: 'topbar__rate num' });
   const essenceEl = h('b');
-  const essencePill = h('span', { class: 'pill pill--essence', title: 'Осколки реликвий' }, glyph('ember', 14), ' ', essenceEl);
+  const essencePill = h('span', { class: 'pill pill--essence', title: SHARDS_NAME }, glyph('ember', 14), ' ', essenceEl);
   const topbar = h(
     'header',
     { class: 'topbar' },
     h('div', { class: 'topbar__brand' },
       h('span', { class: 'topbar__crest', 'aria-hidden': 'true' }, '✦'),
       h('div', { class: 'topbar__brand-copy' },
-        h('strong', { class: 'topbar__title' }, 'Гильдия Теней'),
-        h('span', { class: 'topbar__motto' }, 'Собирай. Исследуй. Возвращайся.'),
+        h('strong', { class: 'topbar__title' }, T.brand),
+        h('span', { class: 'topbar__motto' }, T.motto),
       ),
     ),
     h('div', { class: 'topbar__resources' },
@@ -87,13 +85,13 @@ export async function startApp(platform: Platform, root: HTMLElement): Promise<v
   const tabButtons = new Map<Tab, HTMLElement>();
   const tabbar = h('nav', { class: 'tabbar' }, h('div', { class: 'tabbar__inner' }));
   const tabInner = tabbar.firstElementChild as HTMLElement;
-  for (const t of TABS) {
-    const b = h('button', { class: 'tab' }, t.label);
+  for (const id of TABS) {
+    const b = h('button', { class: 'tab' }, T.tabs[id]);
     b.addEventListener('click', () => {
-      tab = t.id;
+      tab = id;
       render();
     });
-    tabButtons.set(t.id, b);
+    tabButtons.set(id, b);
     tabInner.append(b);
   }
 
@@ -154,7 +152,7 @@ export async function startApp(platform: Platform, root: HTMLElement): Promise<v
 
   function updateTopbar(): void {
     goldEl.textContent = fmt(state.gold);
-    rateEl.textContent = `+${fmt(totalIncome(state))} в секунду`;
+    rateEl.textContent = fill(T.perSecond, { n: fmt(totalIncome(state)) });
     essenceEl.textContent = String(Math.floor(state.essence));
     essencePill.style.display = state.essence > 0 || state.relicarium > 0 ? '' : 'none';
   }
@@ -202,16 +200,22 @@ export async function startApp(platform: Platform, root: HTMLElement): Promise<v
     void platform.flush();
   });
 
-  root.replaceChildren(topbar, main, tabbar);
+  // Игра только в альбомной ориентации: в портретной CSS показывает эту заставку поверх всего.
+  const rotateHint = h('div', { class: 'rotate-hint', role: 'alert' },
+    h('div', { class: 'rotate-hint__icon', 'aria-hidden': 'true' }),
+    h('strong', null, T.rotate.title),
+    h('p', null, T.rotate.text),
+  );
+  root.replaceChildren(topbar, main, tabbar, rotateHint);
   render();
   window.setInterval(onTick, TICK_MS);
   window.setInterval(save, AUTOSAVE_MS);
   platform.gameReady();
 
-  if (startNotice) ctx.modal(startNotice.title, [startNotice.text], [{ label: 'Понятно' }]);
+  if (startNotice) ctx.modal(startNotice.title, [startNotice.text], [{ label: T.notices.ok }]);
   else if (offline && offline.seconds >= 60) {
-    const lines: string[] = [`Пока вас не было ${fmtDuration(offline.seconds)}${offline.capped ? ' (засчитано не больше 8 часов)' : ''}, посты принесли ${fmt(offline.gold)} золота.`];
-    ctx.modal('С возвращением', lines, [{ label: 'Забрать' }]);
+    const text = fill(T.offline.text, { time: fmtDuration(offline.seconds), capped: offline.capped ? T.offline.capped : '', gold: fmt(offline.gold) });
+    ctx.modal(T.offline.title, [text], [{ label: T.offline.take }]);
   }
   save();
 }
