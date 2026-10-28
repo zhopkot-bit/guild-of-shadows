@@ -1,0 +1,12 @@
+{
+  "poses": {
+    "idle": "idle.png",
+    "windup": "windup.png",
+    "strike": "strike.png",
+    "cast": "cast.png",
+    "hit": "hit.png",
+    "down": "down.png",
+    "victory": "victory.png"
+  },
+  "fps": 12
+}

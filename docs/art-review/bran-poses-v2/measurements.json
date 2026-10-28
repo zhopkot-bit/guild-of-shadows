@@ -1,0 +1,156 @@
+{
+  "alphaThreshold": 24,
+  "allSevenRgbaReadable": true,
+  "nativeSourceHeight": 1448,
+  "requiredMasterHeight": 2048,
+  "productionReady": false,
+  "rows": [
+    {
+      "pose": "idle",
+      "size": [
+        1086,
+        1448
+      ],
+      "opaqueBox": [
+        231,
+        83,
+        921,
+        1390
+      ],
+      "opaqueHeightFraction": 0.9026,
+      "gutters": [
+        231,
+        83,
+        165,
+        58
+      ],
+      "sha256": "004b5b12d045d5af92b79fa9fadf4667916052538ea3f20dabe405eac4c352fd"
+    },
+    {
+      "pose": "windup",
+      "size": [
+        1086,
+        1448
+      ],
+      "opaqueBox": [
+        52,
+        26,
+        1057,
+        1429
+      ],
+      "opaqueHeightFraction": 0.9689,
+      "gutters": [
+        52,
+        26,
+        29,
+        19
+      ],
+      "sha256": "946b9c261992f8f5f69fb6166104f0a2039fc59403626f227add82cd1aeb6543"
+    },
+    {
+      "pose": "strike",
+      "size": [
+        1086,
+        1448
+      ],
+      "opaqueBox": [
+        31,
+        162,
+        1076,
+        1350
+      ],
+      "opaqueHeightFraction": 0.8204,
+      "gutters": [
+        31,
+        162,
+        10,
+        98
+      ],
+      "sha256": "a32a2d0785eeaf0fc499b1adc71eda17898f30eb271d803c7c09a8f15e6164e7"
+    },
+    {
+      "pose": "cast",
+      "size": [
+        1086,
+        1448
+      ],
+      "opaqueBox": [
+        127,
+        102,
+        1047,
+        1385
+      ],
+      "opaqueHeightFraction": 0.886,
+      "gutters": [
+        127,
+        102,
+        39,
+        63
+      ],
+      "sha256": "d8851a96f418b50abd6f07c96ae88d45bb484858c9be024a2fad3626a8cefbc8"
+    },
+    {
+      "pose": "hit",
+      "size": [
+        1086,
+        1448
+      ],
+      "opaqueBox": [
+        77,
+        97,
+        1057,
+        1390
+      ],
+      "opaqueHeightFraction": 0.893,
+      "gutters": [
+        77,
+        97,
+        29,
+        58
+      ],
+      "sha256": "de27c66167d723c84b27bd00c787596b89f0de0e3d7676fa289436b18eda5f5f"
+    },
+    {
+      "pose": "down",
+      "size": [
+        1086,
+        1448
+      ],
+      "opaqueBox": [
+        177,
+        383,
+        982,
+        1378
+      ],
+      "opaqueHeightFraction": 0.6872,
+      "gutters": [
+        177,
+        383,
+        104,
+        70
+      ],
+      "sha256": "536a77e2fb80490bf58bd965f571a6441d9f57ff6f3a1ecec50134501cf5c31a"
+    },
+    {
+      "pose": "victory",
+      "size": [
+        1086,
+        1448
+      ],
+      "opaqueBox": [
+        247,
+        17,
+        920,
+        1425
+      ],
+      "opaqueHeightFraction": 0.9724,
+      "gutters": [
+        247,
+        17,
+        166,
+        23
+      ],
+      "sha256": "85cded06f04f633f212fd6590d2bf48d8aae98cdfbb153308b3eb8a45cdc4fe1"
+    }
+  ]
+}
