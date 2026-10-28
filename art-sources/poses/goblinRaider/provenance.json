@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-29",
+  "tool": "OpenAI image_gen",
+  "status": "Five art candidates created; acceptance pending.",
+  "sources": {
+    "idle": {
+      "generatedFile": "exec-8ad46120-dff9-4887-8941-d9f07b70f299.png",
+      "sha256": "98de6a92ef225348fe8a37a534c9064d5f65398c2dd0f11d1835d9261cd43f6f"
+    },
+    "windup": {
+      "generatedFile": "exec-997a2b58-6d2a-4969-8057-e43a8cfed93e.png",
+      "sha256": "cc8f6b0697e3fed8c23cae08ae8ed5d998876ef364acfe8eb59ce735f1d1b7c6"
+    },
+    "strike": {
+      "generatedFile": "exec-18cb7d8f-6aa6-413a-8f97-e3580b985685.png",
+      "sha256": "cd30bb998f1f20b255acaa58617441737fb2f3822b1a2890bbb3db9816e51a01"
+    },
+    "hit": {
+      "generatedFile": "exec-260fc710-8605-471c-84c9-a24bc0399ea8.png",
+      "sha256": "08d996619399e676672044afd3191c44fc5a240a9b4f9b1b6e091b58ba2057a6"
+    },
+    "down": {
+      "generatedFile": "exec-be535a8c-338d-4f75-ae3d-76dd9aa3e44a.png",
+      "sha256": "2a29b2312907a18a7bf6191e82cf900cb3599a04c136a6eb2caa9ac497fbc27f"
+    }
+  },
+  "manualRetouch": false,
+  "runtimeIntegrated": false,
+  "notes": [
+    "Art candidates only; no user acceptance, manual retouch, alignment, runtime integration, or technical QA.",
+    "Framing revised through image_gen. Weapon geometry, crossed-arm pose and remaining cloak margins still require artistic acceptance."
+  ]
+}

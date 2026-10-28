@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-29",
+  "tool": "OpenAI image_gen",
+  "status": "Six art candidates created; not yet accepted by user. Technical integration and tests deferred until complete art set.",
+  "sources": {
+    "idle": {
+      "generatedFile": "exec-67291643-fe52-4900-a0e0-197077e4d7cf.png",
+      "sha256": "6ba7ebee957d6fd727f208340842ab71211bacd7ec02aeeecf399fa2cb96b5cd"
+    },
+    "aim": {
+      "generatedFile": "exec-eb699585-ba85-40e5-94cd-1c9c1be921ca.png",
+      "sha256": "ba722cfe351e7efb6868734b1475ad6fe893f6f1c41ff3263a82f37cf28d3401"
+    },
+    "shoot": {
+      "generatedFile": "exec-0199ec96-21c1-478b-b482-af81c37e3cd8.png",
+      "sha256": "a9ba8090d7f8f13ca42f4eb8186f98e0ae07f1141b2dde26d3a633a5221ae5a1"
+    },
+    "hit": {
+      "generatedFile": "exec-043010b8-b6d0-4441-b509-98c4b4cf8d57.png",
+      "sha256": "f9fa8df884137f1c2b39b267d3e0192ac4f6a098d619f591088751a9a8fa13bb"
+    },
+    "down": {
+      "generatedFile": "exec-b51572dd-2607-463d-9cac-2e167be46f6e.png",
+      "sha256": "0af7a3edce4bb82c643f337b97facc0f9ca81f35a6a7bb811aa3c32fa1bf1d4e"
+    },
+    "victory": {
+      "generatedFile": "exec-9ebbcee4-8ab0-494a-9294-6f5855b002ff.png",
+      "sha256": "ea1e36ae84d0c6af282463a9ae6f991ead0174d3a03113129ac2c078f9a2fdb0"
+    }
+  },
+  "manualRetouch": false,
+  "runtimeIntegrated": false,
+  "notes": [
+    "Victory v1 rejected for invented vertical handle; replacement generated from idle.",
+    "Some intermediate generation requests were rejected by image tool; prompt files retained, no image result for those attempts."
+  ]
+}

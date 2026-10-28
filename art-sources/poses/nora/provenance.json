@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-29",
+  "tool": "OpenAI image_gen",
+  "status": "Seven art candidates created; user acceptance pending. Technical integration and tests deferred.",
+  "sources": {
+    "idle": {
+      "generatedFile": "exec-f3835701-fe5c-42e2-beb2-25a5bf21604d.png",
+      "sha256": "ecb633a411e6cc22750bad8a6a51eba64d74c6b891fe9788bc38160ed7e7f544"
+    },
+    "aim": {
+      "generatedFile": "exec-ae5336e6-9eff-4598-8596-586726f2c212.png",
+      "sha256": "6cdd864b1aa2b99a1c87ee7d2d6122ae0f2d343a34e01a6f3fc0e37c913f3dec"
+    },
+    "shoot": {
+      "generatedFile": "exec-25277709-5ee6-4a1b-b387-6ef8e94f1fa3.png",
+      "sha256": "b416f473ec93b71c353280a9bb534923a4eac3ea127f955eb662df50c11f902a"
+    },
+    "cast": {
+      "generatedFile": "exec-eb8c093e-2fa3-4539-b83a-3276db89d742.png",
+      "sha256": "524b758a998bd1d95718a3159f5d696694d637f8a2c61f40fcadb1878aaec4ed"
+    },
+    "hit": {
+      "generatedFile": "exec-15d0de78-2a1f-4f9a-91d7-979b58074554.png",
+      "sha256": "18a5b54830fc436ea60bc2db3aca022f9feabc181a5e87a8d06ff76fc363be91"
+    },
+    "down": {
+      "generatedFile": "exec-463b2ab8-db12-4c7e-9beb-d299f2bc40f4.png",
+      "sha256": "e432ff926b9ca0e7076b364d68dec185d509b93425ab0b7322d93e28bd083dee"
+    },
+    "victory": {
+      "generatedFile": "exec-6a55580e-de4f-4e5d-b9a6-55ce39aec2aa.png",
+      "sha256": "bddabd9de2aa116886696e2877cb02a38c6f31b3f071381cea53562e86de4817"
+    }
+  },
+  "manualRetouch": false,
+  "runtimeIntegrated": false,
+  "notes": [
+    "Shoot regenerated to include complete staff head and cape; initial framing saved as alternative."
+  ]
+}

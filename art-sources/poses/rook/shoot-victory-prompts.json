@@ -1,0 +1,18 @@
+{
+  "shoot": {
+    "prompt": "Create the SHOOT/recoil pose immediately AFTER firing for this exact ROOK crossbowman. Use image 1 as the direct preceding AIM frame and image 2 as the costume/body reference. Same recognizable face, entire costume and EXACT same crossbow design, character scale, boots and transparent portrait canvas. His body leans slightly back as the same crossbow muzzle kicks UP about 10 degrees, his near RIGHT shoulder recoils, cheek lifts away from the stock, eyes still tracking the target to screen RIGHT. RIGHT hand stays at trigger, LEFT hand supports wooden fore-end from below, natural bent elbows connected to correct shoulders. One mechanically rigid straight stock/rail, bow limbs and sight retain their relative positions; the weapon does NOT flex or acquire additional parts. Bolt has LEFT the rail, show NO bolt on the crossbow and NO flying projectile; string has returned FORWARD to the braced line between limb tips. The recoil is readable through shoulder, elbows, torso, knees and gently shifting coat; clearly different from aiming. Keep all body parts, both boots and both crossbow limb tips fully inside generous margins. Same detailed realistic painted dark fantasy as references, TRUE TRANSPARENT background, no floor, no shadow, no effects, no text. 1086x1448 portrait canvas.",
+    "referenced_image_paths": [
+      "/workspace/guild-of-shadows/art-sources/poses/rook/proposals/aim.png",
+      "/workspace/guild-of-shadows/art-sources/poses/rook/proposals/idle.png"
+    ],
+    "transparent_background": true
+  },
+  "victory": {
+    "prompt": "Correct the crossbow prop in this victory illustration (image 1), using the exact crossbow in image 2 as design reference. Preserve the man, face, clothing and calm standing victory pose. The current version mistakenly adds a long vertical wooden cylindrical handle projecting down from the weapon. REMOVE that invented handle completely. Rebuild the weapon as the SAME single straight wooden tiller/stock from image 2, with butt, trigger housing, rail, small sight and transverse bow limbs in their proper places. The stock rests diagonally across his right shoulder with the front bow limbs behind him at upper left. His right hand supports the underside of the real stock near the trigger, with fingers wrapped naturally around the stock, NOT around a vertical rod. The butt and bow nose lie on ONE straight diagonal axis. No L-shaped body, no second stock, no added grip or tube. Preserve a recognizable complete crossbow entirely inside frame, both limbs with tips intact. All other details as unchanged as possible, both boots complete, generous padding, no zoom. Transparent background retained.",
+    "referenced_image_paths": [
+      "/workspace/guild-of-shadows/art-sources/poses/rook/alternatives/victory-v1.png",
+      "/workspace/guild-of-shadows/art-sources/poses/rook/proposals/idle.png"
+    ],
+    "transparent_background": true
+  }
+}
