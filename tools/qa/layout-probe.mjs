@@ -9,7 +9,9 @@ mkdirSync(outDir, { recursive: true });
 const save = readFileSync(savePath, 'utf8');
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const report = {};
-for (const [w, h] of [[1920, 1080], [1366, 768], [1024, 768], [390, 844]]) {
+// Альбомная ориентация — единственная поддерживаемая (решение заказчика); VIEWPORTS="1920x1080,844x390" — свой набор.
+const VIEWPORTS = (process.env.VIEWPORTS ?? '1920x1080,1366x768,1024x768,844x390,667x375').split(',').map((v) => v.split('x').map(Number));
+for (const [w, h] of VIEWPORTS) {
   const ctx = await b.newContext({ viewport: { width: w, height: h } });
   await ctx.addInitScript((s) => { if (!sessionStorage.getItem('probe')) { localStorage.setItem('gos.save', s); sessionStorage.setItem('probe', '1'); } }, save);
   const p = await ctx.newPage();
