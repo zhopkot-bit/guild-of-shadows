@@ -2,7 +2,7 @@
   "date": "2026-10-28",
   "baseCommit": "1ce10f8",
   "tool": "OpenAI image_gen",
-  "status": "Art pilot; strike v5 is a candidate after user feedback, not automatically approved",
+  "status": "Strike v9 approved by user on 2026-10-28; acceptance applies to this pose, not automatically to all eight poses.",
   "sources": {
     "aim": {
       "generatedFile": "exec-c757f474-f76d-468e-976d-2ecafc37c3ed.png",
@@ -25,8 +25,8 @@
       "sha256": "cba8a9cb0fa58979de4204adf7f5e339a2de5ef83c7cff3b15cdee743264f329"
     },
     "strike": {
-      "generatedFile": "exec-e140f587-8d28-451f-9b70-f9b139740a55.png",
-      "sha256": "c4828923dd41bd18ab95c0fb2160ef4c72547d475f115b1abde4c3f410c98f76"
+      "generatedFile": "exec-d947b2fa-089d-4c46-a414-fdadb52793de.png",
+      "sha256": "e845979af58255941793c35590dfba38e9fde1f95169f3fc2e2191af4feb2325"
     },
     "victory": {
       "generatedFile": "exec-62aa298f-c207-4070-a7ae-618cbd9e300f.png",
@@ -47,6 +47,14 @@
   "gameRegistryChanged": false,
   "revisions": {
     "hit": "v2: restored visible connected bow arm",
-    "strike": "v5: marked screen-left empty hand replaced with loosely closed fist; v1-v4 retained as rejected alternatives"
+    "strike": "v9: blade points down-left on the same axis as the handle, removing the L-shaped joint; based on v7. Approved by user."
+  },
+  "acceptance": {
+    "strike": {
+      "version": "v9",
+      "date": "2026-10-28",
+      "userQuote": "Последний зачёт",
+      "sha256": "e845979af58255941793c35590dfba38e9fde1f95169f3fc2e2191af4feb2325"
+    }
   }
 }

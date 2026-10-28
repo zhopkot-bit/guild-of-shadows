@@ -16,9 +16,9 @@ const refs=`<!doctype html><html lang="ru"><meta charset="utf-8"><style>${style}
 writeFileSync(resolve(out,'reference-sheet.html'),refs);
 const pages=['pose-sheet','reference-sheet'];
 if(id==='mira'){
- const crop=(path,label)=>`<article><div class="label">${label}</div><div class="crop"><img src="${link(path)}"></div></article>`;
- writeFileSync(resolve(out,'hand-detail.html'),`<!doctype html><html lang="ru"><meta charset="utf-8"><style>${style}.hands{display:flex}.crop{position:relative;width:400px;height:420px;overflow:hidden;background:#555b61}.crop img{position:absolute;max-width:none;width:2172px;left:-520px;top:-1100px}</style><header><h1>Мира · свободная кисть в атаке</h1><p>Область, отмеченная заказчиком: x=30,9%, y=45,9%. Увеличение исходных PNG ×2.</p></header><div class="hands">${crop('art-sources/poses/mira/alternatives/strike-v3.png','Отклонённый вариант')}${crop('art-sources/poses/mira/proposals/strike.png','Новая правка')}</div>`);
- pages.push('hand-detail');
+ const figure=(path,label)=>`<article><div class="label">${label}</div><img src="${link(path)}"></article>`;
+ writeFileSync(resolve(out,'attack-comparison.html'),`<!doctype html><html lang="ru"><meta charset="utf-8"><style>${style}.attacks{display:flex}.attacks article{width:50%;background:#555b61}.attacks img{display:block;width:100%;height:960px;object-fit:contain}</style><header><h1>Мира · правка клинка</h1><p>V9 принята: клинок продолжает ось рукояти без Г-образного излома.</p></header><div class="attacks">${figure('art-sources/poses/mira/alternatives/strike-v7-blade-rejected.png','V7 · до правки клинка')}${figure('art-sources/poses/mira/proposals/strike.png','V9 · принято')}</div>`);
+ pages.push('attack-comparison');
 }
 const server=createServer((req,res)=>{
  try{const file=resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://localhost').pathname));

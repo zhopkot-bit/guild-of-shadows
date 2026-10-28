@@ -102,16 +102,16 @@
     ],
     "mode": "RGBA",
     "bbox": [
-      41,
-      40,
-      1054,
-      1404
+      34,
+      2,
+      1029,
+      1448
     ],
     "alphaRange": [
       0,
       255
     ],
-    "sha256": "c4828923dd41bd18ab95c0fb2160ef4c72547d475f115b1abde4c3f410c98f76"
+    "sha256": "e845979af58255941793c35590dfba38e9fde1f95169f3fc2e2191af4feb2325"
   },
   {
     "pose": "victory",

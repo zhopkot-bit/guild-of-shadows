@@ -1,0 +1,7 @@
+{
+  "prompt": "Restore the full framing of this isolated character illustration. Add generous TRANSPARENT canvas space around ALL FOUR SIDES, especially below the front boot at the bottom right, and complete only the tiny clipped bottom edge of that boot. The entire character, both boots, the bow tip at the top and the straight dagger tip at the right must be fully visible with at least 6 percent clear margin from every canvas edge. Keep the exact existing pose, anatomy, face, clothing, equipment and straight dagger geometry. Do not zoom in. This is a framing and missing-boot-edge correction only. Preserve the existing foreground artwork as closely as possible. Transparent background, no scenery, no ground or shadows.",
+  "referenced_image_paths": [
+    "/workspace/generated_images/exec-34b101f4-a0ad-4923-8b3f-8b4466fd3f3c.png"
+  ],
+  "transparent_background": true
+}
