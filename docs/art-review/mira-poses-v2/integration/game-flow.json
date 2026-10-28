@@ -1,0 +1,79 @@
+{
+  "ok": true,
+  "rows": [
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "ok": true,
+      "actions": [
+        "attack",
+        "skill"
+      ],
+      "livePoses": [
+        "idle",
+        "aim",
+        "shoot",
+        "hit",
+        "windup",
+        "strike"
+      ],
+      "reloadPreservedBattle": true,
+      "autoAdvancedRound": true,
+      "finishControl": "Досчитать",
+      "result": "victory",
+      "returnedToGuild": true,
+      "heroSheet": true,
+      "assets": [
+        "aim.webp",
+        "down.webp",
+        "hit.webp",
+        "idle.webp",
+        "poses.json",
+        "shoot.webp",
+        "strike.webp",
+        "victory.webp",
+        "windup.webp"
+      ],
+      "errors": []
+    },
+    {
+      "viewport": [
+        667,
+        375
+      ],
+      "ok": true,
+      "actions": [
+        "attack",
+        "skill"
+      ],
+      "livePoses": [
+        "idle",
+        "aim",
+        "shoot",
+        "hit",
+        "windup",
+        "strike"
+      ],
+      "reloadPreservedBattle": true,
+      "autoAdvancedRound": true,
+      "finishControl": "Досчитать",
+      "result": "victory",
+      "returnedToGuild": true,
+      "heroSheet": true,
+      "assets": [
+        "aim.webp",
+        "down.webp",
+        "hit.webp",
+        "idle.webp",
+        "poses.json",
+        "shoot.webp",
+        "strike.webp",
+        "victory.webp",
+        "windup.webp"
+      ],
+      "errors": []
+    }
+  ]
+}

@@ -459,6 +459,10 @@ export class ArenaScene {
       a.w = box ? (a.h * box.width) / box.height : a.anim ? (a.h * a.anim.frameWidth) / a.anim.frameHeight : a.tex ? (a.h * a.tex.w) / a.tex.h : a.h * 0.45;
       const pp = a.posePack;
       if (pp && !a.rig && !a.anim) {
+        if (this.setup.showcase) {
+          // Экран героя должен вмещать весь холст с поднятым оружием, а не только стойку.
+          a.h = Math.min(a.h, H * 0.9 * pp.figureHeight, W * 0.9 * pp.frameHeight / pp.frameWidth * pp.figureHeight);
+        }
         // Рост фигуры в стойке = высота слота; холст позы крупнее на запас под замах.
         a.drawH = a.h / pp.figureHeight;
         a.drawW = (a.drawH * pp.frameWidth) / pp.frameHeight;
@@ -470,6 +474,11 @@ export class ArenaScene {
     } else {
       heroes.forEach((a, i) => place(a, L.heroes[i]));
       foes.forEach((a, i) => place(a, L.enemies[i]));
+      // У цельных поз плащ/оружие шире стойки. Сдвигаем строй вместе, сохраняя
+      // расстояния между героями и их плашками, вместо сдвига одного бойца на соседа.
+      const posed = heroes.filter((a) => a.posePack && !a.rig && !a.anim);
+      const shift = Math.max(0, ...posed.map((a) => a.drawW * a.posePack!.pivot[0] + 8 * this.dpr - a.x));
+      if (shift > 0) for (const a of heroes) a.x += shift;
     }
     this.order = [...this.actors.values()].sort((a, b) => a.slot.z - b.slot.z || a.y - b.y);
     this.container.classList.toggle('arena--portrait', L.portrait);
@@ -936,6 +945,7 @@ export class ArenaScene {
       outlineColor,
       mode,
     };
+    if (posed) this.keepPoseInFrame(d);
     // Смена позы: прежняя поза коротко тает и «отстаёт» по ходу движения — глаз читает рывок, а не подмену.
     const ghostK = (this.time - a.poseAt) * this.speed / POSE_GHOST;
     if (posed && mode === 0 && a.prevTex && ghostK < 1) {
@@ -946,6 +956,28 @@ export class ArenaScene {
       }
     }
     this.backend.drawSprite(d);
+  }
+
+  /** Камера и отдача не должны обрезать цельную позу у края арены. */
+  private keepPoseInFrame(d: SpriteDraw): void {
+    const v = this.view();
+    const W = this.cssW * this.dpr, H = this.cssH * this.dpr;
+    // Консервативная оболочка всего холста, включая дыхание/плащ и наклон.
+    const side = Math.abs(d.sway) * d.w * 0.047 + Math.abs(d.breath) * d.w * 0.55;
+    const top = d.h * (1 + Math.abs(d.breath) + Math.abs(d.bob) * 0.007);
+    const corners = [-d.w / 2 - side, d.w / 2 + side].flatMap((x) => [0, -top].map((y) => {
+      const px = (x - d.lean * y) * (d.flip ? -1 : 1) * d.sx;
+      const py = y * d.sy;
+      return { x: Math.cos(d.rot) * px - Math.sin(d.rot) * py, y: Math.sin(d.rot) * px + Math.cos(d.rot) * py };
+    }));
+    const margin = 3 * this.dpr;
+    const fit = (pos: number, offsets: number[], limit: number, center: number) => {
+      const min = center + (margin - center) / v.z - Math.min(...offsets);
+      const max = center + (limit - margin - center) / v.z - Math.max(...offsets);
+      return min <= max ? Math.max(min, Math.min(max, pos)) : (min + max) / 2;
+    };
+    d.x = fit(d.x, corners.map((p) => p.x), W, v.x);
+    d.y = fit(d.y, corners.map((p) => p.y), H, v.y);
   }
 
   /** Какую позу показать: заказанную хореографией, «готовлю удар» при заряде, раненую стойку или ближайшую замену. */
@@ -1772,13 +1804,13 @@ export class ArenaScene {
     if (a && !a.phase2) this.enterPhase2Visuals(a, true);
   }
 
-  stats(): { backend: string; actors: number; particles: number; errors: string[]; units: Array<{ id: string; x: number; offX: number; alpha: number; dissolve: number; clip: string | null; anim: boolean }> } {
+  stats(): { backend: string; actors: number; particles: number; errors: string[]; units: Array<{ id: string; x: number; offX: number; alpha: number; dissolve: number; clip: string | null; pose: PoseName | null; anim: boolean }> } {
     return {
       backend: this.backend.kind,
       actors: this.actors.size,
       particles: this.particles.length,
       errors: [...this.errors],
-      units: [...this.actors.values()].map((a) => ({ id: a.spec.id, x: Math.round(a.x), offX: Math.round(a.p.offX), alpha: a.p.alpha, dissolve: a.p.dissolve, clip: a.clip?.name ?? null, anim: !!a.anim })),
+      units: [...this.actors.values()].map((a) => ({ id: a.spec.id, x: Math.round(a.x), offX: Math.round(a.p.offX), alpha: a.p.alpha, dissolve: a.p.dissolve, clip: a.clip?.name ?? null, pose: a.posePack ? this.shownPose(a) : null, anim: !!a.anim })),
     };
   }
 }

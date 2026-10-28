@@ -44,7 +44,7 @@
   },
   "sourceTransform": "Original generated PNG bytes preserved. Aligning/scaling/padding only in QA export; browser gallery is layout-only.",
   "manualRetouch": false,
-  "gameRegistryChanged": false,
+  "gameRegistryChanged": true,
   "revisions": {
     "hit": "v2: restored visible connected bow arm",
     "strike": "v9: blade points down-left on the same axis as the handle, removing the L-shaped joint; based on v7. Approved by user."
@@ -56,5 +56,6 @@
       "userQuote": "Последний зачёт",
       "sha256": "e845979af58255941793c35590dfba38e9fde1f95169f3fc2e2191af4feb2325"
     }
-  }
+  },
+  "runtimePack": "public/art/v17/heroes/mira/poses/poses.json"
 }

@@ -17,6 +17,15 @@ const T0 = Date.now();
 
 function game(): GameState {
   const s = newGame(T0);
+  // QA_PARTY=mira,rook,nora — проверить художнический пакет в нужном составе и порядке.
+  if (process.env.QA_PARTY) {
+    const identities = process.env.QA_PARTY.split(',');
+    const party = identities.map((identity) => s.heroes.find((h) => h.identity === identity)?.id);
+    if (party.length < 1 || party.length > 3 || new Set(party).size !== party.length || party.some((id) => !id)) {
+      throw new Error('QA_PARTY: нужны 1–3 разных героя из стартового ростера');
+    }
+    s.party = party as string[];
+  }
   s.gold = 5400;
   s.essence = 7;
   s.posts.forge = 3;
