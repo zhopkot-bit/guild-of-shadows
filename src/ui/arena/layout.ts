@@ -65,9 +65,11 @@ export function computeLayout(inp: LayoutInput): ArenaLayout {
   const n = inp.heroes;
   // Отряд: передний план, слева; ступенчатая глубина, чтобы силуэты не сливались.
   const heroX = hasBoss ? [0.11, 0.25, 0.39] : [0.1, 0.23, 0.36];
+  // Узкая арена (телефон горизонтально, справа колонка управления): отряд расставлен шире, иначе плашки над головами слипаются.
+  const heroXNarrow = [0.08, 0.245, 0.41];
   const heroY = [0.95, 0.9, 0.97];
   for (let i = 0; i < n; i++) {
-    const x = lerp((heroX[i] ?? 0.12 + i * 0.13) * 0.92 + 0.02, heroX[i] ?? 0.12 + i * 0.13, wide);
+    const x = lerp(heroXNarrow[i] ?? 0.12 + i * 0.13, heroX[i] ?? 0.12 + i * 0.13, wide);
     heroes.push({ x, y: heroY[i] ?? 0.95, h: lerp(0.5, 0.55, wide) * (i === 1 ? 0.95 : 1) * short, z: 10 + (i === 1 ? 0 : 2) });
   }
   const m = inp.enemies.length;

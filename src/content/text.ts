@@ -14,3 +14,8 @@ export const SHARDS_NAME = 'Осколки реликвий';
 export function shards(n: number): string {
   return `${n} ${plural(n, ['осколок', 'осколка', 'осколков'])} реликвий`;
 }
+
+/** Подстановка в шаблон из текстовых файлов: fill('+{n} в секунду', { n: 5 }) → '+5 в секунду'. */
+export function fill(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m));
+}

@@ -1,4 +1,4 @@
-/* «Гильдия Теней» v1.7 — единая визуальная система Dark Fantasy.
+/* «Гильдия Теней» — единая визуальная система Dark Fantasy. Только альбомная ориентация.
    Холодные сине-серые тона камня и тумана, тёплые акценты латуни и огня.
    Один набор токенов для рамок, панелей, кнопок и иконок; без наслоения стилей прошлых версий. */
 :root {
@@ -247,10 +247,6 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 600; margin: 0; letter-spac
 .hero-sheet__skill strong { display: block; color: var(--gold-bright); font: 600 15px var(--serif); }
 .hero-sheet__skill span { color: var(--bone-dim); font-size: 13px; }
 .hero-sheet__close { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; display: grid; place-items: center; border: var(--frame); background: rgba(8, 10, 15, 0.8); color: var(--bone); cursor: pointer; }
-@media (max-width: 760px) {
-  .hero-sheet__panel { grid-template-columns: 1fr; grid-template-rows: 46% 54%; height: 94vh; }
-  .hero-sheet__info { padding: 16px; }
-}
 
 /* ---------- Модули, предложения, подготовка, итоги ---------- */
 .run-head-wrap { display: grid; gap: 8px; }
@@ -490,8 +486,6 @@ body.is-battle .topbar__motto { display: none; }
 .coach--actions { right: 16px; bottom: 16px; }
 .coach--intents { right: 16px; top: 46%; }
 .coach--center { left: 50%; top: 40%; transform: translateX(-50%); }
-@media (max-width: 760px) { .coach { position: fixed; left: 8px; right: 8px; width: auto; top: 6px; bottom: auto; transform: none; padding: 9px 12px; gap: 4px; z-index: 40; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
-  .coach strong { font-size: 15px; grid-column: 1; } .coach p { font-size: 13px; line-height: 1.35; grid-column: 1; } .coach .btn { grid-column: 2; grid-row: 1 / span 2; } }
 
 /* Док: карточки отряда + панель действий. */
 .battle-dock {
@@ -565,7 +559,7 @@ body.is-battle .topbar__motto { display: none; }
   .battle-dock__right { justify-items: stretch; grid-template-columns: 1fr auto; align-items: center; }
 }
 
-/* Телефон: арена сверху, управление снизу; HUD не перекрывает бойцов. */
+/* Узкий экран (телефон горизонтально): компактная шапка и карточки. */
 @media (max-width: 760px) {
   #app { padding-left: 12px; padding-right: 12px; }
   .topbar { gap: 8px; }
@@ -577,54 +571,6 @@ body.is-battle .topbar__motto { display: none; }
   .topbar__resources { flex: none; gap: 6px; }
   .topbar__gold strong { font-size: 19px; }
   .pill { padding: 1px 8px; font-size: 12px; }
-  .stage--battle { height: calc(100dvh - 52px); min-height: 0; }
-  body.is-battle .topbar { padding: 4px 10px; }
-  .hud__top { top: 8px; left: 8px; right: 8px; }
-  .boss-bar { grid-template-columns: auto minmax(0, 1fr); padding: 5px 8px 5px 5px; gap: 8px; }
-  .boss-bar .portrait { width: 40px; }
-  .boss-bar__name { font-size: 15px; }
-  .boss-bar__phase { font-size: 9px; }
-  .boss-bar__track { height: 10px; }
-  .encounter-bar { padding: 5px 12px; }
-  .encounter-bar strong { font-size: 15px; }
-  .turns { top: auto; bottom: 8px; left: 8px; flex-direction: row; padding: 4px; gap: 4px; }
-  .turns__chip .portrait { width: 28px; }
-  .turns__sep { width: 1px; height: auto; margin: 2px; }
-  .intents { left: 8px; right: 8px; top: 62px; width: auto; }
-  .intents__title { display: none; }
-  .intent { padding: 4px 8px; grid-template-columns: 16px minmax(0, 1fr); gap: 6px; }
-  .intent:not(.intent--armed) { display: none; }
-  .intent__text { font-size: 11px; }
-  .intent__text strong { font-size: 12px; }
-  .intent__text em { display: none; }
-  .plate { min-width: 72px; max-width: 110px; padding: 2px 5px 3px; }
-  .plate__name { font-size: 11px; }
-  .plate__hp { display: none; }
-  .float { font-size: 18px; }
-  .float--crit { font-size: 24px; }
-  .hud__banner { top: 26%; font-size: 17px; white-space: normal; }
-  .hud__prompt { bottom: 46px; font-size: 13px; }
-  .battle-dock { grid-template-columns: 1fr; gap: 8px; padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px)); }
-  .party-cards { gap: 6px; }
-  .hero-card { grid-template-columns: 1fr; justify-items: center; padding: 5px 4px; gap: 4px; text-align: center; }
-  .hero-card .portrait { width: 40px; }
-  .hero-card__role, .hero-card__cd { display: none; }
-  .hero-card__name { font-size: 13px; }
-  .hero-card__body { width: 100%; }
-  .hero-card__meta { justify-content: center; font-size: 10px; }
-  .battle-dock__right { justify-items: stretch; gap: 6px; }
-  .action-bar { justify-content: stretch; }
-  .action-bar__who { display: none; }
-  .action { flex: 1 1 0; width: auto; height: 64px; }
-  .action-bar { min-height: 64px; }
-  .battle-dock { min-height: 0; }
-  .action__sub, .action kbd { display: none; }
-  .action--cancel { flex: 0 0 64px; }
-  .battle-controls { justify-content: space-between; gap: 4px; flex-wrap: nowrap; }
-  .battle-controls > * { flex: none; }
-  .battle-controls .segmented button { padding: 4px 8px; min-height: 32px; font-size: 12px; }
-  .battle-controls .btn--small { min-height: 32px; padding: 2px 8px; font-size: 12px; }
-  .battle-log { display: none; }
   .hero-card-lg__top { grid-template-columns: 96px minmax(0, 1fr); }
   .hero-card-lg__top .portrait { width: 96px; }
   .slots { gap: 8px; }
@@ -649,6 +595,191 @@ body.is-battle .topbar__motto { display: none; }
   .hero-card-lg__top { grid-template-columns: 1fr; justify-items: center; text-align: center; }
   .hero-card-lg__id { justify-items: center; }
 }
+
+/* =====================================================================
+   АЛЬБОМНЫЙ ТЕЛЕФОН (высота ≤ 560 px): игра поддерживает только альбомную ориентацию.
+   Шапка и вкладки — одна строка сверху; бой без прокрутки: арена во всю высоту, управление — колонка справа.
+   ===================================================================== */
+@media (max-height: 560px) and (orientation: landscape) {
+  :root { --topbar-h: 44px; --tabbar-h: 44px; --dock-w: 232px; }
+  #app {
+    max-width: none;
+    padding: 0 max(12px, env(safe-area-inset-right, 0px)) 16px max(12px, env(safe-area-inset-left, 0px));
+  }
+  .topbar { min-height: var(--topbar-h); padding: 4px 0; gap: 8px; }
+  .topbar__brand-copy { display: none; }
+  .topbar__crest { width: 28px; height: 32px; font-size: 18px; }
+  .topbar__motto, .topbar__rate { display: none; }
+  .topbar__gold strong { font-size: 19px; }
+  .pill { padding: 1px 8px; font-size: 12px; }
+  /* Вкладки встают в строку шапки, между гербом и ресурсами. */
+  .tabbar {
+    position: fixed; top: 0; bottom: auto; left: calc(max(12px, env(safe-area-inset-left, 0px)) + 40px); right: auto;
+    margin: 0; padding: 0; background: none; border: 0; backdrop-filter: none; z-index: 9;
+  }
+  .tabbar__inner { width: auto; }
+  .tab { flex: none; height: var(--tabbar-h); padding: 0 14px; font-size: 15px; border-top: 0; border-bottom: 2px solid transparent; }
+  .tab[aria-current="page"] { border-bottom-color: var(--gold); background: linear-gradient(0deg, rgba(201, 164, 92, 0.14), transparent); }
+  .toast { bottom: 16px; }
+
+  /* Баннеры экранов — низкие полосы вместо плакатов. */
+  .guild-hero, .expedition-hero, .squad-hero { min-height: 0; margin: 10px 0 12px; }
+  .guild-hero__content, .expedition-hero__content, .squad-hero__content { padding: 14px 18px; max-width: 560px; }
+  .guild-hero h1 { font-size: 30px; }
+  .expedition-hero__content h2, .squad-hero__content h2 { font-size: 26px; }
+  .guild-hero__content p, .expedition-hero__content p, .squad-hero__content p { margin: 6px 0 0; font-size: 14px; line-height: 1.4; }
+  .guild-hero__rule { margin-top: 4px; }
+  .eyebrow { margin-bottom: 4px; }
+  .hint { margin: 2px 0 8px; font-size: 13px; }
+  .hero-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 10px; }
+  .hero-card-lg { gap: 8px; padding: 10px; }
+  .hero-card-lg__top { grid-template-columns: 80px minmax(0, 1fr); gap: 10px; }
+  .hero-card-lg__top .portrait { width: 80px; }
+  .hero-card-lg__id h3 { font-size: 21px; }
+  .slots { margin: 4px 0 10px; }
+  .slot .portrait { width: 64px; }
+  .slot__empty { width: 64px; }
+  .post-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 10px; }
+  .entry--post { grid-template-columns: 76px minmax(0, 1fr); padding: 8px; }
+  .entry__art-wrap { width: 76px; height: 68px; }
+  .entry__title h3 { font-size: 17px; }
+  .btn { min-height: 40px; }
+
+  /* Экран героя: сцена и описание рядом, на всю высоту. */
+  .hero-sheet__panel { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); grid-template-rows: none; width: 100vw; height: 100dvh; border: 0; }
+  .hero-sheet__info { padding: 14px 16px; gap: 6px; }
+  .hero-sheet__info h2 { font-size: 30px; }
+  .hero-sheet__bio { font-size: 14px; line-height: 1.45; }
+  .overlay { padding: 8px; }
+  .modal { max-height: calc(100dvh - 16px); overflow: auto; padding: 14px 16px; gap: 8px; }
+
+  /* Экспедиция: отряд — колонка слева, этап — справа. */
+  .screen--expedition:not(.screen--stage-battle):not(.screen--stage-ended) {
+    display: grid; grid-template-columns: 196px minmax(0, 1fr); gap: 14px; align-items: start; padding-top: 10px;
+  }
+  .screen--expedition .run-head-wrap { position: sticky; top: calc(var(--topbar-h) + 10px); }
+  .screen--expedition .run-head { grid-template-columns: 1fr; gap: 8px; padding: 0 0 8px; }
+  .member .portrait { width: 40px; }
+  .stage { padding: 0; }
+  .stage h3 { font-size: 20px; margin-bottom: 2px; }
+  .stage p { margin: 4px 0 8px; }
+  .choice-list { gap: 8px; margin-top: 8px; }
+  .offer-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 10px; margin-top: 8px; }
+  .offer { padding: 10px 12px; }
+  .offer__icon { height: 28px; margin-bottom: 0; }
+  .offer strong { font-size: 17px; }
+  .offer__text { font-size: 13px; }
+  .prep-head { gap: 12px; }
+  .prep-head .portrait { width: 64px; }
+  .prep-head h3 { font-size: 22px; }
+  /* Карта идёт слева направо: старт слева, король справа. */
+  .map { display: flex; flex-direction: row-reverse; justify-content: space-around; padding: 8px 4px; min-height: 230px; overflow-x: auto; }
+  .map__row { flex: 1 1 0; min-width: 0; flex-direction: column; justify-content: space-around; align-items: center; padding: 0 2px; gap: 6px; }
+  .node-wrap { width: 100%; max-width: 72px; gap: 2px; }
+  .node { width: 44px; height: 44px; }
+  .node--boss { width: 52px; height: 52px; }
+  .node-label { font-size: 10px; }
+  .node-scout { max-width: 72px; }
+  .summary { padding: 10px 0; }
+  .summary__banner { padding: 12px 16px 10px; }
+  .summary__banner h2 { font-size: 30px; }
+  .reward-tiles { margin: 10px 0; }
+  .reward-tile { padding: 8px 6px; }
+  .reward-tile b { font-size: 22px; }
+
+  /* ---------- Бой ---------- */
+  body.is-battle .topbar { display: none; }
+  body.is-battle #app { padding: 0; }
+  .stage--battle {
+    grid-template-columns: minmax(0, 1fr) var(--dock-w); grid-template-rows: minmax(0, 1fr);
+    height: 100dvh; min-height: 0;
+  }
+  .battle-log { display: none; }
+  .battle-dock {
+    grid-template-columns: minmax(0, 1fr); grid-auto-rows: max-content; align-content: start; gap: 8px; min-width: 0; min-height: 0;
+    padding: 8px max(8px, env(safe-area-inset-right, 0px)) 8px 8px; overflow: hidden auto;
+    border-top: 0; border-left: var(--frame-strong); box-shadow: -12px 0 30px rgba(0, 0, 0, 0.6);
+  }
+  .party-cards { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .hero-card { grid-template-columns: 36px minmax(0, 1fr); gap: 8px; padding: 4px 6px; }
+  .hero-card .portrait { width: 36px; }
+  .hero-card__role, .hero-card__cd { display: none; }
+  .hero-card__name { font-size: 14px; }
+  .hero-card__meta { font-size: 10px; }
+  .battle-dock__right { justify-items: stretch; gap: 8px; min-width: 0; }
+  .action-bar { min-height: 56px; min-width: 0; }
+  .action-bar__who { display: none; }
+  .action { flex: 1 1 0; width: auto; height: 56px; padding: 4px; }
+  .action__label { font-size: 12px; }
+  .action__sub, .action kbd { display: none; }
+  .action--cancel { flex: 0 0 52px; }
+  .action__cd { font-size: 24px; }
+  .battle-controls { justify-content: flex-start; gap: 6px; flex-wrap: wrap; }
+  .battle-controls .segmented button, .battle-controls .btn--small { min-height: 32px; padding: 2px 8px; font-size: 12px; }
+  /* HUD арены: очередь ходов — строкой слева сверху, заголовок встречи — справа. */
+  .hud__top { top: 8px; left: auto; right: 8px; width: min(380px, 54%); justify-content: flex-end; }
+  .boss-bar { padding: 4px 8px 4px 4px; gap: 8px; }
+  .boss-bar .portrait { width: 36px; }
+  .boss-bar__name { font-size: 15px; }
+  .boss-bar__phase { font-size: 9px; }
+  .boss-bar__track { height: 9px; }
+  .encounter-bar { padding: 4px 12px; gap: 10px; }
+  .encounter-bar strong { font-size: 15px; }
+  .encounter-bar span { font-size: 10px; }
+  .turns { top: 8px; left: 8px; flex-direction: row; padding: 4px; gap: 4px; max-width: calc(46% - 20px); overflow: hidden; }
+  .turns__chip .portrait { width: 26px; }
+  .turns__sep { width: 1px; height: auto; margin: 2px; }
+  .intents { top: 58px; right: 8px; width: min(260px, 48%); gap: 4px; }
+  .intents__title { display: none; }
+  .intent { padding: 4px 8px; grid-template-columns: 16px minmax(0, 1fr); gap: 6px; }
+  .intent:not(.intent--armed):not(.intent--aoe) { display: none; }
+  .intent__text { font-size: 11px; }
+  .intent__text strong { font-size: 12px; }
+  .intent__text em, .intent__cycle { display: none; }
+  .plate { min-width: 56px; max-width: 96px; padding: 2px 5px 3px; }
+  .plate__name { font-size: 11px; }
+  .plate__hp { display: none; }
+  .float { font-size: 18px; }
+  .float--crit { font-size: 24px; }
+  .hud__banner { top: 30%; font-size: 18px; }
+  .hud__banner--phase { font-size: 22px; }
+  .hud__prompt { bottom: 8px; font-size: 13px; padding: 6px 12px; }
+  .result-card { max-height: calc(100% - 16px); overflow: auto; padding: 14px; gap: 8px; }
+  .result-card__heroes li { grid-template-columns: 36px 1fr auto; }
+  .result-card__heroes .portrait { width: 36px; }
+  .coach { right: 8px; left: auto; top: auto; bottom: 8px; width: min(340px, 86%); padding: 8px 12px; gap: 4px; transform: none; }
+  .coach strong { font-size: 15px; }
+  .coach p { font-size: 13px; line-height: 1.35; }
+}
+
+/* Самые узкие альбомные экраны (667–740 px): колонки уже, арене больше места. */
+@media (max-height: 560px) and (orientation: landscape) and (max-width: 740px) {
+  :root { --dock-w: 204px; }
+  .screen--expedition:not(.screen--stage-battle):not(.screen--stage-ended) { grid-template-columns: 160px minmax(0, 1fr); gap: 10px; }
+  .member { gap: 6px; }
+  .member .portrait { width: 34px; }
+  .member__name { font-size: 14px; }
+  .action__label { font-size: 11px; }
+  .coach { width: min(300px, 78%); }
+  .coach p { font-size: 12px; }
+}
+
+/* Портретная ориентация на телефоне и планшете не поддерживается — просим повернуть устройство. */
+.rotate-hint { display: none; }
+@media (orientation: portrait) and (max-width: 1024px) {
+  .rotate-hint {
+    position: fixed; inset: 0; z-index: 100; display: grid; place-content: center; justify-items: center; gap: 12px;
+    padding: 24px; text-align: center; background: radial-gradient(90% 60% at 50% 40%, #1b2230, var(--night));
+  }
+  .rotate-hint strong { font: 600 26px var(--serif); color: var(--gold-bright); }
+  .rotate-hint p { max-width: 320px; margin: 0; color: var(--bone-dim); }
+  .rotate-hint__icon {
+    width: 56px; height: 92px; border: 3px solid var(--gold); border-radius: 10px; margin-bottom: 8px;
+    animation: rotate-device 2.4s ease-in-out infinite;
+  }
+  body:has(.rotate-hint) { overflow: hidden; }
+}
+@keyframes rotate-device { 0%, 25% { transform: rotate(0); } 55%, 100% { transform: rotate(-90deg); } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
