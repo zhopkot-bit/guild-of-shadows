@@ -10,6 +10,12 @@
 
 Маски свечения (`glow`) и варианты поз (`alternatives`) — необязательны (ТЗ §3.8).
 
+Техническая подгонка без перерисовки (ТЗ §3.7):
+    "alignFeet": true           — сдвинуть каждую позу (кроме `down`) по вертикали так, чтобы ступни
+                                  встали на линию стойки; маски свечения сдвигаются вместе с позой;
+    "poseScale": {"victory": 1.09} — масштаб позы от точки между ступнями (если фигура нарисована мельче/крупнее).
+Холст при необходимости расширяется одинаково для всех поз, чтобы ничего не обрезалось.
+
 `pivot` и `figureHeight` можно не указывать — они вычисляются по стойке (idle): точка опоры — середина
 ступней, высота фигуры — по непрозрачной области. На выходе — WebP и готовый `poses.json` для реестра.
 После сборки запустите `node tools/art/validate_pack.mjs` на реестре.
@@ -84,9 +90,70 @@ def main() -> int:
     if not box:
         print('Стойка пустая (нет непрозрачных пикселей)', file=sys.stderr)
         return 1
-    pivot = spec.get('pivot') or [round(feet_center_x(idle, box[3]) / size[0], 4), round(box[3] / size[1], 4)]
-    figure_h = spec.get('figureHeight') or round((box[3] - box[1]) / size[1], 4)
-    figure_w = spec.get('figureWidth') or round((box[2] - box[0]) / size[0], 4)
+    W0, H0 = size
+    px = spec['pivot'][0] * W0 if spec.get('pivot') else feet_center_x(idle, box[3])
+    py = spec['pivot'][1] * H0 if spec.get('pivot') else box[3]
+    align = bool(spec.get('alignFeet'))
+    pose_scale = spec.get('poseScale') or {}
+
+    # Преобразование каждой картинки: масштаб от ступней и вертикальный сдвиг к линии стойки.
+    # (масштаб s, точка-якорь по вертикали ay, итоговый сдвиг dy) → x' = px + (x - px)·s, y' = ay + (y - ay)·s + dy
+    def transform_for(name, f):
+        im = images[f]
+        b = opaque_box(im)
+        sc_ = float(pose_scale.get(name, 1.0))
+        ay = b[3] if b else py
+        dy = (py - ay) if (align and name != 'down' and b) else 0.0
+        if b and abs(dy) > 0.04 * H0:
+            print(f'Внимание: {f} — сдвиг ступней на {dy / H0:.1%} высоты; проверьте, не в прыжке ли поза', file=sys.stderr)
+        return sc_, ay, dy
+
+    tf = {}
+    for name, files in poses.items():
+        for f in as_list(files):
+            tf[f] = transform_for(name, f)
+    for name, alts in alternatives.items():
+        for a in alts:
+            for f in as_list(a):
+                tf[f] = transform_for(name, f)
+    for name, files in glow.items():
+        frames = as_list(poses.get(name))
+        for i, f in enumerate(as_list(files)):
+            # Маска повторяет преобразование своего кадра позы.
+            tf[f] = tf.get(frames[min(i, len(frames) - 1)], (1.0, py, 0.0)) if frames else (1.0, py, 0.0)
+
+    # Поля, чтобы после преобразований ничего не обрезалось (одинаковые для всех поз).
+    pad_l = pad_t = pad_r = pad_b = 0.0
+    for f, (sc_, ay, dy) in tf.items():
+        b = opaque_box(images[f])
+        if not b:
+            continue
+        x0, x1 = px + (b[0] - px) * sc_, px + (b[2] - px) * sc_
+        y0, y1 = ay + (b[1] - ay) * sc_ + dy, ay + (b[3] - ay) * sc_ + dy
+        pad_l, pad_r = max(pad_l, -x0), max(pad_r, x1 - W0)
+        pad_t, pad_b = max(pad_t, -y0), max(pad_b, y1 - H0)
+    pad_l, pad_t, pad_r, pad_b = (int(round(v)) + (4 if v > 0 else 0) for v in (pad_l, pad_t, pad_r, pad_b))
+    CW, CH = W0 + pad_l + pad_r, H0 + pad_t + pad_b
+    if pad_l or pad_t or pad_r or pad_b:
+        print(f'Холст расширен до {CW}×{CH} (поля: слева {pad_l}, сверху {pad_t}, справа {pad_r}, снизу {pad_b})', file=sys.stderr)
+
+    def prepared(f):
+        im = images[f]
+        sc_, ay, dy = tf.get(f, (1.0, py, 0.0))
+        canvas = Image.new('RGBA', (CW, CH), (0, 0, 0, 0))
+        if sc_ != 1.0:
+            im = im.resize((round(W0 * sc_), round(H0 * sc_)), Image.LANCZOS)
+        ox = pad_l + px * (1 - sc_)
+        oy = pad_t + ay * (1 - sc_) + dy
+        canvas.alpha_composite(im, (round(ox), round(oy)))
+        return canvas
+
+    scale = min(1.0, args.height / CH)
+    w, h = round(CW * scale), round(CH * scale)
+    pivot = [round((px + pad_l) / CW, 4), round((py + pad_t) / CH, 4)]
+    idle_box = opaque_box(prepared(as_list(poses['idle'])[0]))
+    figure_h = spec.get('figureHeight') or round((idle_box[3] - idle_box[1]) / CH, 4)
+    figure_w = spec.get('figureWidth') or round((idle_box[2] - idle_box[0]) / CW, 4)
 
     total = 0
 
@@ -94,10 +161,10 @@ def main() -> int:
         kb_sum = 0
         names = []
         for f in as_list(files):
-            im = images[f]
+            im = prepared(f)
             b = opaque_box(im)
-            if check_feet and b and name != 'down' and abs(b[3] / size[1] - pivot[1]) > 0.025:
-                print(f'Внимание: {f} — ступни на {b[3] / size[1]:.1%}, точка опоры {pivot[1]:.1%}', file=sys.stderr)
+            if check_feet and b and name != 'down' and abs(b[3] / CH - pivot[1]) > 0.015:
+                print(f'Внимание: {f} — ступни на {b[3] / CH:.1%}, точка опоры {pivot[1]:.1%}', file=sys.stderr)
             dst = Path(f).with_suffix('.webp').name
             (im.resize((w, h), Image.LANCZOS) if scale < 1 else im).save(out / dst, 'WEBP', quality=args.quality, method=6)
             kb_sum += (out / dst).stat().st_size

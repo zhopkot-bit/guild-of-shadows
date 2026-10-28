@@ -237,7 +237,8 @@ function checkPoses(group, id, rel, base) {
     }
     // Ступни на одной линии: низ фигуры совпадает с точкой опоры.
     const feet = (box.y1 + 1) / im.h;
-    if (Math.abs(feet - pack.pivot[1]) > 0.025) errors.push(`${L}.${n} ${f}: ступни на ${(feet * 100).toFixed(1)}% высоты, а pivot — ${(pack.pivot[1] * 100).toFixed(1)}% (фигура «прыгнет» при смене позы)`);
+    // 1,5% высоты ≈ 7 px фигуры на 1920×1080 — порог, после которого скачок при смене позы заметен.
+    if (Math.abs(feet - pack.pivot[1]) > 0.015) errors.push(`${L}.${n} ${f}: ступни на ${(feet * 100).toFixed(1)}% высоты, а pivot — ${(pack.pivot[1] * 100).toFixed(1)}% (фигура «прыгнет» при смене позы; можно включить "alignFeet" в сборке)`);
     if (n === 'idle' && kind === 'pose') {
       const fh = (box.y1 - box.y0 + 1) / im.h;
       if (Math.abs(fh - pack.figureHeight) > 0.06) errors.push(`${L}.idle: фигура занимает ${(fh * 100).toFixed(0)}% высоты, а figureHeight — ${(pack.figureHeight * 100).toFixed(0)}%`);
