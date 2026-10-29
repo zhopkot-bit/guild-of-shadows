@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-29",
+  "tool": "OpenAI image_gen",
+  "status": "Six art candidates created; acceptance pending.",
+  "sources": {
+    "idle": {
+      "generatedFile": "exec-e5dc117a-aba7-4fe3-a89b-7778253de649.png",
+      "sha256": "243fcd5637b114d16fc13c00d3d1c9ba6adc2fead904294704c015697e2e3327"
+    },
+    "windup": {
+      "generatedFile": "exec-b9935091-b96f-4ccf-93dd-6a82f42b4324.png",
+      "sha256": "d47dd96535b57361b4787662edf72b073ea6c8d2cd125f2d50806e967759a807"
+    },
+    "strike": {
+      "generatedFile": "exec-a8d7ea72-0714-4831-92af-2c6caf1950b5.png",
+      "sha256": "104d33e53b4aa0469df1a980d3dc60363a49fffac702ee4bf820c3167afcc7cb"
+    },
+    "prepare": {
+      "generatedFile": "exec-cc760676-e627-4c5f-95e7-3a3f315503f4.png",
+      "sha256": "457e02d97ad97287d5048043917c811fdd320efe06232eecd18433690ac8fb8d"
+    },
+    "hit": {
+      "generatedFile": "exec-18b0c8aa-5e93-4676-8cc7-e8528dda64e5.png",
+      "sha256": "238f59fe27efa14c0be17d59b0cf6de8b51b97291e2c202485f2c3ab397b607a"
+    },
+    "down": {
+      "generatedFile": "exec-58a52518-3be7-4a49-8e24-7af527432d3e.png",
+      "sha256": "cecc373c8680afb8d2907098c0c073bc09b4abb614c9fcd96cc6c8ed745aa529"
+    }
+  },
+  "manualRetouch": false,
+  "runtimeIntegrated": false,
+  "notes": [
+    "Six art candidates; user acceptance pending. No manual retouch, alignment, runtime integration or technical QA.",
+    "User review 2026-10-29: shortened sword grip and rebuilt windup with two adjacent hands beside head. Corresponding phase II poses updated.",
+    "Strike is a wide composition; final alpha and master canvas validation deferred to shared technical stage.",
+    "One prepare handle-edit request rejected by image tool; simpler decorative-weapon edit succeeded. Failed request produced no image."
+  ]
+}
