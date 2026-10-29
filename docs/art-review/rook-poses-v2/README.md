@@ -10,3 +10,7 @@
 - [Получение урона (hit)](../../../art-sources/poses/rook/proposals/hit.png)
 - [Павший / павшая (down)](../../../art-sources/poses/rook/proposals/down.png)
 - [Победа (victory)](../../../art-sources/poses/rook/proposals/victory.png)
+
+## Художественный просмотр 29.10.2026
+
+[Результаты и открытые пункты](../ART_REVIEW_2026_10_29_RU.md). [Сравнения правок](../art-review-2026-10-29/index.html).

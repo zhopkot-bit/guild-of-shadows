@@ -32,6 +32,19 @@
   "runtimeIntegrated": false,
   "notes": [
     "Victory v1 rejected for invented vertical handle; replacement generated from idle.",
-    "Some intermediate generation requests were rejected by image tool; prompt files retained, no image result for those attempts."
-  ]
+    "Some intermediate generation requests were rejected by image tool; prompt files retained, no image result for those attempts.",
+    "Internal art review 2026-10-29: shoot remains open. A stronger-recoil candidate is preserved in alternatives, but crossbow length and released-string geometry need correction. Two corrective image_gen requests were rejected by the service with category violence (request IDs 8be3282f-d750-41ce-8c3a-f3645265fed4 and 6f033b32-d97f-47fb-b9c1-b2e19f10c9e7); no corrected image was returned. Original shoot proposal retained."
+  ],
+  "artReview": {
+    "date": "2026-10-29",
+    "reviewer": "Codex",
+    "status": "needs_revision",
+    "report": "docs/art-review/ART_REVIEW_2026_10_29_RU.md",
+    "userAcceptance": false,
+    "finalManualRetouchPending": true,
+    "technicalQaDeferred": true,
+    "openPoses": [
+      "shoot"
+    ]
+  }
 }

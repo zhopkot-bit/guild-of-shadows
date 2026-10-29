@@ -12,12 +12,12 @@
       "sha256": "5f5dec9fe7da7cdca58f45b5a8b58bf959703d7250b12e83a07c12b354a4a22d"
     },
     "strike": {
-      "generatedFile": "exec-27108284-401e-474d-88eb-2e2635967ec8.png",
-      "sha256": "5bcc687fe58b1d1592f1845cb64d921072c5842c1ebb2c0c144dee1786213242"
+      "generatedFile": "exec-3f7140ee-5ece-405c-bfec-2ca25b816ef0.png",
+      "sha256": "c9e44c2a2ed5d44c23d82c6fcf65b58c358ef731f580defe7a18cbadbe7410ee"
     },
     "hit": {
-      "generatedFile": "exec-4dc24b1a-a1a7-4506-8bff-27d8d998da7f.png",
-      "sha256": "08c10a519795195a57182df65f1f0d428db20872b6c9190c3b8bdab170dbedbc"
+      "generatedFile": "exec-f5c14343-ed7d-4387-b4d7-54d9ba6ab5c2.png",
+      "sha256": "c1c6f743452da87253995eeaee09e733fc2085344a9b4de33b925676bd51a8fd"
     },
     "down": {
       "generatedFile": "exec-52608814-95c6-4850-b28a-a018a0762d6f.png",
@@ -28,6 +28,18 @@
   "runtimeIntegrated": false,
   "notes": [
     "Art candidates only; no user acceptance, manual retouch, alignment, runtime integration, or technical QA.",
-    "Gray backdrop remains despite transparent-background request and one removal attempt. Alpha preparation and final master size remain pending."
-  ]
+    "Gray backdrop remains despite transparent-background request and one removal attempt. Alpha preparation and final master size remain pending.",
+    "Internal art review 2026-10-29: hit: Rebuilt reaction with horizontal quadruped torso and four distinct legs. Technical QA remains deferred.",
+    "Internal art review 2026-10-29: strike: Exactly two distinct forepaws and two hind legs; full mane and tail contour. Technical QA remains deferred.",
+    "Current review: backdrop/alpha is not assessed in this artistic pass; previous backdrop note is not a fresh technical finding."
+  ],
+  "artReview": {
+    "date": "2026-10-29",
+    "reviewer": "Codex",
+    "status": "visual_review_complete",
+    "report": "docs/art-review/ART_REVIEW_2026_10_29_RU.md",
+    "userAcceptance": false,
+    "finalManualRetouchPending": true,
+    "technicalQaDeferred": true
+  }
 }

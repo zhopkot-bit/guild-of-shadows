@@ -20,8 +20,8 @@
       "sha256": "8d1fdc9876dbf7d8deb50cd0b8ffdb029be8a6bf36ccd6febbd94803b116ee21"
     },
     "hit": {
-      "generatedFile": "exec-92b4065e-c6bf-457a-b3b7-715df589c011.png",
-      "sha256": "dc4a181f008e7f01b1289ad23bb22d2d8e8ffb4e010a5d5b3895c40550b6df5b"
+      "generatedFile": "exec-85757dd3-0cd4-4be3-b6b9-e7be52c3d46a.png",
+      "sha256": "7018d8498532d8f960fe18b1ea2b412b79d92b54123d071b79a49bf2cf001046"
     },
     "down": {
       "generatedFile": "exec-89d4555a-be7e-43ea-9a20-8ebc3eecd4f4.png",
@@ -33,6 +33,28 @@
   "notes": [
     "Six art candidates; user acceptance pending. No manual retouch, alignment, runtime integration or technical QA.",
     "Shield rounded to match brief; windup head turned left; down reworked as collapsed armor and bones; strike/hit framing revised. Final canvas/scale standardization deferred.",
-    "User review 2026-10-29: hit silhouette regenerated facing left; strike torso and arms rebuilt from idle reference. Replacement candidates pending user acceptance."
+    "User review 2026-10-29: hit silhouette regenerated facing left; strike torso and arms rebuilt from idle reference. Replacement candidates pending user acceptance.",
+    "Internal art review 2026-10-29: hit: Head remains turned left while torso recoils right; sword and shield stay in their canonical hands; full shield visible. Technical QA remains deferred.",
+    "Internal art review: hit lighting and saturation matched to idle; corrected anatomy and full silhouettes retained."
+  ],
+  "artReview": {
+    "date": "2026-10-29",
+    "reviewer": "Codex",
+    "status": "visual_review_complete",
+    "report": "docs/art-review/ART_REVIEW_2026_10_29_RU.md",
+    "userAcceptance": false,
+    "finalManualRetouchPending": true,
+    "technicalQaDeferred": true
+  },
+  "revisionHistory": [
+    {
+      "date": "2026-10-29",
+      "pose": "hit",
+      "previousSource": {
+        "generatedFile": "exec-446787cd-6e7f-489d-abf4-fe7ed889e1b7.png",
+        "sha256": "db36a376dcc19f05195a997b5e0b6ec3044ec8afdd1f950b02a93b95c44d6416"
+      },
+      "reason": "Match cooler muted lighting to idle without changing corrected anatomy."
+    }
   ]
 }

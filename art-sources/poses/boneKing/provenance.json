@@ -8,8 +8,8 @@
       "sha256": "243fcd5637b114d16fc13c00d3d1c9ba6adc2fead904294704c015697e2e3327"
     },
     "windup": {
-      "generatedFile": "exec-b9935091-b96f-4ccf-93dd-6a82f42b4324.png",
-      "sha256": "d47dd96535b57361b4787662edf72b073ea6c8d2cd125f2d50806e967759a807"
+      "generatedFile": "exec-de7d1870-53e9-429c-ac47-ce7e0e965421.png",
+      "sha256": "f3a189059b3ac6964c31c3550e30b4317ec9cba336ce94d6e0bc61673c06ec0f"
     },
     "strike": {
       "generatedFile": "exec-a8d7ea72-0714-4831-92af-2c6caf1950b5.png",
@@ -34,6 +34,16 @@
     "Six art candidates; user acceptance pending. No manual retouch, alignment, runtime integration or technical QA.",
     "User review 2026-10-29: shortened sword grip and rebuilt windup with two adjacent hands beside head. Corresponding phase II poses updated.",
     "Strike is a wide composition; final alpha and master canvas validation deferred to shared technical stage.",
-    "One prepare handle-edit request rejected by image tool; simpler decorative-weapon edit succeeded. Failed request produced no image."
-  ]
+    "One prepare handle-edit request rejected by image tool; simpler decorative-weapon edit succeeded. Failed request produced no image.",
+    "Internal art review 2026-10-29: windup: Sword drawn back toward image right; short handle and two anatomically connected hands. Technical QA remains deferred."
+  ],
+  "artReview": {
+    "date": "2026-10-29",
+    "reviewer": "Codex",
+    "status": "visual_review_complete",
+    "report": "docs/art-review/ART_REVIEW_2026_10_29_RU.md",
+    "userAcceptance": false,
+    "finalManualRetouchPending": true,
+    "technicalQaDeferred": true
+  }
 }

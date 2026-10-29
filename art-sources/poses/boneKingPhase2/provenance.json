@@ -8,8 +8,8 @@
       "sha256": "4ec51ea5bc9a5819f81b6db0d582d3790598f723f13c6b2aabb03760ef559a5b"
     },
     "windup": {
-      "generatedFile": "exec-9a917a70-2e37-40cd-bd1c-1066df49bcd7.png",
-      "sha256": "591dc920c699b6627a60d90cc6bf2d97957471e5e4aaea0b2c4e89972aaf1207"
+      "generatedFile": "exec-f5d3989c-a184-4373-a155-f46b36c141d2.png",
+      "sha256": "28ece408b6799a27666a6e4a5487614f5b93f72c40b444193d570ef48c6f49a9"
     },
     "hit": {
       "generatedFile": "exec-41b5a488-d7e1-4b17-8961-7cc4acd7842f.png",
@@ -33,6 +33,16 @@
   "notes": [
     "Six art candidates; user acceptance pending. No manual retouch, alignment, runtime integration or technical QA.",
     "User review 2026-10-29: shortened sword grip and rebuilt windup with two adjacent hands beside head. Corresponding phase II poses updated.",
-    "Prepare and strike use lowered sword and open arm with chest-core light; no full-arena wave baked into figure."
-  ]
+    "Prepare and strike use lowered sword and open arm with chest-core light; no full-arena wave baked into figure.",
+    "Internal art review 2026-10-29: windup: Matched corrected phase-I sword direction, compact two-hand grip and pose; spectral material treatment retained. Technical QA remains deferred."
+  ],
+  "artReview": {
+    "date": "2026-10-29",
+    "reviewer": "Codex",
+    "status": "visual_review_complete",
+    "report": "docs/art-review/ART_REVIEW_2026_10_29_RU.md",
+    "userAcceptance": false,
+    "finalManualRetouchPending": true,
+    "technicalQaDeferred": true
+  }
 }

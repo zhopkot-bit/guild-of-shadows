@@ -33,5 +33,14 @@
   "notes": [
     "Six art candidates; user acceptance pending. No manual retouch, alignment, runtime integration or technical QA.",
     "Shoot trailing fabric shortened after framing-only edit did not fully restore silhouette. Prepare stows the wand at belt to free both hands."
-  ]
+  ],
+  "artReview": {
+    "date": "2026-10-29",
+    "reviewer": "Codex",
+    "status": "visual_review_complete",
+    "report": "docs/art-review/ART_REVIEW_2026_10_29_RU.md",
+    "userAcceptance": false,
+    "finalManualRetouchPending": true,
+    "technicalQaDeferred": true
+  }
 }

@@ -10,3 +10,7 @@
 - [Подготовка умения (prepare)](../../../art-sources/poses/boneGuard/proposals/prepare.png)
 - [Получение урона (hit)](../../../art-sources/poses/boneGuard/proposals/hit.png)
 - [Павший / павшая (down)](../../../art-sources/poses/boneGuard/proposals/down.png)
+
+## Художественный просмотр 29.10.2026
+
+[Результаты и открытые пункты](../ART_REVIEW_2026_10_29_RU.md). [Сравнения правок](../art-review-2026-10-29/index.html).

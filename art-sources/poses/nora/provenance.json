@@ -12,8 +12,8 @@
       "sha256": "6cdd864b1aa2b99a1c87ee7d2d6122ae0f2d343a34e01a6f3fc0e37c913f3dec"
     },
     "shoot": {
-      "generatedFile": "exec-25277709-5ee6-4a1b-b387-6ef8e94f1fa3.png",
-      "sha256": "b416f473ec93b71c353280a9bb534923a4eac3ea127f955eb662df50c11f902a"
+      "generatedFile": "exec-2f1f25b2-ad04-4d84-86bf-ee9aa30dcb0d.png",
+      "sha256": "809e448119c8190739fb3cf47f1c117d139d2e98dfc9fa03b232012fa6f4b165"
     },
     "cast": {
       "generatedFile": "exec-eb8c093e-2fa3-4539-b83a-3276db89d742.png",
@@ -28,13 +28,46 @@
       "sha256": "e432ff926b9ca0e7076b364d68dec185d509b93425ab0b7322d93e28bd083dee"
     },
     "victory": {
-      "generatedFile": "exec-6a55580e-de4f-4e5d-b9a6-55ce39aec2aa.png",
-      "sha256": "bddabd9de2aa116886696e2877cb02a38c6f31b3f071381cea53562e86de4817"
+      "generatedFile": "exec-c82619df-1dd6-4ab2-b1dc-a8afb1eaa835.png",
+      "sha256": "a8dcf80b40e04bacbc1f08870b2f79b33e9c56e1b628b8788f9b8ce068c29d6a"
     }
   },
   "manualRetouch": false,
   "runtimeIntegrated": false,
   "notes": [
-    "Shoot regenerated to include complete staff head and cape; initial framing saved as alternative."
+    "Shoot regenerated to include complete staff head and cape; initial framing saved as alternative.",
+    "Internal art review 2026-10-29: shoot: Restored forked staff head; corrected right garment edge. Technical QA remains deferred.",
+    "Internal art review 2026-10-29: victory staff raised with complete forked head and full silhouette. Technical QA remains deferred.",
+    "Internal art review: shoot lighting and saturation matched to idle; corrected anatomy and full silhouettes retained.",
+    "Internal art review: victory lighting and saturation matched to idle; corrected anatomy and full silhouettes retained."
+  ],
+  "artReview": {
+    "date": "2026-10-29",
+    "reviewer": "Codex",
+    "status": "visual_review_complete",
+    "report": "docs/art-review/ART_REVIEW_2026_10_29_RU.md",
+    "userAcceptance": false,
+    "finalManualRetouchPending": true,
+    "technicalQaDeferred": true
+  },
+  "revisionHistory": [
+    {
+      "date": "2026-10-29",
+      "pose": "shoot",
+      "previousSource": {
+        "generatedFile": "exec-893aa01e-2210-45f2-a1fd-b721d7cbad44.png",
+        "sha256": "b761032fef253c23d49fdef39860d461d113d1ac741679e9d4a497d87aaf57da"
+      },
+      "reason": "Match cooler muted lighting to idle without changing corrected anatomy."
+    },
+    {
+      "date": "2026-10-29",
+      "pose": "victory",
+      "previousSource": {
+        "generatedFile": "exec-7c9c35a4-86db-43bb-8959-1eb100a75eeb.png",
+        "sha256": "c50f51cfedbc8a7c2a2d2121a25c3b22af3dafdec12f36cf0754b2ceec4374e9"
+      },
+      "reason": "Match cooler muted lighting to idle without changing corrected anatomy."
+    }
   ]
 }

@@ -8,8 +8,8 @@
       "sha256": "98de6a92ef225348fe8a37a534c9064d5f65398c2dd0f11d1835d9261cd43f6f"
     },
     "windup": {
-      "generatedFile": "exec-997a2b58-6d2a-4969-8057-e43a8cfed93e.png",
-      "sha256": "cc8f6b0697e3fed8c23cae08ae8ed5d998876ef364acfe8eb59ce735f1d1b7c6"
+      "generatedFile": "exec-63caaa45-eea7-4b27-8b62-75fafb30c17c.png",
+      "sha256": "e729a9b526f19b83f95782f7bd6fa51a8fb1fb11be8a8a067e2baff8c6595d59"
     },
     "strike": {
       "generatedFile": "exec-18cb7d8f-6aa6-413a-8f97-e3580b985685.png",
@@ -28,6 +28,16 @@
   "runtimeIntegrated": false,
   "notes": [
     "Art candidates only; no user acceptance, manual retouch, alignment, runtime integration, or technical QA.",
-    "Framing revised through image_gen. Weapon geometry, crossed-arm pose and remaining cloak margins still require artistic acceptance."
-  ]
+    "Framing revised through image_gen. Weapon geometry, crossed-arm pose and remaining cloak margins still require artistic acceptance.",
+    "Internal art review 2026-10-29: windup: Separated cleaver and dagger so they no longer touch or read as one weapon. Technical QA remains deferred."
+  ],
+  "artReview": {
+    "date": "2026-10-29",
+    "reviewer": "Codex",
+    "status": "visual_review_complete",
+    "report": "docs/art-review/ART_REVIEW_2026_10_29_RU.md",
+    "userAcceptance": false,
+    "finalManualRetouchPending": true,
+    "technicalQaDeferred": true
+  }
 }
