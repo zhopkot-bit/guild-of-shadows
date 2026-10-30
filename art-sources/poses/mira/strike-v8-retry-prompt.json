@@ -1,0 +1,7 @@
+{
+  "prompt": "Technical art correction for a non-graphic fantasy game character illustration. Please correct the geometry of the existing small steel dagger prop: its blade should have a straight centerline aligned with the handle, a simple symmetrical taper, two smooth clean edges and a single defined tip, with natural steel shading. Keep the blade short and fully within the canvas. Preserve the existing guard, handle, hand, character pose, anatomy, face, costume and all other details. This is only a prop design correction; add no action, injury, blood, victim or other scene elements. Preserve the transparent background.",
+  "referenced_image_paths": [
+    "/workspace/guild-of-shadows/art-sources/poses/mira/proposals/strike.png"
+  ],
+  "transparent_background": true
+}

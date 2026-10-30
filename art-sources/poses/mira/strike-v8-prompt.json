@@ -1,0 +1,7 @@
+{
+  "prompt": "Edit ONLY the knife blade in this image of Mira. Preserve the entire character, both arms, hands, grip, shoulder anatomy, pose, face, clothes, equipment and framing exactly as they are. The current blade has a malformed curved, irregular shape. Replace just the exposed metal blade with a physically coherent SHORT STRAIGHT STEEL DAGGER BLADE: straight central axis continuing the handle's longitudinal axis, two clean straight symmetrical cutting edges tapering evenly to one sharp point, simple central ridge, restrained realistic steel highlights consistent with the illustration. Blade grows naturally out of the existing small guard at the lower-right side of the weapon fist. Retain the existing handle, guard and reverse grip. Short practical dagger proportions, blade length about one and a half hand lengths, NOT a long sword, not a curved scimitar, not a jagged or hooked blade. The tip points diagonally down-right and stays fully inside the canvas with a clear margin. No second blade, no new weapons, no change to wrist or fingers. Absolutely no redesign or repaint of any other part of the image. Keep all foreground objects whole and preserve the existing true transparent background and image dimensions.",
+  "referenced_image_paths": [
+    "/workspace/guild-of-shadows/art-sources/poses/mira/proposals/strike.png"
+  ],
+  "transparent_background": true
+}

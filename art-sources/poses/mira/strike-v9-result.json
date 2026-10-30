@@ -1,0 +1,9 @@
+{
+  "file": "strike-v9-axis-candidate.png",
+  "sha256": "e845979af58255941793c35590dfba38e9fde1f95169f3fc2e2191af4feb2325",
+  "generatedFile": "exec-d947b2fa-089d-4c46-a414-fdadb52793de.png",
+  "base": "strike-v7-blade-rejected.png",
+  "change": "Blade redirected down-left to continue handle axis, removing L-shaped joint. User clarified remaining v7 figure was acceptable.",
+  "status": "Approved by user: Последний зачёт. Installed as proposals/strike.png and included in QA export.",
+  "acceptedDate": "2026-10-28"
+}

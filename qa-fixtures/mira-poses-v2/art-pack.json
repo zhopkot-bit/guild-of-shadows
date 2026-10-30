@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "heroes": { "mira": { "poses": "mira/poses.json" } },
+  "enemies": {},
+  "arenas": {}
+}

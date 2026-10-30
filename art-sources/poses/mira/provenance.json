@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-28",
+  "baseCommit": "1ce10f8",
+  "tool": "OpenAI image_gen",
+  "status": "Strike v9 approved by user on 2026-10-28; acceptance applies to this pose, not automatically to all eight poses.",
+  "sources": {
+    "aim": {
+      "generatedFile": "exec-c757f474-f76d-468e-976d-2ecafc37c3ed.png",
+      "sha256": "15bc01ace22e29afd0de4bb11a6e508f57d9faf92aff199859c191b0f616cd18"
+    },
+    "down": {
+      "generatedFile": "exec-6182310e-c5bf-4061-8cb6-37095dc41432.png",
+      "sha256": "ca932dfecdfb373a5e6716a3574118391fb8918101999c55335a045841de61cf"
+    },
+    "hit": {
+      "generatedFile": "exec-a522ead9-9e85-4572-99fd-6bae0b95a742.png",
+      "sha256": "27b93f6f713667d2e9dfe8cd84d78242e93bb9264e3e8d46d4b844ee8e18b502"
+    },
+    "idle": {
+      "generatedFile": "exec-72d3f7dd-2ceb-449b-8640-1cf68591ff14.png",
+      "sha256": "c05099e45b7d7ef2767e89f202586dab0aa29c5d053afe8f77cd3400d7b21fd2"
+    },
+    "shoot": {
+      "generatedFile": "exec-a1ee9638-e427-43c7-ace0-86ac43bfb7b5.png",
+      "sha256": "cba8a9cb0fa58979de4204adf7f5e339a2de5ef83c7cff3b15cdee743264f329"
+    },
+    "strike": {
+      "generatedFile": "exec-d947b2fa-089d-4c46-a414-fdadb52793de.png",
+      "sha256": "e845979af58255941793c35590dfba38e9fde1f95169f3fc2e2191af4feb2325"
+    },
+    "victory": {
+      "generatedFile": "exec-62aa298f-c207-4070-a7ae-618cbd9e300f.png",
+      "sha256": "8861ca54bd424613e2becf37fdac849e1d45bec4f544156b7909ee69517165b9"
+    },
+    "windup": {
+      "generatedFile": "exec-d64992ed-3472-4a48-a6d6-54e1348c1ed3.png",
+      "sha256": "6ffb236b4c8d9f5fd405a2523fe0b2d32a856207b67b623adddb3c355209a3fa"
+    }
+  },
+  "references": {
+    "public/art/v17/heroes/mira/sprite.webp": "7c85e90ecb74bf55fc387e5aa83d333789713f9566b534b59172c5f94cf73384",
+    "public/art/v17/heroes/mira/portrait.webp": "f3fe4b91b33504cf3276c9cdf046d15331cc8b904519f9da1190a5b5daaf0086",
+    "public/art/scenes/hero-lineup.webp": "d1590d24b521d533265ade300f15aab6f9f91242297f27c40a7300a681b323a2"
+  },
+  "sourceTransform": "Original generated PNG bytes preserved. Aligning/scaling/padding only in QA export; browser gallery is layout-only.",
+  "manualRetouch": false,
+  "gameRegistryChanged": true,
+  "revisions": {
+    "hit": "v2: restored visible connected bow arm",
+    "strike": "v9: blade points down-left on the same axis as the handle, removing the L-shaped joint; based on v7. Approved by user."
+  },
+  "acceptance": {
+    "strike": {
+      "version": "v9",
+      "date": "2026-10-28",
+      "userQuote": "Последний зачёт",
+      "sha256": "e845979af58255941793c35590dfba38e9fde1f95169f3fc2e2191af4feb2325"
+    }
+  },
+  "runtimePack": "public/art/v17/heroes/mira/poses/poses.json"
+}

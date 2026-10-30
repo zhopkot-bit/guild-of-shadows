@@ -1,0 +1,176 @@
+{
+  "ok": true,
+  "rows": [
+    {
+      "viewport": [
+        667,
+        375
+      ],
+      "ok": true,
+      "errors": [],
+      "backend": "canvas2d",
+      "poses": [
+        "aim",
+        "strike",
+        "idle",
+        "windup",
+        "shoot",
+        "down",
+        "hit",
+        "victory"
+      ],
+      "canvas": [
+        463,
+        375
+      ],
+      "heroId": "h2",
+      "scroll": [
+        0,
+        0
+      ],
+      "dockBottom": 375,
+      "static": [
+        {
+          "requested": "idle",
+          "pose": "idle",
+          "bounds": [
+            34.9,
+            200.7,
+            131.8,
+            356.2
+          ],
+          "fits": true
+        },
+        {
+          "requested": "aim",
+          "pose": "aim",
+          "bounds": [
+            25.7,
+            190.5,
+            139.3,
+            356.1
+          ],
+          "fits": true
+        },
+        {
+          "requested": "shoot",
+          "pose": "shoot",
+          "bounds": [
+            18,
+            187.4,
+            137.7,
+            356.1
+          ],
+          "fits": true
+        },
+        {
+          "requested": "windup",
+          "pose": "windup",
+          "bounds": [
+            18.8,
+            192.7,
+            137.2,
+            356.1
+          ],
+          "fits": true
+        },
+        {
+          "requested": "strike",
+          "pose": "strike",
+          "bounds": [
+            15.9,
+            183.1,
+            134.9,
+            356.1
+          ],
+          "fits": true
+        },
+        {
+          "requested": "hit",
+          "pose": "hit",
+          "bounds": [
+            14.7,
+            194.9,
+            140.6,
+            356.1
+          ],
+          "fits": true
+        },
+        {
+          "requested": "down",
+          "pose": "down",
+          "bounds": [
+            15.2,
+            232,
+            139.3,
+            351.5
+          ],
+          "fits": true
+        },
+        {
+          "requested": "victory",
+          "pose": "victory",
+          "bounds": [
+            29,
+            170.2,
+            141.8,
+            356.1
+          ],
+          "fits": true
+        }
+      ],
+      "actions": [
+        {
+          "kind": "shoot",
+          "completed": true,
+          "framesChecked": 40,
+          "poses": [
+            "aim",
+            "shoot",
+            "idle"
+          ],
+          "clippedFrames": []
+        },
+        {
+          "kind": "melee",
+          "completed": true,
+          "framesChecked": 51,
+          "poses": [
+            "windup",
+            "strike",
+            "idle"
+          ],
+          "clippedFrames": []
+        },
+        {
+          "kind": "hit",
+          "completed": true,
+          "framesChecked": 40,
+          "poses": [
+            "hit",
+            "idle"
+          ],
+          "clippedFrames": []
+        },
+        {
+          "kind": "victory",
+          "completed": true,
+          "framesChecked": 32,
+          "poses": [
+            "victory"
+          ],
+          "clippedFrames": []
+        },
+        {
+          "kind": "die",
+          "completed": true,
+          "framesChecked": 37,
+          "poses": [
+            "down"
+          ],
+          "clippedFrames": []
+        }
+      ]
+    }
+  ]
+}

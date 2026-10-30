@@ -1,0 +1,25 @@
+{
+ "registry": "/workspace/guild-of-shadows/qa-fixtures/mira-poses-v2/art-pack.json",
+ "ok": true,
+ "errors": [],
+ "warnings": [],
+ "info": [
+  "heroes.mira (mira/poses.json).idle idle.webp: 537×768 webp alpha, 71 КБ",
+  "heroes.mira (mira/poses.json).idle idle.webp: WebP — проверка ступней только по PNG-мастерам",
+  "heroes.mira (mira/poses.json).windup windup.webp: 537×768 webp alpha, 83 КБ",
+  "heroes.mira (mira/poses.json).windup windup.webp: WebP — проверка ступней только по PNG-мастерам",
+  "heroes.mira (mira/poses.json).strike strike.webp: 537×768 webp alpha, 82 КБ",
+  "heroes.mira (mira/poses.json).strike strike.webp: WebP — проверка ступней только по PNG-мастерам",
+  "heroes.mira (mira/poses.json).aim aim.webp: 537×768 webp alpha, 78 КБ",
+  "heroes.mira (mira/poses.json).aim aim.webp: WebP — проверка ступней только по PNG-мастерам",
+  "heroes.mira (mira/poses.json).shoot shoot.webp: 537×768 webp alpha, 81 КБ",
+  "heroes.mira (mira/poses.json).shoot shoot.webp: WebP — проверка ступней только по PNG-мастерам",
+  "heroes.mira (mira/poses.json).hit hit.webp: 537×768 webp alpha, 86 КБ",
+  "heroes.mira (mira/poses.json).hit hit.webp: WebP — проверка ступней только по PNG-мастерам",
+  "heroes.mira (mira/poses.json).down down.webp: 537×768 webp alpha, 63 КБ",
+  "heroes.mira (mira/poses.json).down down.webp: WebP — проверка ступней только по PNG-мастерам",
+  "heroes.mira (mira/poses.json).victory victory.webp: 537×768 webp alpha, 86 КБ",
+  "heroes.mira (mira/poses.json).victory victory.webp: WebP — проверка ступней только по PNG-мастерам",
+  "heroes.mira (mira/poses.json): поз 8, вариантов 0, масок 0, 630 КБ"
+ ]
+}

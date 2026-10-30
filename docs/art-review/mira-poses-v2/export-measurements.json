@@ -1,0 +1,133 @@
+{
+  "footSpreadPixels": 0,
+  "rows": [
+    {
+      "pose": "idle",
+      "size": [
+        537,
+        768
+      ],
+      "bbox": [
+        99,
+        123,
+        477,
+        738
+      ],
+      "baseline": 738,
+      "baselineDeltaPixels": 0.336,
+      "kb": 70.9
+    },
+    {
+      "pose": "aim",
+      "size": [
+        537,
+        768
+      ],
+      "bbox": [
+        69,
+        91,
+        512,
+        738
+      ],
+      "baseline": 738,
+      "baselineDeltaPixels": 0.336,
+      "kb": 78.5
+    },
+    {
+      "pose": "shoot",
+      "size": [
+        537,
+        768
+      ],
+      "bbox": [
+        39,
+        79,
+        506,
+        738
+      ],
+      "baseline": 738,
+      "baselineDeltaPixels": 0.336,
+      "kb": 80.9
+    },
+    {
+      "pose": "windup",
+      "size": [
+        537,
+        768
+      ],
+      "bbox": [
+        42,
+        98,
+        504,
+        738
+      ],
+      "baseline": 738,
+      "baselineDeltaPixels": 0.336,
+      "kb": 82.7
+    },
+    {
+      "pose": "strike",
+      "size": [
+        537,
+        768
+      ],
+      "bbox": [
+        31,
+        63,
+        495,
+        738
+      ],
+      "baseline": 738,
+      "baselineDeltaPixels": 0.336,
+      "kb": 82.1
+    },
+    {
+      "pose": "hit",
+      "size": [
+        537,
+        768
+      ],
+      "bbox": [
+        26,
+        108,
+        517,
+        738
+      ],
+      "baseline": 738,
+      "baselineDeltaPixels": 0.336,
+      "kb": 86.0
+    },
+    {
+      "pose": "down",
+      "size": [
+        537,
+        768
+      ],
+      "bbox": [
+        27,
+        251,
+        512,
+        720
+      ],
+      "baseline": 720,
+      "baselineDeltaPixels": -17.664,
+      "kb": 63.3
+    },
+    {
+      "pose": "victory",
+      "size": [
+        537,
+        768
+      ],
+      "bbox": [
+        82,
+        13,
+        522,
+        738
+      ],
+      "baseline": 738,
+      "baselineDeltaPixels": 0.336,
+      "kb": 86.0
+    }
+  ]
+}
