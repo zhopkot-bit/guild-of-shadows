@@ -1,0 +1,26 @@
+[
+  {
+    "id": "boneKing",
+    "pose": "prepare",
+    "stage": "rebuild_arms_and_palette",
+    "generatedFile": "exec-99f36705-3b9a-4765-b43b-70bf73da6058.png",
+    "references": [
+      "art-sources/poses/boneKing/proposals/idle.png",
+      "art-sources/poses/boneKing/proposals/prepare.png"
+    ],
+    "referenceRevision": "7df6856",
+    "transparent_background": true,
+    "prompt": "Regenerate the Bone King first-phase ability-preparation pose from scratch. The FIRST image is the authoritative model and palette: same skull with golden crown, weathered dark iron/bronze armor with restrained gold details, dark grey torn cape, subdued brown-black cloth, long straight two-handed sword. The SECOND image is a failed earlier preparation; use it only to understand that his sword should be raised overhead, do not copy its missing/hidden left arm, exaggerated orange lighting or pose anatomy.\n\nDesign a readable front-three-quarter figure, head turned left, stable stance. His left shoulder and right shoulder both visibly sit on opposite sides of the torso. BOTH arms are fully present: from each separate shoulder, one armored upper arm rises to its own elbow; each elbow bends into a distinct forearm; each forearm ends in its own wrist and gauntleted hand. Place the elbows OUTWARD to either side of his head, each arm visible from shoulder to fist, even if that requires changing the original pose. Both hands grip the SAME SHORT two-handed hilt above the crown, with one hand near the crossguard and one near the round pommel. The pommel extends below the hands and clearly does not touch or connect to either forearm or the armor. The single greatsword blade extends upward in a straight line; full steel blade, crossguard, hilt and pommel visible. No phantom hands, no fused joints, no extra arms or swords. The head and crown do not obscure the arms.\n\nUse the FIRST reference's dark muted charcoal-black iron and aged muted bronze palette, with subtle pale gold edging. No bright orange/yellow plating and no red light on the body. The crown has just a small dim red ember effect. Do not change the king's clothing, build, style or face. Full figure and full sword inside the frame with generous clear transparent margins. No environment, floor, halo, text or red background."
+  },
+  {
+    "id": "boneKing",
+    "pose": "prepare",
+    "stage": "refine_crown_and_isolation",
+    "generatedFile": "exec-0094f913-2334-4e53-967f-fb0bb5a905e4.png",
+    "references": [
+      "/workspace/generated_images/exec-99f36705-3b9a-4765-b43b-70bf73da6058.png"
+    ],
+    "transparent_background": true,
+    "prompt": "Edit the existing Bone King image subtly. Preserve the exact pose and structure of BOTH visible arms, each shoulder, upper arm, elbow, forearm, wrist and hand; both hands hold one short hilt above his head, and the round pommel hangs freely, separated from all armor. Do not alter any of this, or the long straight blade. Keep the matching muted black steel and aged bronze palette, neutral illumination, skull and torn cape.\n\nIsolate the full figure and complete sword on a transparent background with no surrounding atmospheric glow, as a character art master. Add a very faint red ember glow just within the crown. No orange illumination, no extra arms, no change to the head, armor, sword, stance or composition."
+  }
+]

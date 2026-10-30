@@ -16,8 +16,8 @@
       "sha256": "104d33e53b4aa0469df1a980d3dc60363a49fffac702ee4bf820c3167afcc7cb"
     },
     "prepare": {
-      "generatedFile": "exec-4381093b-9988-48ed-b2ff-848b9f422be4.png",
-      "sha256": "1f34cf5a183c22ba7ff5fb3cfdf1f64857041ef7731a2959e51a9bd6ddaa811a"
+      "generatedFile": "exec-0094f913-2334-4e53-967f-fb0bb5a905e4.png",
+      "sha256": "13044e2410ae0b76def4e33672bff2b61da87d8fdb4d814f8f50ee2e1248e0e2"
     },
     "hit": {
       "generatedFile": "exec-23a072c7-1864-43ed-887c-316ddb0d5d06.png",
@@ -39,7 +39,8 @@
     "PR #16 art review 2026-10-30: Added subdued red glow to crown; preserved pose and two-handed grip.",
     "PR #16 art review 2026-10-30: Torso and head recoil while the king remains braced; preserved two-handed grip and complete sword.",
     "User review 2026-10-30: regenerated raised-sword preparation with connected forearms, separate gauntlets and a compact two-handed grip; candidate for review.",
-    "User review 2026-10-30: separated the sword pommel from the arm armor, changed the forearm approach to the grip, reduced the crown glow and restored long blade proportions; candidate for review."
+    "User review 2026-10-30: separated the sword pommel from the arm armor, changed the forearm approach to the grip, reduced the crown glow and restored long blade proportions; candidate for review.",
+    "User review 2026-10-30: rebuilt both arms from separate shoulders and matched the muted dark iron and bronze palette to idle; retained a separate sword pommel. Candidate for review."
   ],
   "artReview": {
     "date": "2026-10-30",
@@ -90,6 +91,16 @@
       },
       "previousGitCommit": "d5a4556",
       "reason": "User review 2026-10-30: separated the sword pommel from the arm armor, changed the forearm approach to the grip, reduced the crown glow and restored long blade proportions; candidate for review."
+    },
+    {
+      "date": "2026-10-30",
+      "pose": "prepare",
+      "previousSource": {
+        "generatedFile": "exec-4381093b-9988-48ed-b2ff-848b9f422be4.png",
+        "sha256": "1f34cf5a183c22ba7ff5fb3cfdf1f64857041ef7731a2959e51a9bd6ddaa811a"
+      },
+      "previousGitCommit": "7df6856",
+      "reason": "User review 2026-10-30: rebuilt both arms from separate shoulders and matched the muted dark iron and bronze palette to idle; retained a separate sword pommel. Candidate for review."
     }
   ]
 }
