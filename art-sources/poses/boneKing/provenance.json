@@ -17,7 +17,21 @@
     },
     "prepare": {
       "generatedFile": "exec-0094f913-2334-4e53-967f-fb0bb5a905e4.png",
-      "sha256": "13044e2410ae0b76def4e33672bff2b61da87d8fdb4d814f8f50ee2e1248e0e2"
+      "generatedSha256": "13044e2410ae0b76def4e33672bff2b61da87d8fdb4d814f8f50ee2e1248e0e2",
+      "sha256": "74b29b1613e176bf87a6d386fdf6212287ef1d74ebb635240aa7d673fde1a300",
+      "derivation": {
+        "bodyAndSwordReference": "d0258c8:art-sources/poses/boneKing/proposals/prepare.png",
+        "forearmsGeneratedFile": "exec-45f15e30-f83f-4de3-8179-9b611347f56d.png",
+        "forearmsGeneratedSha256": "a68f29f57d1e8ad2a44f3b450a2330e5cd9f7a907472361c8166001be75140d9",
+        "headReference": "art-sources/poses/boneKing/proposals/idle.png",
+        "headScale": {
+          "width": "890/1086",
+          "height": "1187/1448"
+        },
+        "retouch": "GIMP 3.0 Script-Fu layered compositing: original sword and both hands translated upward by 50 px without rescaling; generated forearms masked locally; head and crown cut from idle and scaled; subdued red crown tint placed on a separate layer.",
+        "canvasChange": "80 px added above the original frame to fit the lifted sword.",
+        "layeredFile": "art-sources/poses/boneKing/layers/prepare-head-lift-2026-10-30.psd"
+      }
     },
     "hit": {
       "generatedFile": "exec-23a072c7-1864-43ed-887c-316ddb0d5d06.png",
@@ -40,13 +54,14 @@
     "PR #16 art review 2026-10-30: Torso and head recoil while the king remains braced; preserved two-handed grip and complete sword.",
     "User review 2026-10-30: regenerated raised-sword preparation with connected forearms, separate gauntlets and a compact two-handed grip; candidate for review.",
     "User review 2026-10-30: separated the sword pommel from the arm armor, changed the forearm approach to the grip, reduced the crown glow and restored long blade proportions; candidate for review.",
-    "User review 2026-10-30: rebuilt both arms from separate shoulders and matched the muted dark iron and bronze palette to idle; retained a separate sword pommel. Candidate for review."
+    "User review 2026-10-30: rebuilt both arms from separate shoulders and matched the muted dark iron and bronze palette to idle; retained a separate sword pommel. Candidate for review.",
+    "User authorized a small upward shift of the hands and sword. GIMP Script-Fu preserved the original weapon and grip as a translated layer, composited generated forearms, scaled the head from idle and added a separate subdued crown tint. No freehand painting; editable PSD supplied."
   ],
   "artReview": {
     "date": "2026-10-30",
     "reviewer": "Codex",
     "status": "candidate_for_review",
-    "report": "docs/art-review/USER_REVIEW_2026_10_30_RU.md",
+    "report": "docs/art-review/REVIEW_PR16_FOLLOWUP_2026_10_30_RU.md",
     "userAcceptance": false,
     "finalManualRetouchPending": true,
     "technicalQaDeferred": true
@@ -101,6 +116,16 @@
       },
       "previousGitCommit": "7df6856",
       "reason": "User review 2026-10-30: rebuilt both arms from separate shoulders and matched the muted dark iron and bronze palette to idle; retained a separate sword pommel. Candidate for review."
+    },
+    {
+      "date": "2026-10-30",
+      "pose": "prepare",
+      "previousSource": {
+        "generatedFile": "exec-0094f913-2334-4e53-967f-fb0bb5a905e4.png",
+        "sha256": "13044e2410ae0b76def4e33672bff2b61da87d8fdb4d814f8f50ee2e1248e0e2"
+      },
+      "previousGitCommit": "c8a3d93",
+      "reason": "With user authorization, raised both hands and the original sword together, reconnected the forearms and restored the idle head proportions. Candidate for artistic review."
     }
   ]
 }
