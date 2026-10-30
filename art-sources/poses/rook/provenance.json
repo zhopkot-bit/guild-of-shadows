@@ -13,7 +13,14 @@
     },
     "shoot": {
       "generatedFile": "exec-21ab2f81-6a97-48b4-93e0-aec0037fe7bf.png",
-      "sha256": "bd940caafc2a80b3c7f5ed481a9c28bbe4e89a2e6b241ff98b076a0ffacaad9c"
+      "generatedSha256": "bd940caafc2a80b3c7f5ed481a9c28bbe4e89a2e6b241ff98b076a0ffacaad9c",
+      "sha256": "2ac2a255baebc2ead6e1198a146ea2fd1a66f855cb05cc80c7e87cb03ee382c8",
+      "derivation": {
+        "headGeneratedFile": "exec-bf162937-d37e-4c5e-9220-41e93ac62114.png",
+        "headGeneratedSha256": "86b51361661d712535083977d373842d9d4d3c43dc746fdedb82ea7205f39e8a",
+        "retouch": "GIMP 3.0 Script-Fu compositing with complementary feathered masks, removal of the stray string and a hand-positioned vector line; no freehand painting.",
+        "layeredFile": "art-sources/poses/rook/layers/shoot-review-2026-10-30.psd"
+      }
     },
     "hit": {
       "generatedFile": "exec-043010b8-b6d0-4441-b509-98c4b4cf8d57.png",
@@ -35,20 +42,21 @@
     "Some intermediate generation requests were rejected by image tool; prompt files retained, no image result for those attempts.",
     "Internal art review 2026-10-29: shoot remains open. A stronger-recoil candidate is preserved in alternatives, but crossbow length and released-string geometry need correction. Two corrective image_gen requests were rejected by the service with category violence (request IDs 8be3282f-d750-41ce-8c3a-f3645265fed4 and 6f033b32-d97f-47fb-b9c1-b2e19f10c9e7); no corrected image was returned. Original shoot proposal retained.",
     "PR #16 art review 2026-10-30: Raised crossbow and shifted shoulders backward for readable recoil; follow-up string correction blocked, exact string geometry remains open.",
-    "PR #16 art review 2026-10-30: stronger recoil candidate selected. Follow-up string edit was rejected by image_gen as violence (request ID 432a5d9a-cd51-4759-af5d-3762ef60d55e). String geometry remains open."
+    "PR #16 art review 2026-10-30: stronger recoil candidate selected. Follow-up string edit was rejected by image_gen as violence (request ID 432a5d9a-cd51-4759-af5d-3762ef60d55e). String geometry remains open.",
+    "PR review follow-up 2026-10-30: image_gen supplied the local head, GIMP Script-Fu composited it over the original with masks and placed a string line; editable layered PSD supplied. Pose and technical delivery remain pending user review."
   ],
   "artReview": {
     "date": "2026-10-30",
     "reviewer": "Codex",
-    "status": "needs_revision",
-    "report": "docs/art-review/REVIEW_PR16_2026_10_30_RU.md",
+    "status": "candidate_for_review",
+    "report": "docs/art-review/REVIEW_PR16_FOLLOWUP_2026_10_30_RU.md",
     "userAcceptance": false,
     "finalManualRetouchPending": true,
     "technicalQaDeferred": true,
     "openPoses": [
       "shoot"
     ],
-    "openDetails": "Recoil revised; exact crossbow string geometry requires manual art review."
+    "openDetails": "Localized face and hair candidate and a manually positioned string line await artistic approval; literal identity with aim is not asserted."
   },
   "revisionHistory": [
     {
@@ -60,6 +68,16 @@
       },
       "previousGitCommit": "f783935",
       "reason": "Raised crossbow and shifted shoulders backward for readable recoil; follow-up string correction blocked, exact string geometry remains open."
+    },
+    {
+      "date": "2026-10-30",
+      "pose": "shoot",
+      "previousSource": {
+        "generatedFile": "exec-21ab2f81-6a97-48b4-93e0-aec0037fe7bf.png",
+        "sha256": "bd940caafc2a80b3c7f5ed481a9c28bbe4e89a2e6b241ff98b076a0ffacaad9c"
+      },
+      "previousGitCommit": "d0258c8",
+      "reason": "PR review follow-up: localized head candidate matched to aim and portrait, with a single released string; preserve accepted recoil pose. Pending artistic review."
     }
   ]
 }
