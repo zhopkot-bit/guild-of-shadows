@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-29",
+  "tool": "OpenAI image_gen",
+  "status": "Six art candidates created; not yet accepted by user. Technical integration and tests deferred until complete art set.",
+  "sources": {
+    "idle": {
+      "generatedFile": "exec-67291643-fe52-4900-a0e0-197077e4d7cf.png",
+      "sha256": "6ba7ebee957d6fd727f208340842ab71211bacd7ec02aeeecf399fa2cb96b5cd"
+    },
+    "aim": {
+      "generatedFile": "exec-eb699585-ba85-40e5-94cd-1c9c1be921ca.png",
+      "sha256": "ba722cfe351e7efb6868734b1475ad6fe893f6f1c41ff3263a82f37cf28d3401"
+    },
+    "shoot": {
+      "generatedFile": "exec-21ab2f81-6a97-48b4-93e0-aec0037fe7bf.png",
+      "generatedSha256": "bd940caafc2a80b3c7f5ed481a9c28bbe4e89a2e6b241ff98b076a0ffacaad9c",
+      "sha256": "2ac2a255baebc2ead6e1198a146ea2fd1a66f855cb05cc80c7e87cb03ee382c8",
+      "derivation": {
+        "headGeneratedFile": "exec-bf162937-d37e-4c5e-9220-41e93ac62114.png",
+        "headGeneratedSha256": "86b51361661d712535083977d373842d9d4d3c43dc746fdedb82ea7205f39e8a",
+        "retouch": "GIMP 3.0 Script-Fu compositing with complementary feathered masks, removal of the stray string and a hand-positioned vector line; no freehand painting.",
+        "layeredFile": "art-sources/poses/rook/layers/shoot-review-2026-10-30.psd"
+      }
+    },
+    "hit": {
+      "generatedFile": "exec-043010b8-b6d0-4441-b509-98c4b4cf8d57.png",
+      "sha256": "f9fa8df884137f1c2b39b267d3e0192ac4f6a098d619f591088751a9a8fa13bb"
+    },
+    "down": {
+      "generatedFile": "exec-b51572dd-2607-463d-9cac-2e167be46f6e.png",
+      "sha256": "0af7a3edce4bb82c643f337b97facc0f9ca81f35a6a7bb811aa3c32fa1bf1d4e"
+    },
+    "victory": {
+      "generatedFile": "exec-9ebbcee4-8ab0-494a-9294-6f5855b002ff.png",
+      "sha256": "ea1e36ae84d0c6af282463a9ae6f991ead0174d3a03113129ac2c078f9a2fdb0"
+    }
+  },
+  "manualRetouch": false,
+  "runtimeIntegrated": false,
+  "notes": [
+    "Victory v1 rejected for invented vertical handle; replacement generated from idle.",
+    "Some intermediate generation requests were rejected by image tool; prompt files retained, no image result for those attempts.",
+    "Internal art review 2026-10-29: shoot remains open. A stronger-recoil candidate is preserved in alternatives, but crossbow length and released-string geometry need correction. Two corrective image_gen requests were rejected by the service with category violence (request IDs 8be3282f-d750-41ce-8c3a-f3645265fed4 and 6f033b32-d97f-47fb-b9c1-b2e19f10c9e7); no corrected image was returned. Original shoot proposal retained.",
+    "PR #16 art review 2026-10-30: Raised crossbow and shifted shoulders backward for readable recoil; follow-up string correction blocked, exact string geometry remains open.",
+    "PR #16 art review 2026-10-30: stronger recoil candidate selected. Follow-up string edit was rejected by image_gen as violence (request ID 432a5d9a-cd51-4759-af5d-3762ef60d55e). String geometry remains open.",
+    "PR review follow-up 2026-10-30: image_gen supplied the local head, GIMP Script-Fu composited it over the original with masks and placed a string line; editable layered PSD supplied. Pose and technical delivery remain pending user review."
+  ],
+  "artReview": {
+    "date": "2026-10-30",
+    "reviewer": "Codex",
+    "status": "candidate_for_review",
+    "report": "docs/art-review/REVIEW_PR16_FOLLOWUP_2026_10_30_RU.md",
+    "userAcceptance": false,
+    "finalManualRetouchPending": true,
+    "technicalQaDeferred": true,
+    "openPoses": [
+      "shoot"
+    ],
+    "openDetails": "Localized face and hair candidate and a manually positioned string line await artistic approval; literal identity with aim is not asserted."
+  },
+  "revisionHistory": [
+    {
+      "date": "2026-10-30",
+      "pose": "shoot",
+      "previousSource": {
+        "generatedFile": "exec-0199ec96-21c1-478b-b482-af81c37e3cd8.png",
+        "sha256": "a9ba8090d7f8f13ca42f4eb8186f98e0ae07f1141b2dde26d3a633a5221ae5a1"
+      },
+      "previousGitCommit": "f783935",
+      "reason": "Raised crossbow and shifted shoulders backward for readable recoil; follow-up string correction blocked, exact string geometry remains open."
+    },
+    {
+      "date": "2026-10-30",
+      "pose": "shoot",
+      "previousSource": {
+        "generatedFile": "exec-21ab2f81-6a97-48b4-93e0-aec0037fe7bf.png",
+        "sha256": "bd940caafc2a80b3c7f5ed481a9c28bbe4e89a2e6b241ff98b076a0ffacaad9c"
+      },
+      "previousGitCommit": "d0258c8",
+      "reason": "PR review follow-up: localized head candidate matched to aim and portrait, with a single released string; preserve accepted recoil pose. Pending artistic review."
+    }
+  ]
+}

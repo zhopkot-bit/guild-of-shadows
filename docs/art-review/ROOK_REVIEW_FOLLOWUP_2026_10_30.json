@@ -1,0 +1,15 @@
+{
+  "character": "rook",
+  "pose": "shoot",
+  "headGeneratedFile": "exec-bf162937-d37e-4c5e-9220-41e93ac62114.png",
+  "referenceRevision": "d0258c8",
+  "references": [
+    "art-sources/poses/rook/proposals/shoot.png",
+    "art-sources/poses/rook/proposals/aim.png",
+    "public/art/v17/heroes/rook/portrait.webp"
+  ],
+  "transparent_background": true,
+  "prompt": "Make a localized portrait correction in the FIRST full-body image. The SECOND and THIRD references show the exact same man's face and hairstyle. Replace only the head and hair in the first image to match them: narrow face, defined cheekbones, short dark stubble, focused squint, straight nearly black shoulder-length hair with a few loose strands across the forehead, no light-brown curls or fluffy volume. Maintain the same backward tilt of the head with the posture and gaze forward and slightly upward. Blend the neck naturally into the existing grey scarf.\n\nEverything outside the head and hair must be preserved exactly as in the FIRST image: body pose, hands, equipment, clothing, legs, cloak, colors, framing and lighting. Do not alter anything held in the hands. Same realistic dark-fantasy painting. Full-body figure on transparent background, no text.",
+  "subsequentRetouch": "GIMP 3.0 Script-Fu: selected and feathered head from the generated candidate over the approved original with complementary masks; masked the stray diagonal and placed a separate straight string layer between the bow tips. No freehand painting.",
+  "layeredFile": "art-sources/poses/rook/layers/shoot-review-2026-10-30.psd"
+}

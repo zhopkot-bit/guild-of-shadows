@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#242b31;color:#eee;font:18px Arial}
+header{padding:24px;background:#151b21}h1{margin:0 0 8px;color:#e3c58f;font-size:28px}p{margin:0;color:#c5ccd4}
+.grid{display:grid;grid-template-columns:repeat(3,1fr)}article{border:1px solid #70777d}article h2{font-size:18px;margin:0;padding:12px;background:#30373d}
+.stage{position:relative;height:800px;overflow:hidden;background:#555b61}
+.stage:after{content:"";position:absolute;left:0;right:0;top:760px;border-top:1px dashed #c1c7cb}
+img{position:absolute;width:488px;max-width:none;left:50%;transform:translateX(-50%)}
+.idle{top:128px}.aim{top:128px}.shoot{top:134px}
+</style>
+<header><h1>Рук: стойка, прицеливание и выстрел</h1><p>Одинаковый масштаб исходных холстов, опора приведена к общей линии. Сравнение для художественного просмотра.</p></header>
+<div class="grid">
+<article><h2>Стойка · idle</h2><div class="stage"><img class="idle" src="../../../art-sources/poses/rook/proposals/idle.png"></div></article>
+<article><h2>Прицеливание · aim</h2><div class="stage"><img class="aim" src="../../../art-sources/poses/rook/proposals/aim.png"></div></article>
+<article><h2>Выстрел · кандидат</h2><div class="stage"><img class="shoot" src="../../../art-sources/poses/rook/proposals/shoot.png"></div></article>
+</div>
+</html>

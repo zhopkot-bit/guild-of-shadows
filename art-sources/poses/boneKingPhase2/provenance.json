@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-29",
+  "tool": "OpenAI image_gen",
+  "status": "Six art candidates created; acceptance pending.",
+  "sources": {
+    "idle": {
+      "generatedFile": "exec-dae5a5f1-be4b-4033-a574-25bfe4f1ceb2.png",
+      "sha256": "4ec51ea5bc9a5819f81b6db0d582d3790598f723f13c6b2aabb03760ef559a5b"
+    },
+    "windup": {
+      "generatedFile": "exec-f5d3989c-a184-4373-a155-f46b36c141d2.png",
+      "sha256": "28ece408b6799a27666a6e4a5487614f5b93f72c40b444193d570ef48c6f49a9"
+    },
+    "hit": {
+      "generatedFile": "exec-41b5a488-d7e1-4b17-8961-7cc4acd7842f.png",
+      "sha256": "5d3c99dc64ad158bd2a6a7299d5fc97006a95ba5060bc203da4e01affe6e22e6"
+    },
+    "down": {
+      "generatedFile": "exec-11b1753c-1349-406a-a781-77942b127544.png",
+      "sha256": "6d9d8a02a6c8398aedcaf96ed835b1adb0427501d4c749c3035ec370d0a5f2e4"
+    },
+    "prepare": {
+      "generatedFile": "exec-ff1e795a-c35b-49c4-8cea-2679a9d086c1.png",
+      "sha256": "88b746571aeaeaa1dd271adc6ebad867c4e1acb68083ed6231bd00bd9a5b6aec"
+    },
+    "strike": {
+      "generatedFile": "exec-3e4de3a5-e715-4133-94b5-bd690a7805df.png",
+      "sha256": "88e53c64aee17f59f1fceeaabff805e1c548638515711a2149e02e92db1bed05"
+    }
+  },
+  "manualRetouch": false,
+  "runtimeIntegrated": false,
+  "notes": [
+    "Six art candidates; user acceptance pending. No manual retouch, alignment, runtime integration or technical QA.",
+    "User review 2026-10-29: shortened sword grip and rebuilt windup with two adjacent hands beside head. Corresponding phase II poses updated.",
+    "Prepare and strike use lowered sword and open arm with chest-core light; no full-arena wave baked into figure.",
+    "Internal art review 2026-10-29: windup: Matched corrected phase-I sword direction, compact two-hand grip and pose; spectral material treatment retained. Technical QA remains deferred."
+  ],
+  "artReview": {
+    "date": "2026-10-29",
+    "reviewer": "Codex",
+    "status": "visual_review_complete",
+    "report": "docs/art-review/ART_REVIEW_2026_10_29_RU.md",
+    "userAcceptance": false,
+    "finalManualRetouchPending": true,
+    "technicalQaDeferred": true
+  }
+}

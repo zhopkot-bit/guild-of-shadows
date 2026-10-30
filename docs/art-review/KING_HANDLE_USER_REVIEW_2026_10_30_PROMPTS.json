@@ -1,0 +1,37 @@
+[
+  {
+    "id": "boneKing",
+    "pose": "prepare",
+    "stage": "separate_grip_and_pommel",
+    "generatedFile": "exec-4c9af6dc-f9c5-4cdb-a975-945a8ada3ea2.png",
+    "references": [
+      "art-sources/poses/boneKing/proposals/prepare.png",
+      "art-sources/poses/boneKing/proposals/idle.png"
+    ],
+    "referenceRevision": "d5a4556",
+    "transparent_background": true,
+    "prompt": "Redraw the first illustration's Bone King preparing his special move, in the style and same armor and costume as both references. He holds his single long straight sword raised above the head. Keep his skull, crown with faint red glow, dark gilded plate armor and ragged cape and wide stance. Focus on showing a physically correct two-handed grip: the hilt is a separate object with one small visible round pommel at the bottom, a short dark wrapped straight handle, one crossguard and the long straight steel blade. Upper hand grips the hilt immediately next to the crossguard; lower hand grips the same hilt immediately beside it near the pommel. The pommel sticks out visibly beyond the lower fist and floats free, surrounded by negative space: it never runs into any armored sleeve, wrist guard, shoulder or gauntlet plate. Hands hold the grip, not the pommel. Use different orientations for arms and hilt: both armored forearms approach the hands diagonally FROM BELOW AND FROM OPPOSITE SIDES, their wrist joints angled naturally. The sword handle points vertically upward, so it does not visually continue either forearm. Spread the elbows to show arm attachment clearly. Only two connected arms with normal wrists and hands, with fingers curled naturally around hilt; no extra rods, limbs or cuffs fused to the sword. Whole character and complete sword are in the portrait frame, including pommel and blade tip. Isolated transparent background, high detail dark fantasy game illustration."
+  },
+  {
+    "id": "boneKing",
+    "pose": "prepare",
+    "stage": "subdue_crown_glow",
+    "generatedFile": "exec-f2b80828-13d0-4982-a53c-bc14fc079947.png",
+    "references": [
+      "/workspace/generated_images/exec-4c9af6dc-f9c5-4cdb-a975-945a8ada3ea2.png"
+    ],
+    "transparent_background": true,
+    "prompt": "Preserve this exact Bone King ability-preparation illustration, especially the geometrically correct two-handed sword grip, arm arrangement, blade and round pommel. The pommel is separate and below both hands, with visible transparent space between it and the gauntlet and forearm armor; retain that precisely. Maintain each wrist's connection to its own forearm. Do not change the sword or hands.\n\nRefine only the crown lighting: no big orange halo or background glow, instead subtle dark red embers in the crown. Slightly wider framing, with the full sword tip, both feet and cloak in the frame and some transparent margin. Preserve all other character features and the dark fantasy painted style. No backdrop, text, new props or limbs."
+  },
+  {
+    "id": "boneKing",
+    "pose": "prepare",
+    "stage": "restore_blade_proportion",
+    "generatedFile": "exec-4381093b-9988-48ed-b2ff-848b9f422be4.png",
+    "references": [
+      "/workspace/generated_images/exec-f2b80828-13d0-4982-a53c-bc14fc079947.png"
+    ],
+    "transparent_background": true,
+    "prompt": "Edit this full-body illustration, preserving the character and especially preserving the current correct arms and sword grip. The detached round pommel is clearly visible below the lower fist and separate from the two armored forearms; the short handle and two hands must remain exactly as they are, with each hand connected to its own wrist and no handle merging into armor.\n\nThe blade currently reads too short for the established greatsword. Lengthen ONLY the straight double-edged blade beyond the guard, making it a long greatsword blade approximately four times the length of the grip including pommel. The blade, crossguard, straight grip, and round pommel remain one continuous aligned sword. Pull the whole composition back enough to show the entire longer blade tip with generous transparent margin above, and keep both feet, crown and cape fully visible. Keep the same armor, proportions, pose, faint red crown embers and subdued dark fantasy style. Transparent background, no additions, no text."
+  }
+]

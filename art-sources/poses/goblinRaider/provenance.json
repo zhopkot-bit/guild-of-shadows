@@ -1,0 +1,111 @@
+{
+  "date": "2026-10-29",
+  "tool": "OpenAI image_gen",
+  "status": "Five art candidates created; acceptance pending.",
+  "sources": {
+    "idle": {
+      "generatedFile": "exec-3de16c9f-b303-4899-b634-65030b82cca2.png",
+      "sha256": "8c49e5e9d2690bdb6252a430124502327173c3c2e18531eab92c8357d93fd089"
+    },
+    "windup": {
+      "generatedFile": "exec-7aacb182-59b8-4232-baf8-9ada32608988.png",
+      "sha256": "9a375e780d55992bd73cb6a97bf883ce72c7a8ae1da70362ffa6ff7dd3e7b780"
+    },
+    "strike": {
+      "generatedFile": "exec-97804bec-c98e-4d48-8ebd-d090c02d16d7.png",
+      "sha256": "a03ce165c20c8b832cf36e65969bae034f6289046b40c0c847741252104197de"
+    },
+    "hit": {
+      "generatedFile": "exec-0cc098f9-93b8-436c-bf75-466b305d393a.png",
+      "sha256": "3d514c1e6290266a21aab656dc8477d25bd85d3a28ae48f87041282ac3f56743"
+    },
+    "down": {
+      "generatedFile": "exec-1d7ced2d-12be-4060-ad30-7d3c9e06505d.png",
+      "sha256": "dccca9b97fe08d45dbcc6c5d1e8fd7d39b89270d07ef336cd884270d010b165b"
+    }
+  },
+  "manualRetouch": false,
+  "runtimeIntegrated": false,
+  "notes": [
+    "Art candidates only; no user acceptance, manual retouch, alignment, runtime integration, or technical QA.",
+    "Framing revised through image_gen. Weapon geometry, crossed-arm pose and remaining cloak margins still require artistic acceptance.",
+    "Internal art review 2026-10-29: windup: Separated cleaver and dagger so they no longer touch or read as one weapon. Technical QA remains deferred.",
+    "PR #16 art review 2026-10-30: Muted olive skin, dark clothing and cool metal matched to canon.",
+    "PR #16 art review 2026-10-30: Muted palette matched to idle; retained pose and two separate weapons.",
+    "PR #16 art review 2026-10-30: Muted palette matched to idle; retained recoil and two separate weapons.",
+    "PR #16 art review 2026-10-30: Muted palette matched to canon; completed rear boot and kept figure within frame.",
+    "PR #16 art review 2026-10-30: Both separate weapons clearly drawn back, muted canon palette and whole blades in frame.",
+    "User review 2026-10-30: regenerated windup with separate shoulders, bent arms and two drawn-back blades; candidate for review."
+  ],
+  "artReview": {
+    "date": "2026-10-30",
+    "reviewer": "Codex",
+    "status": "candidate_for_review",
+    "report": "docs/art-review/USER_REVIEW_2026_10_30_RU.md",
+    "userAcceptance": false,
+    "finalManualRetouchPending": true,
+    "technicalQaDeferred": true
+  },
+  "revisionHistory": [
+    {
+      "date": "2026-10-30",
+      "pose": "idle",
+      "previousSource": {
+        "generatedFile": "exec-8ad46120-dff9-4887-8941-d9f07b70f299.png",
+        "sha256": "98de6a92ef225348fe8a37a534c9064d5f65398c2dd0f11d1835d9261cd43f6f"
+      },
+      "previousGitCommit": "f783935",
+      "reason": "Muted olive skin, dark clothing and cool metal matched to canon."
+    },
+    {
+      "date": "2026-10-30",
+      "pose": "strike",
+      "previousSource": {
+        "generatedFile": "exec-18cb7d8f-6aa6-413a-8f97-e3580b985685.png",
+        "sha256": "cd30bb998f1f20b255acaa58617441737fb2f3822b1a2890bbb3db9816e51a01"
+      },
+      "previousGitCommit": "f783935",
+      "reason": "Muted palette matched to idle; retained pose and two separate weapons."
+    },
+    {
+      "date": "2026-10-30",
+      "pose": "hit",
+      "previousSource": {
+        "generatedFile": "exec-260fc710-8605-471c-84c9-a24bc0399ea8.png",
+        "sha256": "08d996619399e676672044afd3191c44fc5a240a9b4f9b1b6e091b58ba2057a6"
+      },
+      "previousGitCommit": "f783935",
+      "reason": "Muted palette matched to idle; retained recoil and two separate weapons."
+    },
+    {
+      "date": "2026-10-30",
+      "pose": "down",
+      "previousSource": {
+        "generatedFile": "exec-be535a8c-338d-4f75-ae3d-76dd9aa3e44a.png",
+        "sha256": "2a29b2312907a18a7bf6191e82cf900cb3599a04c136a6eb2caa9ac497fbc27f"
+      },
+      "previousGitCommit": "f783935",
+      "reason": "Muted palette matched to canon; completed rear boot and kept figure within frame."
+    },
+    {
+      "date": "2026-10-30",
+      "pose": "windup",
+      "previousSource": {
+        "generatedFile": "exec-63caaa45-eea7-4b27-8b62-75fafb30c17c.png",
+        "sha256": "e729a9b526f19b83f95782f7bd6fa51a8fb1fb11be8a8a067e2baff8c6595d59"
+      },
+      "previousGitCommit": "f783935",
+      "reason": "Both separate weapons clearly drawn back, muted canon palette and whole blades in frame."
+    },
+    {
+      "date": "2026-10-30",
+      "pose": "windup",
+      "previousSource": {
+        "generatedFile": "exec-1f2b3715-5f37-4bb6-8a10-dc94bd7e7eb2.png",
+        "sha256": "ed2663889cbc63853065ed52eb806f8527930fe826e896c256680ed2353f95e0"
+      },
+      "previousGitCommit": "3ba207d",
+      "reason": "User review 2026-10-30: regenerated windup with separate shoulders, bent arms and two drawn-back blades; candidate for review."
+    }
+  ]
+}

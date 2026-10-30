@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-29",
+  "tool": "OpenAI image_gen",
+  "status": "Six art candidates created; acceptance pending.",
+  "sources": {
+    "idle": {
+      "generatedFile": "exec-d8b39097-210c-497f-993e-164ad73b0b9f.png",
+      "sha256": "35cb638c29428adcc610468132f6df6424415a1b45bc784f111670dd80be28c3"
+    },
+    "aim": {
+      "generatedFile": "exec-97bcb5e7-1198-426f-ab20-00ef5c81c00d.png",
+      "sha256": "c8e0387c2f46a82ebcf993353867d22b98b8baf2b23e2e3fb22a824fe39b6c1f"
+    },
+    "shoot": {
+      "generatedFile": "exec-7b63b873-7dcb-4bef-810e-22c91de90c5c.png",
+      "sha256": "f174976e56eabd3aa643c37852af317b5eafd661f1547d078551d9dc6c75f022"
+    },
+    "prepare": {
+      "generatedFile": "exec-5971f411-b566-4076-b9d8-25fafb45ba54.png",
+      "sha256": "f4e1a04cbef84d1bc8d2e2ae77e9cde5033b166e385812bc45e2b85a5eba246a"
+    },
+    "hit": {
+      "generatedFile": "exec-8f49bdfc-43ee-44ac-9af8-c698d7f4fc92.png",
+      "sha256": "582727b56526a2983694540dbc30358aca5a61e8b7343a445e4c81866b0d88c6"
+    },
+    "down": {
+      "generatedFile": "exec-068843da-da04-4a5e-80c0-8cf61af51642.png",
+      "sha256": "ee0c05f939f40983ec83445a4a032279d4cd46395bc84a9d9a969c49579ee66f"
+    }
+  },
+  "manualRetouch": false,
+  "runtimeIntegrated": false,
+  "notes": [
+    "Six art candidates; user acceptance pending. No manual retouch, alignment, runtime integration or technical QA.",
+    "Shoot trailing fabric shortened after framing-only edit did not fully restore silhouette. Prepare stows the wand at belt to free both hands.",
+    "PR #16 art review 2026-10-30: Bent flame-bearing arm so flame rests near chest; wand remains in other hand."
+  ],
+  "artReview": {
+    "date": "2026-10-30",
+    "reviewer": "Codex",
+    "status": "candidate_for_review",
+    "report": "docs/art-review/REVIEW_PR16_2026_10_30_RU.md",
+    "userAcceptance": false,
+    "finalManualRetouchPending": true,
+    "technicalQaDeferred": true
+  },
+  "revisionHistory": [
+    {
+      "date": "2026-10-30",
+      "pose": "idle",
+      "previousSource": {
+        "generatedFile": "exec-45828d10-e76f-4a6b-bdfe-099f4c335a4c.png",
+        "sha256": "4384178e3c0671ed47252f7a468a1b4e5e0dbab2e5f59db854e02a56d008c2c2"
+      },
+      "previousGitCommit": "f783935",
+      "reason": "Bent flame-bearing arm so flame rests near chest; wand remains in other hand."
+    }
+  ]
+}

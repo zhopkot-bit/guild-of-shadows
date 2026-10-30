@@ -1,0 +1,15 @@
+{
+  "character": "boneKing",
+  "pose": "prepare",
+  "stage": "local_forearm_reference",
+  "generatedFile": "exec-45f15e30-f83f-4de3-8179-9b611347f56d.png",
+  "references": [
+    "art-sources/poses/boneKing/proposals/prepare.png",
+    "art-sources/poses/boneKing/proposals/idle.png"
+  ],
+  "referenceRevision": "c8a3d93",
+  "transparent_background": true,
+  "prompt": "Using the FIRST image as the image to be edited and SECOND as exact head identity and proportions, correct the Bone King's special-ability preparation. Lift the king's paired hands AND the sword a little together, without changing either hand's grip or the shape, proportions, straight blade, metal crossguard, short handle and clearly separate round pommel of the FIRST sword. Increase the space above the image as needed so its full tip is not cropped. Make small natural adjustments to the forearms/elbows so each one remains connected to its own shoulder and hand. The original wide stance, arm placement, cape, armor, color scheme, skull facing left, and body silhouette should otherwise be preserved.\n\nThe purpose is to enlarge the small skull and crown by approximately 30–35 percent, matching their head-to-shin proportion in the SECOND image, and to lift them so the jaw is clearly above the shoulder plates. Show a neck collar connecting the head to the torso, with a little free space between the top of the crown and the pommel. Make the points of the crown glow a very subtle dark red with no bright aura; no other red light. Preserve the muted charcoal, grey and aged bronze palette of the FIRST image. Reproduce the original character's details, full figure, complete sword, no text or scenery, transparent background.",
+  "subsequentRetouch": "Only the generated elbows and forearms were composited. The original sword and hands were lifted as a rigid layer; the head was taken from idle, and a dim crown tint was added in GIMP Script-Fu.",
+  "layeredFile": "art-sources/poses/boneKing/layers/prepare-head-lift-2026-10-30.psd"
+}
