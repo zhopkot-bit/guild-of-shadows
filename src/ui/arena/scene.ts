@@ -958,10 +958,14 @@ export class ArenaScene {
     this.backend.drawSprite(d);
   }
 
-  /** Камера и отдача не должны обрезать цельную позу у края арены. */
+  /**
+   * Камера и отдача не должны обрезать цельную позу у левого/правого края арены.
+   * Только по горизонтали: ступни всегда остаются на линии пола. Холст позы выше фигуры (запас под замах),
+   * а у короля он выше самой арены — вертикальная подгонка утопила бы ступни под нижний край.
+   */
   private keepPoseInFrame(d: SpriteDraw): void {
     const v = this.view();
-    const W = this.cssW * this.dpr, H = this.cssH * this.dpr;
+    const W = this.cssW * this.dpr;
     // Консервативная оболочка всего холста, включая дыхание/плащ и наклон.
     const side = Math.abs(d.sway) * d.w * 0.047 + Math.abs(d.breath) * d.w * 0.55;
     const top = d.h * (1 + Math.abs(d.breath) + Math.abs(d.bob) * 0.007);
@@ -977,7 +981,6 @@ export class ArenaScene {
       return min <= max ? Math.max(min, Math.min(max, pos)) : (min + max) / 2;
     };
     d.x = fit(d.x, corners.map((p) => p.x), W, v.x);
-    d.y = fit(d.y, corners.map((p) => p.y), H, v.y);
   }
 
   /** Какую позу показать: заказанную хореографией, «готовлю удар» при заряде, раненую стойку или ближайшую замену. */
