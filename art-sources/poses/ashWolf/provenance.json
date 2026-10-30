@@ -4,24 +4,24 @@
   "status": "Five art candidates created; acceptance pending.",
   "sources": {
     "idle": {
-      "generatedFile": "exec-681e4289-673e-4691-bbfc-c934f92c2728.png",
-      "sha256": "88f6d5cc6065a6d43c66b08aa8cc9717acec325a51efb878fba756a33c3ba9cc"
+      "generatedFile": "exec-eb47bf33-7162-4404-a6b2-662c258123cb.png",
+      "sha256": "b045de26f4938b4ba762290fa4063fd5aac05be6cdbadca665ccafe5a1f44b11"
     },
     "windup": {
-      "generatedFile": "exec-d97491f8-532c-45bb-be62-ab3411af308a.png",
-      "sha256": "5f5dec9fe7da7cdca58f45b5a8b58bf959703d7250b12e83a07c12b354a4a22d"
+      "generatedFile": "exec-f5895805-d92a-450d-bcb0-bd32e5c84287.png",
+      "sha256": "1dda4d939df7140ffc6442f0d59283ab68a5c442fa8fbe4112fdc2745dcf5363"
     },
     "strike": {
-      "generatedFile": "exec-3f7140ee-5ece-405c-bfec-2ca25b816ef0.png",
-      "sha256": "c9e44c2a2ed5d44c23d82c6fcf65b58c358ef731f580defe7a18cbadbe7410ee"
+      "generatedFile": "exec-9359d141-2421-4829-b7cb-738338513a0b.png",
+      "sha256": "e7be3921e58a101a095c8eceb584860587b80f5bd4f4886e22ed1916d2ca8d4d"
     },
     "hit": {
-      "generatedFile": "exec-f5c14343-ed7d-4387-b4d7-54d9ba6ab5c2.png",
-      "sha256": "c1c6f743452da87253995eeaee09e733fc2085344a9b4de33b925676bd51a8fd"
+      "generatedFile": "exec-1e3ce16f-9f71-4d38-a44b-45405727f5b5.png",
+      "sha256": "b11739408b8b6650a23c9c0e214a448e167d8f932532e0861e479afeb15a003c"
     },
     "down": {
-      "generatedFile": "exec-52608814-95c6-4850-b28a-a018a0762d6f.png",
-      "sha256": "040f1419bb53cc4a6ac30327d351ed9685c0c33016c9c8269312d8078b03000a"
+      "generatedFile": "exec-50c09841-e5b7-4d3b-b733-13d3671f7d3c.png",
+      "sha256": "b9cdddc34fe11184bc5bf32fe474fff2a3bcb7cec9bce0f11a0fa0d18e06d584"
     }
   },
   "manualRetouch": false,
@@ -31,15 +31,72 @@
     "Gray backdrop remains despite transparent-background request and one removal attempt. Alpha preparation and final master size remain pending.",
     "Internal art review 2026-10-29: hit: Rebuilt reaction with horizontal quadruped torso and four distinct legs. Technical QA remains deferred.",
     "Internal art review 2026-10-29: strike: Exactly two distinct forepaws and two hind legs; full mane and tail contour. Technical QA remains deferred.",
-    "Current review: backdrop/alpha is not assessed in this artistic pass; previous backdrop note is not a fresh technical finding."
+    "Current review: backdrop/alpha is not assessed in this artistic pass; previous backdrop note is not a fresh technical finding.",
+    "PR #16 art review 2026-10-30: Matched dark charcoal fur to canon; preserved pose.",
+    "PR #16 art review 2026-10-30: Distinct low crouch with flexed rear legs and canon-dark fur.",
+    "PR #16 art review 2026-10-30: Dark fur matched to new reference; maintained four-legged silhouette.",
+    "PR #16 art review 2026-10-30: Dark fur matched to new reference; maintained recoil and raised head.",
+    "PR #16 art review 2026-10-30: Dark fur matched to new reference; maintained resting silhouette."
   ],
   "artReview": {
-    "date": "2026-10-29",
+    "date": "2026-10-30",
     "reviewer": "Codex",
-    "status": "visual_review_complete",
-    "report": "docs/art-review/ART_REVIEW_2026_10_29_RU.md",
+    "status": "candidate_for_review",
+    "report": "docs/art-review/REVIEW_PR16_2026_10_30_RU.md",
     "userAcceptance": false,
     "finalManualRetouchPending": true,
     "technicalQaDeferred": true
-  }
+  },
+  "revisionHistory": [
+    {
+      "date": "2026-10-30",
+      "pose": "idle",
+      "previousSource": {
+        "generatedFile": "exec-681e4289-673e-4691-bbfc-c934f92c2728.png",
+        "sha256": "88f6d5cc6065a6d43c66b08aa8cc9717acec325a51efb878fba756a33c3ba9cc"
+      },
+      "previousGitCommit": "f783935",
+      "reason": "Matched dark charcoal fur to canon; preserved pose."
+    },
+    {
+      "date": "2026-10-30",
+      "pose": "windup",
+      "previousSource": {
+        "generatedFile": "exec-d97491f8-532c-45bb-be62-ab3411af308a.png",
+        "sha256": "5f5dec9fe7da7cdca58f45b5a8b58bf959703d7250b12e83a07c12b354a4a22d"
+      },
+      "previousGitCommit": "f783935",
+      "reason": "Distinct low crouch with flexed rear legs and canon-dark fur."
+    },
+    {
+      "date": "2026-10-30",
+      "pose": "strike",
+      "previousSource": {
+        "generatedFile": "exec-3f7140ee-5ece-405c-bfec-2ca25b816ef0.png",
+        "sha256": "c9e44c2a2ed5d44c23d82c6fcf65b58c358ef731f580defe7a18cbadbe7410ee"
+      },
+      "previousGitCommit": "f783935",
+      "reason": "Dark fur matched to new reference; maintained four-legged silhouette."
+    },
+    {
+      "date": "2026-10-30",
+      "pose": "hit",
+      "previousSource": {
+        "generatedFile": "exec-f5c14343-ed7d-4387-b4d7-54d9ba6ab5c2.png",
+        "sha256": "c1c6f743452da87253995eeaee09e733fc2085344a9b4de33b925676bd51a8fd"
+      },
+      "previousGitCommit": "f783935",
+      "reason": "Dark fur matched to new reference; maintained recoil and raised head."
+    },
+    {
+      "date": "2026-10-30",
+      "pose": "down",
+      "previousSource": {
+        "generatedFile": "exec-52608814-95c6-4850-b28a-a018a0762d6f.png",
+        "sha256": "040f1419bb53cc4a6ac30327d351ed9685c0c33016c9c8269312d8078b03000a"
+      },
+      "previousGitCommit": "f783935",
+      "reason": "Dark fur matched to new reference; maintained resting silhouette."
+    }
+  ]
 }

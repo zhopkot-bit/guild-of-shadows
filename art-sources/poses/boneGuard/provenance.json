@@ -16,12 +16,12 @@
       "sha256": "2f28b64fdc4d30ccdb82a3d73e4a4824ae6e8998e91ceb66ad6cb8cd29bffc1c"
     },
     "prepare": {
-      "generatedFile": "exec-4433f2f1-a5be-4998-ae81-2db3d51d65ae.png",
-      "sha256": "8d1fdc9876dbf7d8deb50cd0b8ffdb029be8a6bf36ccd6febbd94803b116ee21"
+      "generatedFile": "exec-30334310-71ef-4670-9b11-d938f6ca067e.png",
+      "sha256": "2dae58bfe9340061ed95bb38a99ce203d6e0dd8c2e74b30c058d580d59ed05d0"
     },
     "hit": {
-      "generatedFile": "exec-85757dd3-0cd4-4be3-b6b9-e7be52c3d46a.png",
-      "sha256": "7018d8498532d8f960fe18b1ea2b412b79d92b54123d071b79a49bf2cf001046"
+      "generatedFile": "exec-deb430aa-4ab0-44d5-b29a-17495429e285.png",
+      "sha256": "c2a801b9f68463a8e41bc71dfcac51ea4453eb8955db17cee5a1de9da987c348"
     },
     "down": {
       "generatedFile": "exec-89d4555a-be7e-43ea-9a20-8ebc3eecd4f4.png",
@@ -35,13 +35,15 @@
     "Shield rounded to match brief; windup head turned left; down reworked as collapsed armor and bones; strike/hit framing revised. Final canvas/scale standardization deferred.",
     "User review 2026-10-29: hit silhouette regenerated facing left; strike torso and arms rebuilt from idle reference. Replacement candidates pending user acceptance.",
     "Internal art review 2026-10-29: hit: Head remains turned left while torso recoils right; sword and shield stay in their canonical hands; full shield visible. Technical QA remains deferred.",
-    "Internal art review: hit lighting and saturation matched to idle; corrected anatomy and full silhouettes retained."
+    "Internal art review: hit lighting and saturation matched to idle; corrected anatomy and full silhouettes retained.",
+    "PR #16 art review 2026-10-30: Shield visibly strapped behind back; both hands retain sword grip.",
+    "PR #16 art review 2026-10-30: Skull tilted further back and remains facing left; shield and sword stay in place."
   ],
   "artReview": {
-    "date": "2026-10-29",
+    "date": "2026-10-30",
     "reviewer": "Codex",
-    "status": "visual_review_complete",
-    "report": "docs/art-review/ART_REVIEW_2026_10_29_RU.md",
+    "status": "candidate_for_review",
+    "report": "docs/art-review/REVIEW_PR16_2026_10_30_RU.md",
     "userAcceptance": false,
     "finalManualRetouchPending": true,
     "technicalQaDeferred": true
@@ -55,6 +57,26 @@
         "sha256": "db36a376dcc19f05195a997b5e0b6ec3044ec8afdd1f950b02a93b95c44d6416"
       },
       "reason": "Match cooler muted lighting to idle without changing corrected anatomy."
+    },
+    {
+      "date": "2026-10-30",
+      "pose": "prepare",
+      "previousSource": {
+        "generatedFile": "exec-4433f2f1-a5be-4998-ae81-2db3d51d65ae.png",
+        "sha256": "8d1fdc9876dbf7d8deb50cd0b8ffdb029be8a6bf36ccd6febbd94803b116ee21"
+      },
+      "previousGitCommit": "f783935",
+      "reason": "Shield visibly strapped behind back; both hands retain sword grip."
+    },
+    {
+      "date": "2026-10-30",
+      "pose": "hit",
+      "previousSource": {
+        "generatedFile": "exec-85757dd3-0cd4-4be3-b6b9-e7be52c3d46a.png",
+        "sha256": "7018d8498532d8f960fe18b1ea2b412b79d92b54123d071b79a49bf2cf001046"
+      },
+      "previousGitCommit": "f783935",
+      "reason": "Skull tilted further back and remains facing left; shield and sword stay in place."
     }
   ]
 }

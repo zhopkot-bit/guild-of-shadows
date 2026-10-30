@@ -16,12 +16,12 @@
       "sha256": "104d33e53b4aa0469df1a980d3dc60363a49fffac702ee4bf820c3167afcc7cb"
     },
     "prepare": {
-      "generatedFile": "exec-cc760676-e627-4c5f-95e7-3a3f315503f4.png",
-      "sha256": "457e02d97ad97287d5048043917c811fdd320efe06232eecd18433690ac8fb8d"
+      "generatedFile": "exec-e60ffbd7-871f-493a-b05d-92c375da57be.png",
+      "sha256": "d23432a45e252cf84ceac3d16dbd86832732bd8dd43c0eb72175a75b40b5b935"
     },
     "hit": {
-      "generatedFile": "exec-18b0c8aa-5e93-4676-8cc7-e8528dda64e5.png",
-      "sha256": "238f59fe27efa14c0be17d59b0cf6de8b51b97291e2c202485f2c3ab397b607a"
+      "generatedFile": "exec-23a072c7-1864-43ed-887c-316ddb0d5d06.png",
+      "sha256": "a12e409d421e0aa0241490998816ccbe6981095d9dd3b7efe5fcb062529bb39f"
     },
     "down": {
       "generatedFile": "exec-58a52518-3be7-4a49-8e24-7af527432d3e.png",
@@ -35,15 +35,39 @@
     "User review 2026-10-29: shortened sword grip and rebuilt windup with two adjacent hands beside head. Corresponding phase II poses updated.",
     "Strike is a wide composition; final alpha and master canvas validation deferred to shared technical stage.",
     "One prepare handle-edit request rejected by image tool; simpler decorative-weapon edit succeeded. Failed request produced no image.",
-    "Internal art review 2026-10-29: windup: Sword drawn back toward image right; short handle and two anatomically connected hands. Technical QA remains deferred."
+    "Internal art review 2026-10-29: windup: Sword drawn back toward image right; short handle and two anatomically connected hands. Technical QA remains deferred.",
+    "PR #16 art review 2026-10-30: Added subdued red glow to crown; preserved pose and two-handed grip.",
+    "PR #16 art review 2026-10-30: Torso and head recoil while the king remains braced; preserved two-handed grip and complete sword."
   ],
   "artReview": {
-    "date": "2026-10-29",
+    "date": "2026-10-30",
     "reviewer": "Codex",
-    "status": "visual_review_complete",
-    "report": "docs/art-review/ART_REVIEW_2026_10_29_RU.md",
+    "status": "candidate_for_review",
+    "report": "docs/art-review/REVIEW_PR16_2026_10_30_RU.md",
     "userAcceptance": false,
     "finalManualRetouchPending": true,
     "technicalQaDeferred": true
-  }
+  },
+  "revisionHistory": [
+    {
+      "date": "2026-10-30",
+      "pose": "prepare",
+      "previousSource": {
+        "generatedFile": "exec-cc760676-e627-4c5f-95e7-3a3f315503f4.png",
+        "sha256": "457e02d97ad97287d5048043917c811fdd320efe06232eecd18433690ac8fb8d"
+      },
+      "previousGitCommit": "f783935",
+      "reason": "Added subdued red glow to crown; preserved pose and two-handed grip."
+    },
+    {
+      "date": "2026-10-30",
+      "pose": "hit",
+      "previousSource": {
+        "generatedFile": "exec-18b0c8aa-5e93-4676-8cc7-e8528dda64e5.png",
+        "sha256": "238f59fe27efa14c0be17d59b0cf6de8b51b97291e2c202485f2c3ab397b607a"
+      },
+      "previousGitCommit": "f783935",
+      "reason": "Torso and head recoil while the king remains braced; preserved two-handed grip and complete sword."
+    }
+  ]
 }

@@ -12,8 +12,8 @@
       "sha256": "ba722cfe351e7efb6868734b1475ad6fe893f6f1c41ff3263a82f37cf28d3401"
     },
     "shoot": {
-      "generatedFile": "exec-0199ec96-21c1-478b-b482-af81c37e3cd8.png",
-      "sha256": "a9ba8090d7f8f13ca42f4eb8186f98e0ae07f1141b2dde26d3a633a5221ae5a1"
+      "generatedFile": "exec-21ab2f81-6a97-48b4-93e0-aec0037fe7bf.png",
+      "sha256": "bd940caafc2a80b3c7f5ed481a9c28bbe4e89a2e6b241ff98b076a0ffacaad9c"
     },
     "hit": {
       "generatedFile": "exec-043010b8-b6d0-4441-b509-98c4b4cf8d57.png",
@@ -33,18 +33,33 @@
   "notes": [
     "Victory v1 rejected for invented vertical handle; replacement generated from idle.",
     "Some intermediate generation requests were rejected by image tool; prompt files retained, no image result for those attempts.",
-    "Internal art review 2026-10-29: shoot remains open. A stronger-recoil candidate is preserved in alternatives, but crossbow length and released-string geometry need correction. Two corrective image_gen requests were rejected by the service with category violence (request IDs 8be3282f-d750-41ce-8c3a-f3645265fed4 and 6f033b32-d97f-47fb-b9c1-b2e19f10c9e7); no corrected image was returned. Original shoot proposal retained."
+    "Internal art review 2026-10-29: shoot remains open. A stronger-recoil candidate is preserved in alternatives, but crossbow length and released-string geometry need correction. Two corrective image_gen requests were rejected by the service with category violence (request IDs 8be3282f-d750-41ce-8c3a-f3645265fed4 and 6f033b32-d97f-47fb-b9c1-b2e19f10c9e7); no corrected image was returned. Original shoot proposal retained.",
+    "PR #16 art review 2026-10-30: Raised crossbow and shifted shoulders backward for readable recoil; follow-up string correction blocked, exact string geometry remains open.",
+    "PR #16 art review 2026-10-30: stronger recoil candidate selected. Follow-up string edit was rejected by image_gen as violence (request ID 432a5d9a-cd51-4759-af5d-3762ef60d55e). String geometry remains open."
   ],
   "artReview": {
-    "date": "2026-10-29",
+    "date": "2026-10-30",
     "reviewer": "Codex",
     "status": "needs_revision",
-    "report": "docs/art-review/ART_REVIEW_2026_10_29_RU.md",
+    "report": "docs/art-review/REVIEW_PR16_2026_10_30_RU.md",
     "userAcceptance": false,
     "finalManualRetouchPending": true,
     "technicalQaDeferred": true,
     "openPoses": [
       "shoot"
-    ]
-  }
+    ],
+    "openDetails": "Recoil revised; exact crossbow string geometry requires manual art review."
+  },
+  "revisionHistory": [
+    {
+      "date": "2026-10-30",
+      "pose": "shoot",
+      "previousSource": {
+        "generatedFile": "exec-0199ec96-21c1-478b-b482-af81c37e3cd8.png",
+        "sha256": "a9ba8090d7f8f13ca42f4eb8186f98e0ae07f1141b2dde26d3a633a5221ae5a1"
+      },
+      "previousGitCommit": "f783935",
+      "reason": "Raised crossbow and shifted shoulders backward for readable recoil; follow-up string correction blocked, exact string geometry remains open."
+    }
+  ]
 }
