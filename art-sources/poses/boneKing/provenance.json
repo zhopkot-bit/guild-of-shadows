@@ -16,8 +16,8 @@
       "sha256": "104d33e53b4aa0469df1a980d3dc60363a49fffac702ee4bf820c3167afcc7cb"
     },
     "prepare": {
-      "generatedFile": "exec-e60ffbd7-871f-493a-b05d-92c375da57be.png",
-      "sha256": "d23432a45e252cf84ceac3d16dbd86832732bd8dd43c0eb72175a75b40b5b935"
+      "generatedFile": "exec-76b5b7a0-dc99-462f-a6e4-478d723dbf1a.png",
+      "sha256": "3df5f4860283345ad96aef8812edf8dc31c2c0189e9c048f8aeec6fc195a04f5"
     },
     "hit": {
       "generatedFile": "exec-23a072c7-1864-43ed-887c-316ddb0d5d06.png",
@@ -37,13 +37,14 @@
     "One prepare handle-edit request rejected by image tool; simpler decorative-weapon edit succeeded. Failed request produced no image.",
     "Internal art review 2026-10-29: windup: Sword drawn back toward image right; short handle and two anatomically connected hands. Technical QA remains deferred.",
     "PR #16 art review 2026-10-30: Added subdued red glow to crown; preserved pose and two-handed grip.",
-    "PR #16 art review 2026-10-30: Torso and head recoil while the king remains braced; preserved two-handed grip and complete sword."
+    "PR #16 art review 2026-10-30: Torso and head recoil while the king remains braced; preserved two-handed grip and complete sword.",
+    "User review 2026-10-30: regenerated raised-sword preparation with connected forearms, separate gauntlets and a compact two-handed grip; candidate for review."
   ],
   "artReview": {
     "date": "2026-10-30",
     "reviewer": "Codex",
     "status": "candidate_for_review",
-    "report": "docs/art-review/REVIEW_PR16_2026_10_30_RU.md",
+    "report": "docs/art-review/USER_REVIEW_2026_10_30_RU.md",
     "userAcceptance": false,
     "finalManualRetouchPending": true,
     "technicalQaDeferred": true
@@ -68,6 +69,16 @@
       },
       "previousGitCommit": "f783935",
       "reason": "Torso and head recoil while the king remains braced; preserved two-handed grip and complete sword."
+    },
+    {
+      "date": "2026-10-30",
+      "pose": "prepare",
+      "previousSource": {
+        "generatedFile": "exec-e60ffbd7-871f-493a-b05d-92c375da57be.png",
+        "sha256": "d23432a45e252cf84ceac3d16dbd86832732bd8dd43c0eb72175a75b40b5b935"
+      },
+      "previousGitCommit": "3ba207d",
+      "reason": "User review 2026-10-30: regenerated raised-sword preparation with connected forearms, separate gauntlets and a compact two-handed grip; candidate for review."
     }
   ]
 }

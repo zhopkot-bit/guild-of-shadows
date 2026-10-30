@@ -8,8 +8,8 @@
       "sha256": "8c49e5e9d2690bdb6252a430124502327173c3c2e18531eab92c8357d93fd089"
     },
     "windup": {
-      "generatedFile": "exec-1f2b3715-5f37-4bb6-8a10-dc94bd7e7eb2.png",
-      "sha256": "ed2663889cbc63853065ed52eb806f8527930fe826e896c256680ed2353f95e0"
+      "generatedFile": "exec-7aacb182-59b8-4232-baf8-9ada32608988.png",
+      "sha256": "9a375e780d55992bd73cb6a97bf883ce72c7a8ae1da70362ffa6ff7dd3e7b780"
     },
     "strike": {
       "generatedFile": "exec-97804bec-c98e-4d48-8ebd-d090c02d16d7.png",
@@ -34,13 +34,14 @@
     "PR #16 art review 2026-10-30: Muted palette matched to idle; retained pose and two separate weapons.",
     "PR #16 art review 2026-10-30: Muted palette matched to idle; retained recoil and two separate weapons.",
     "PR #16 art review 2026-10-30: Muted palette matched to canon; completed rear boot and kept figure within frame.",
-    "PR #16 art review 2026-10-30: Both separate weapons clearly drawn back, muted canon palette and whole blades in frame."
+    "PR #16 art review 2026-10-30: Both separate weapons clearly drawn back, muted canon palette and whole blades in frame.",
+    "User review 2026-10-30: regenerated windup with separate shoulders, bent arms and two drawn-back blades; candidate for review."
   ],
   "artReview": {
     "date": "2026-10-30",
     "reviewer": "Codex",
     "status": "candidate_for_review",
-    "report": "docs/art-review/REVIEW_PR16_2026_10_30_RU.md",
+    "report": "docs/art-review/USER_REVIEW_2026_10_30_RU.md",
     "userAcceptance": false,
     "finalManualRetouchPending": true,
     "technicalQaDeferred": true
@@ -95,6 +96,16 @@
       },
       "previousGitCommit": "f783935",
       "reason": "Both separate weapons clearly drawn back, muted canon palette and whole blades in frame."
+    },
+    {
+      "date": "2026-10-30",
+      "pose": "windup",
+      "previousSource": {
+        "generatedFile": "exec-1f2b3715-5f37-4bb6-8a10-dc94bd7e7eb2.png",
+        "sha256": "ed2663889cbc63853065ed52eb806f8527930fe826e896c256680ed2353f95e0"
+      },
+      "previousGitCommit": "3ba207d",
+      "reason": "User review 2026-10-30: regenerated windup with separate shoulders, bent arms and two drawn-back blades; candidate for review."
     }
   ]
 }

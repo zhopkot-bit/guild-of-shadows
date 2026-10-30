@@ -1,0 +1,25 @@
+[
+  {
+    "id": "goblinRaider",
+    "pose": "windup",
+    "generatedFile": "exec-7aacb182-59b8-4232-baf8-9ada32608988.png",
+    "references": [
+      "art-sources/poses/goblinRaider/proposals/idle.png"
+    ],
+    "referenceRevision": "3ba207d",
+    "transparent_background": true,
+    "prompt": "Create a new full-body dark fantasy character artwork of the same goblin raider shown in the reference, a game action pose preparing an attack. Keep the distinctive face, olive skin, headband, long ears, dark hair, ragged armor, belt, fabric and muted palette. The opponent is on image LEFT and the goblin looks left; his two separate blades must be withdrawn toward image RIGHT. Depict a natural humanoid body in a clear three-quarter FRONT VIEW, both shoulders on opposite sides of the chest and joined naturally to the neck and torso, no unnatural twisting of the trunk. This is NOT a rear view.\n\nPose the two arms differently so their attachment to each shoulder can be followed: on the IMAGE LEFT side, his shoulder drops into an upper arm, his elbow is bent close to the left ribs, and the forearm runs diagonally across his belly to a hand holding the short dagger near his right hip; the dagger points to the RIGHT, away from the enemy. On the IMAGE RIGHT side, the other shoulder leads to an upper arm with a bent elbow out to the right; its forearm curves back UP to the hand raised beside his right shoulder, gripping the broad cleaver with the blade above and to the right. Separate the two arms and show both elbows and wrists clearly. Exactly two anatomically connected arms and two hands; natural length of each limb; no overlapping or merged limbs or odd joints. Hands hold their own hilts naturally and blades connect to their own guards. Slight crouch, balanced feet. Keep the full figure, feet, ragged clothing, hands and complete weapon tips inside the image with plenty of empty margin. Transparent background. No text or effects. High detail painted game-art, faithful to the reference."
+  },
+  {
+    "id": "boneKing",
+    "pose": "prepare",
+    "generatedFile": "exec-76b5b7a0-dc99-462f-a6e4-478d723dbf1a.png",
+    "references": [
+      "art-sources/poses/boneKing/proposals/idle.png",
+      "art-sources/poses/boneKing/proposals/prepare.png"
+    ],
+    "referenceRevision": "3ba207d",
+    "transparent_background": true,
+    "prompt": "Redraw the Bone King in the FIRST image from scratch in a full-body ability preparation pose, using the SECOND image only for intended special-ability action, not its incorrect arms. Maintain the same skull, golden royal crown with faint red embers, black and gold armor, long torn black cloak and steel double-edged sword. Three-quarter facing left, wide planted feet, sword lifted for a special move, held diagonally upward to the right. Faithful dark-fantasy painted game-art style. The complete figure and sword need clear margins on a transparent background.\n\nGive the king a believable body and readable two-handed grip. Both upper arms emerge from separate shoulders, elbows bend naturally outward on either side of the chest; each long armored forearm leads cleanly into its own attached gauntlet through a correctly aligned wrist. Hands are visibly separate and fully formed; both gripping the same short straight hilt in a normal two-handed sword grip, upper hand near the crossguard and lower hand toward the pommel, no missing wrist, no overlap making limbs ambiguous. Exactly one pommel, one straight hilt, one crossguard, and one continuous straight blade. No unusual extensions of the handle, no extra limbs or weapons. Balanced recognizable pose and full undamaged silhouette, no labels or background."
+  }
+]
