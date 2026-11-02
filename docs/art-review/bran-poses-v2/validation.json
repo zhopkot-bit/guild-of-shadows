@@ -1,0 +1,23 @@
+{
+ "registry": "/workspace/guild-of-shadows-poses/qa-out/bran-poses-v2/art-pack.json",
+ "ok": true,
+ "errors": [],
+ "warnings": [],
+ "info": [
+  "heroes.bran (bran/poses.json).idle idle.webp: 576×768 webp alpha, 89 КБ",
+  "heroes.bran (bran/poses.json).idle idle.webp: WebP — проверка ступней только по PNG-мастерам",
+  "heroes.bran (bran/poses.json).windup windup.webp: 576×768 webp alpha, 98 КБ",
+  "heroes.bran (bran/poses.json).windup windup.webp: WebP — проверка ступней только по PNG-мастерам",
+  "heroes.bran (bran/poses.json).strike strike.webp: 576×768 webp alpha, 122 КБ",
+  "heroes.bran (bran/poses.json).strike strike.webp: WebP — проверка ступней только по PNG-мастерам",
+  "heroes.bran (bran/poses.json).cast cast.webp: 576×768 webp alpha, 125 КБ",
+  "heroes.bran (bran/poses.json).cast cast.webp: WebP — проверка ступней только по PNG-мастерам",
+  "heroes.bran (bran/poses.json).hit hit.webp: 576×768 webp alpha, 121 КБ",
+  "heroes.bran (bran/poses.json).hit hit.webp: WebP — проверка ступней только по PNG-мастерам",
+  "heroes.bran (bran/poses.json).down down.webp: 576×768 webp alpha, 99 КБ",
+  "heroes.bran (bran/poses.json).down down.webp: WebP — проверка ступней только по PNG-мастерам",
+  "heroes.bran (bran/poses.json).victory victory.webp: 576×768 webp alpha, 79 КБ",
+  "heroes.bran (bran/poses.json).victory victory.webp: WebP — проверка ступней только по PNG-мастерам",
+  "heroes.bran (bran/poses.json): поз 7, вариантов 0, масок 0, 733 КБ"
+ ]
+}

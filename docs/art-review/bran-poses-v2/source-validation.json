@@ -1,0 +1,29 @@
+{
+ "registry": "/workspace/guild-of-shadows-poses/qa-out/bran-poses-v2/raw-art-pack.json",
+ "ok": false,
+ "errors": [
+  "heroes.bran (raw-poses.json).idle ../../art-sources/poses/bran/proposals/idle.png: 1416 КБ больше бюджета 160 КБ",
+  "heroes.bran (raw-poses.json).windup ../../art-sources/poses/bran/proposals/windup.png: 1453 КБ больше бюджета 160 КБ",
+  "heroes.bran (raw-poses.json).windup ../../art-sources/poses/bran/proposals/windup.png: ступни на 98.7% высоты, а pivot — 96.0% (фигура «прыгнет» при смене позы)",
+  "heroes.bran (raw-poses.json).strike ../../art-sources/poses/bran/proposals/strike.png: 1650 КБ больше бюджета 160 КБ",
+  "heroes.bran (raw-poses.json).strike ../../art-sources/poses/bran/proposals/strike.png: ступни на 93.2% высоты, а pivot — 96.0% (фигура «прыгнет» при смене позы)",
+  "heroes.bran (raw-poses.json).cast ../../art-sources/poses/bran/proposals/cast.png: 1816 КБ больше бюджета 160 КБ",
+  "heroes.bran (raw-poses.json).hit ../../art-sources/poses/bran/proposals/hit.png: 1731 КБ больше бюджета 160 КБ",
+  "heroes.bran (raw-poses.json).down ../../art-sources/poses/bran/proposals/down.png: 1523 КБ больше бюджета 160 КБ",
+  "heroes.bran (raw-poses.json).victory ../../art-sources/poses/bran/proposals/victory.png: 1231 КБ больше бюджета 160 КБ",
+  "heroes.bran (raw-poses.json): 10822 КБ на персонажа больше бюджета 1200 КБ"
+ ],
+ "warnings": [
+  "heroes.bran (raw-poses.json): холст выше 1024 px — хватит 768 (видеопамять телефона: ~20 МБ на персонажа)"
+ ],
+ "info": [
+  "heroes.bran (raw-poses.json).idle ../../art-sources/poses/bran/proposals/idle.png: 1086×1448 png alpha, 1416 КБ",
+  "heroes.bran (raw-poses.json).windup ../../art-sources/poses/bran/proposals/windup.png: 1086×1448 png alpha, 1453 КБ",
+  "heroes.bran (raw-poses.json).strike ../../art-sources/poses/bran/proposals/strike.png: 1086×1448 png alpha, 1650 КБ",
+  "heroes.bran (raw-poses.json).cast ../../art-sources/poses/bran/proposals/cast.png: 1086×1448 png alpha, 1816 КБ",
+  "heroes.bran (raw-poses.json).hit ../../art-sources/poses/bran/proposals/hit.png: 1086×1448 png alpha, 1731 КБ",
+  "heroes.bran (raw-poses.json).down ../../art-sources/poses/bran/proposals/down.png: 1086×1448 png alpha, 1523 КБ",
+  "heroes.bran (raw-poses.json).victory ../../art-sources/poses/bran/proposals/victory.png: 1086×1448 png alpha, 1231 КБ",
+  "heroes.bran (raw-poses.json): поз 7, вариантов 0, масок 0, 10822 КБ"
+ ]
+}
