@@ -1,0 +1,15 @@
+{
+  "poses": {
+    "idle": "idle.png",
+    "windup": "windup.png",
+    "strike": "strike.png",
+    "cast": "cast.png",
+    "hit": "hit.png",
+    "down": "down.png",
+    "victory": "victory.png"
+  },
+  "fps": 12,
+  "alignFeet": true,
+  "poseScale": { "victory": 1.09 },
+  "canvasPadding": [8, 16, 8, 8]
+}

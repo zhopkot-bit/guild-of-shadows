@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "heroes": {
+    "bran": { "poses": "../../../public/art/v17/poses/bran/poses.json" },
+    "mira": { "poses": "../../../public/art/v17/heroes/mira/poses/poses.json" }
+  },
+  "enemies": {},
+  "arenas": {}
+}
