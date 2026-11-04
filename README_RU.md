@@ -40,6 +40,7 @@ npm run preview      # раздать dist/ локально
 
 План доведения до выпуска и ответственность команд: [RELEASE_ARCHITECTURE_RU.md](docs/RELEASE_ARCHITECTURE_RU.md).
 Запуск команд: [инструкция передачи](docs/release/TEAM_HANDOFF_RU.md), [пакеты работ](docs/release/WORK_PACKAGES.json), [координация №17](https://github.com/zhopkot-bit/guild-of-shadows/issues/17).
+**Старт разрешён:** [порядок работы команд и первые задания](docs/release/EXECUTION_ORDER_RU.md).
 ```bash
 npm run build && npx vite preview --port 4173 &
 npm run qa:saves                                    # сейвы: бой, элита, босс I/II

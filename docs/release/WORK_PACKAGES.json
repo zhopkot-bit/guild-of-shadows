@@ -1,10 +1,10 @@
 {
-  "version": 1,
+  "version": 2,
   "date": "2026-11-04",
   "repository": "zhopkot-bit/guild-of-shadows",
   "main_baseline": "17d707071767b24e963a0014b2721a330bbec544",
   "art_baseline": "1d171da95deff86f206999082271a24e4c0ea85b",
-  "planning_status": "ready_for_staffing",
+  "planning_status": "launch_authorized",
   "execution_started": false,
   "teams": [
     {
@@ -54,7 +54,8 @@
         }
       ],
       "github_issue": 18,
-      "github_url": "https://github.com/zhopkot-bit/guild-of-shadows/issues/18"
+      "github_url": "https://github.com/zhopkot-bit/guild-of-shadows/issues/18",
+      "dispatch_status": "first_packages_authorized"
     },
     {
       "id": "T2",
@@ -117,7 +118,8 @@
         }
       ],
       "github_issue": 19,
-      "github_url": "https://github.com/zhopkot-bit/guild-of-shadows/issues/19"
+      "github_url": "https://github.com/zhopkot-bit/guild-of-shadows/issues/19",
+      "dispatch_status": "first_packages_authorized"
     },
     {
       "id": "T3",
@@ -171,7 +173,8 @@
         }
       ],
       "github_issue": 20,
-      "github_url": "https://github.com/zhopkot-bit/guild-of-shadows/issues/20"
+      "github_url": "https://github.com/zhopkot-bit/guild-of-shadows/issues/20",
+      "dispatch_status": "first_packages_authorized"
     },
     {
       "id": "T4",
@@ -228,7 +231,8 @@
         }
       ],
       "github_issue": 21,
-      "github_url": "https://github.com/zhopkot-bit/guild-of-shadows/issues/21"
+      "github_url": "https://github.com/zhopkot-bit/guild-of-shadows/issues/21",
+      "dispatch_status": "first_packages_authorized"
     },
     {
       "id": "T5",
@@ -296,7 +300,8 @@
         }
       ],
       "github_issue": 22,
-      "github_url": "https://github.com/zhopkot-bit/guild-of-shadows/issues/22"
+      "github_url": "https://github.com/zhopkot-bit/guild-of-shadows/issues/22",
+      "dispatch_status": "first_packages_authorized"
     },
     {
       "id": "T6",
@@ -352,7 +357,73 @@
         }
       ],
       "github_issue": 23,
-      "github_url": "https://github.com/zhopkot-bit/guild-of-shadows/issues/23"
+      "github_url": "https://github.com/zhopkot-bit/guild-of-shadows/issues/23",
+      "dispatch_status": "first_packages_authorized"
+    }
+  ],
+  "launch_authorized": true,
+  "staffing_readiness": "confirmed_by_user",
+  "execution_status_note": "Start is authorized; actual package starts are recorded by executors in team issues. No start has been observed by this coordinator yet.",
+  "execution_order": "docs/release/EXECUTION_ORDER_RU.md",
+  "waves": [
+    {
+      "id": 0,
+      "name": "baseline_and_start",
+      "packages": [
+        "G-01",
+        "U-01",
+        "A-01",
+        "A-02",
+        "A-03",
+        "P-01",
+        "Q-01",
+        "R-01",
+        "R-02"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "complete_game_loop",
+      "packages": [
+        "G-02",
+        "G-04",
+        "U-02",
+        "U-03",
+        "P-02"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "quality_and_platform",
+      "packages": [
+        "G-03",
+        "U-04",
+        "U-05",
+        "A-04",
+        "A-05",
+        "P-03",
+        "P-04",
+        "P-05",
+        "Q-03",
+        "Q-04"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "release_candidate",
+      "packages": [
+        "Q-02",
+        "Q-05",
+        "R-03",
+        "R-04"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "release",
+      "packages": [
+        "R-05"
+      ]
     }
   ]
 }
