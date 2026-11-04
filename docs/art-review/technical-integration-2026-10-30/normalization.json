@@ -1,0 +1,1717 @@
+{
+  "rook": {
+    "canvas": [
+      1221,
+      1800
+    ],
+    "pivotPixels": [
+      643,
+      1762
+    ],
+    "alphaNoiseClearedThrough": 1,
+    "baseScale": 1.045752,
+    "idleFraction": 0.8,
+    "poseScale": {
+      "victory": 1.05
+    },
+    "levels": {},
+    "sources": {
+      "idle": {
+        "path": "art-sources/poses/rook/proposals/idle.png",
+        "sha256": "6ba7ebee957d6fd727f208340842ab71211bacd7ec02aeeecf399fa2cb96b5cd",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          268,
+          31,
+          941,
+          1408
+        ],
+        "retainedBox": [
+          266,
+          29,
+          941,
+          1413
+        ],
+        "anchor": [
+          583.0,
+          1408
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          311,
+          320
+        ],
+        "scaledSize": [
+          706,
+          1447
+        ]
+      },
+      "aim": {
+        "path": "art-sources/poses/rook/proposals/aim.png",
+        "sha256": "ba722cfe351e7efb6868734b1475ad6fe893f6f1c41ff3263a82f37cf28d3401",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          87,
+          29,
+          1078,
+          1416
+        ],
+        "retainedBox": [
+          85,
+          27,
+          1080,
+          1418
+        ],
+        "anchor": [
+          558.0,
+          1416
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          148,
+          309
+        ],
+        "scaledSize": [
+          1041,
+          1455
+        ]
+      },
+      "shoot": {
+        "path": "art-sources/poses/rook/proposals/shoot.png",
+        "sha256": "2ac2a255baebc2ead6e1198a146ea2fd1a66f855cb05cc80c7e87cb03ee382c8",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          41,
+          65,
+          1080,
+          1393
+        ],
+        "retainedBox": [
+          38,
+          62,
+          1085,
+          1396
+        ],
+        "anchor": [
+          622.0,
+          1393
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          32,
+          370
+        ],
+        "scaledSize": [
+          1095,
+          1395
+        ]
+      },
+      "hit": {
+        "path": "art-sources/poses/rook/proposals/hit.png",
+        "sha256": "f9fa8df884137f1c2b39b267d3e0192ac4f6a098d619f591088751a9a8fa13bb",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          94,
+          44,
+          1064,
+          1416
+        ],
+        "retainedBox": [
+          92,
+          42,
+          1067,
+          1418
+        ],
+        "anchor": [
+          635.0,
+          1416
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          75,
+          325
+        ],
+        "scaledSize": [
+          1020,
+          1439
+        ]
+      },
+      "down": {
+        "path": "art-sources/poses/rook/proposals/down.png",
+        "sha256": "0af7a3edce4bb82c643f337b97facc0f9ca81f35a6a7bb811aa3c32fa1bf1d4e",
+        "size": [
+          1087,
+          1447
+        ],
+        "visibleBox": [
+          29,
+          493,
+          1058,
+          1375
+        ],
+        "retainedBox": [
+          27,
+          489,
+          1060,
+          1379
+        ],
+        "anchor": [
+          548.0,
+          1375
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          98,
+          835
+        ],
+        "scaledSize": [
+          1080,
+          931
+        ]
+      },
+      "victory": {
+        "path": "art-sources/poses/rook/proposals/victory.png",
+        "sha256": "ea1e36ae84d0c6af282463a9ae6f991ead0174d3a03113129ac2c078f9a2fdb0",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          294,
+          26,
+          958,
+          1416
+        ],
+        "retainedBox": [
+          293,
+          24,
+          960,
+          1418
+        ],
+        "anchor": [
+          627.0,
+          1416
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          294,
+          306
+        ],
+        "scaledSize": [
+          698,
+          1458
+        ]
+      }
+    }
+  },
+  "nora": {
+    "canvas": [
+      1212,
+      1815
+    ],
+    "pivotPixels": [
+      769,
+      1780
+    ],
+    "alphaNoiseClearedThrough": 1,
+    "baseScale": 1.029307,
+    "idleFraction": 0.7934,
+    "poseScale": {
+      "cast": 1.16,
+      "victory": 1.2
+    },
+    "levels": {},
+    "sources": {
+      "idle": {
+        "path": "art-sources/poses/nora/proposals/idle.png",
+        "sha256": "ecb633a411e6cc22750bad8a6a51eba64d74c6b891fe9788bc38160ed7e7f544",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          230,
+          16,
+          980,
+          1415
+        ],
+        "retainedBox": [
+          229,
+          14,
+          982,
+          1417
+        ],
+        "anchor": [
+          660.0,
+          1415
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          325,
+          338
+        ],
+        "scaledSize": [
+          775,
+          1444
+        ]
+      },
+      "aim": {
+        "path": "art-sources/poses/nora/proposals/aim.png",
+        "sha256": "6cdd864b1aa2b99a1c87ee7d2d6122ae0f2d343a34e01a6f3fc0e37c913f3dec",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          97,
+          28,
+          1007,
+          1420
+        ],
+        "retainedBox": [
+          94,
+          26,
+          1025,
+          1422
+        ],
+        "anchor": [
+          695.0,
+          1420
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          150,
+          345
+        ],
+        "scaledSize": [
+          958,
+          1437
+        ]
+      },
+      "shoot": {
+        "path": "art-sources/poses/nora/proposals/shoot.png",
+        "sha256": "809e448119c8190739fb3cf47f1c117d139d2e98dfc9fa03b232012fa6f4b165",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          58,
+          31,
+          1065,
+          1448
+        ],
+        "retainedBox": [
+          55,
+          29,
+          1068,
+          1448
+        ],
+        "anchor": [
+          678.0,
+          1448
+        ],
+        "sourceEdgePixels": {
+          "bottom": 26
+        },
+        "masterOffset": [
+          128,
+          319
+        ],
+        "scaledSize": [
+          1043,
+          1461
+        ]
+      },
+      "cast": {
+        "path": "art-sources/poses/nora/proposals/cast.png",
+        "sha256": "524b758a998bd1d95718a3159f5d696694d637f8a2c61f40fcadb1878aaec4ed",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          98,
+          11,
+          1023,
+          1434
+        ],
+        "retainedBox": [
+          95,
+          9,
+          1042,
+          1436
+        ],
+        "anchor": [
+          712.0,
+          1434
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          134,
+          313
+        ],
+        "scaledSize": [
+          975,
+          1469
+        ]
+      },
+      "hit": {
+        "path": "art-sources/poses/nora/proposals/hit.png",
+        "sha256": "18a5b54830fc436ea60bc2db3aca022f9feabc181a5e87a8d06ff76fc363be91",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          98,
+          8,
+          1042,
+          1432
+        ],
+        "retainedBox": [
+          96,
+          1,
+          1044,
+          1434
+        ],
+        "anchor": [
+          663.0,
+          1432
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          185,
+          307
+        ],
+        "scaledSize": [
+          976,
+          1475
+        ]
+      },
+      "down": {
+        "path": "art-sources/poses/nora/proposals/down.png",
+        "sha256": "e432ff926b9ca0e7076b364d68dec185d509b93425ab0b7322d93e28bd083dee",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          118,
+          11,
+          1016,
+          1384
+        ],
+        "retainedBox": [
+          116,
+          9,
+          1019,
+          1386
+        ],
+        "anchor": [
+          620.0,
+          1384
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          250,
+          365
+        ],
+        "scaledSize": [
+          929,
+          1417
+        ]
+      },
+      "victory": {
+        "path": "art-sources/poses/nora/proposals/victory.png",
+        "sha256": "a8dcf80b40e04bacbc1f08870b2f79b33e9c56e1b628b8788f9b8ce068c29d6a",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          177,
+          25,
+          1002,
+          1438
+        ],
+        "retainedBox": [
+          175,
+          23,
+          1005,
+          1440
+        ],
+        "anchor": [
+          680.0,
+          1438
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          249,
+          324
+        ],
+        "scaledSize": [
+          854,
+          1459
+        ]
+      }
+    }
+  },
+  "goblinRaider": {
+    "canvas": [
+      1798,
+      1800
+    ],
+    "pivotPixels": [
+      952,
+      1762
+    ],
+    "alphaNoiseClearedThrough": 1,
+    "baseScale": 1.2,
+    "idleFraction": 0.8,
+    "poseScale": {
+      "hit": 1.1
+    },
+    "levels": {},
+    "sources": {
+      "idle": {
+        "path": "art-sources/poses/goblinRaider/proposals/idle.png",
+        "sha256": "8c49e5e9d2690bdb6252a430124502327173c3c2e18531eab92c8357d93fd089",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          50,
+          148,
+          1068,
+          1348
+        ],
+        "retainedBox": [
+          47,
+          146,
+          1070,
+          1351
+        ],
+        "anchor": [
+          648.0,
+          1348
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          231,
+          320
+        ],
+        "scaledSize": [
+          1228,
+          1446
+        ]
+      },
+      "windup": {
+        "path": "art-sources/poses/goblinRaider/proposals/windup.png",
+        "sha256": "9a375e780d55992bd73cb6a97bf883ce72c7a8ae1da70362ffa6ff7dd3e7b780",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          22,
+          21,
+          1079,
+          1399
+        ],
+        "retainedBox": [
+          20,
+          19,
+          1086,
+          1401
+        ],
+        "anchor": [
+          563.0,
+          1399
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          300,
+          106
+        ],
+        "scaledSize": [
+          1279,
+          1658
+        ]
+      },
+      "strike": {
+        "path": "art-sources/poses/goblinRaider/proposals/strike.png",
+        "sha256": "a03ce165c20c8b832cf36e65969bae034f6289046b40c0c847741252104197de",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          36,
+          153,
+          1070,
+          1361
+        ],
+        "retainedBox": [
+          34,
+          153,
+          1072,
+          1366
+        ],
+        "anchor": [
+          800.0,
+          1361
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          33,
+          312
+        ],
+        "scaledSize": [
+          1246,
+          1456
+        ]
+      },
+      "hit": {
+        "path": "art-sources/poses/goblinRaider/proposals/hit.png",
+        "sha256": "3d514c1e6290266a21aab656dc8477d25bd85d3a28ae48f87041282ac3f56743",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          36,
+          256,
+          1086,
+          1338
+        ],
+        "retainedBox": [
+          34,
+          254,
+          1086,
+          1341
+        ],
+        "anchor": [
+          593.0,
+          1338
+        ],
+        "sourceEdgePixels": {
+          "right": 103
+        },
+        "masterOffset": [
+          281,
+          461
+        ],
+        "scaledSize": [
+          1262,
+          1304
+        ]
+      },
+      "down": {
+        "path": "art-sources/poses/goblinRaider/proposals/down.png",
+        "sha256": "dccca9b97fe08d45dbcc6c5d1e8fd7d39b89270d07ef336cd884270d010b165b",
+        "size": [
+          1448,
+          1086
+        ],
+        "visibleBox": [
+          105,
+          220,
+          1401,
+          969
+        ],
+        "retainedBox": [
+          102,
+          218,
+          1403,
+          972
+        ],
+        "anchor": [
+          724.0,
+          969
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          206,
+          861
+        ],
+        "scaledSize": [
+          1561,
+          905
+        ]
+      }
+    }
+  },
+  "ashWolf": {
+    "canvas": [
+      2501,
+      1800
+    ],
+    "pivotPixels": [
+      1242,
+      1763
+    ],
+    "alphaNoiseClearedThrough": 1,
+    "baseScale": 1.45749,
+    "idleFraction": 0.8,
+    "poseScale": {},
+    "levels": {
+      "windup": {
+        "outputWhite": 0.86
+      }
+    },
+    "sources": {
+      "idle": {
+        "path": "art-sources/poses/ashWolf/proposals/idle.png",
+        "sha256": "b045de26f4938b4ba762290fa4063fd5aac05be6cdbadca665ccafe5a1f44b11",
+        "size": [
+          1536,
+          1024
+        ],
+        "visibleBox": [
+          108,
+          18,
+          1505,
+          1006
+        ],
+        "retainedBox": [
+          107,
+          17,
+          1507,
+          1008
+        ],
+        "anchor": [
+          768.0,
+          1006
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          279,
+          322
+        ],
+        "scaledSize": [
+          2040,
+          1444
+        ]
+      },
+      "windup": {
+        "path": "art-sources/poses/ashWolf/proposals/windup.png",
+        "sha256": "1dda4d939df7140ffc6442f0d59283ab68a5c442fa8fbe4112fdc2745dcf5363",
+        "size": [
+          1536,
+          1024
+        ],
+        "visibleBox": [
+          39,
+          22,
+          1518,
+          1002
+        ],
+        "retainedBox": [
+          36,
+          18,
+          1520,
+          1004
+        ],
+        "anchor": [
+          801.0,
+          1002
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          127,
+          329
+        ],
+        "scaledSize": [
+          2163,
+          1437
+        ]
+      },
+      "strike": {
+        "path": "art-sources/poses/ashWolf/proposals/strike.png",
+        "sha256": "e7be3921e58a101a095c8eceb584860587b80f5bd4f4886e22ed1916d2ca8d4d",
+        "size": [
+          1774,
+          887
+        ],
+        "visibleBox": [
+          60,
+          64,
+          1726,
+          842
+        ],
+        "retainedBox": [
+          57,
+          62,
+          1729,
+          844
+        ],
+        "anchor": [
+          887.0,
+          842
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          32,
+          626
+        ],
+        "scaledSize": [
+          2437,
+          1140
+        ]
+      },
+      "hit": {
+        "path": "art-sources/poses/ashWolf/proposals/hit.png",
+        "sha256": "b11739408b8b6650a23c9c0e214a448e167d8f932532e0861e479afeb15a003c",
+        "size": [
+          1536,
+          1024
+        ],
+        "visibleBox": [
+          41,
+          21,
+          1513,
+          998
+        ],
+        "retainedBox": [
+          39,
+          17,
+          1516,
+          1001
+        ],
+        "anchor": [
+          735.0,
+          998
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          228,
+          333
+        ],
+        "scaledSize": [
+          2153,
+          1434
+        ]
+      },
+      "down": {
+        "path": "art-sources/poses/ashWolf/proposals/down.png",
+        "sha256": "b9cdddc34fe11184bc5bf32fe474fff2a3bcb7cec9bce0f11a0fa0d18e06d584",
+        "size": [
+          1536,
+          1024
+        ],
+        "visibleBox": [
+          7,
+          194,
+          1528,
+          854
+        ],
+        "retainedBox": [
+          0,
+          193,
+          1536,
+          856
+        ],
+        "anchor": [
+          768.0,
+          854
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          123,
+          800
+        ],
+        "scaledSize": [
+          2239,
+          966
+        ]
+      }
+    }
+  },
+  "boneGuard": {
+    "canvas": [
+      1506,
+      1800
+    ],
+    "pivotPixels": [
+      802,
+      1764
+    ],
+    "alphaNoiseClearedThrough": 1,
+    "baseScale": 1.127643,
+    "idleFraction": 0.8,
+    "poseScale": {},
+    "levels": {},
+    "sources": {
+      "idle": {
+        "path": "art-sources/poses/boneGuard/proposals/idle.png",
+        "sha256": "ff7f3408f93af271061d0b9098f5006d7b9c1e162dfa19e10c3678448ef4dc31",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          40,
+          109,
+          1066,
+          1386
+        ],
+        "retainedBox": [
+          38,
+          106,
+          1068,
+          1388
+        ],
+        "anchor": [
+          647.0,
+          1386
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          115,
+          321
+        ],
+        "scaledSize": [
+          1161,
+          1446
+        ]
+      },
+      "windup": {
+        "path": "art-sources/poses/boneGuard/proposals/windup.png",
+        "sha256": "1753a365f1729a659b8b0f8287cd547cc27fd06c02aecd1bed8cc98e711b6753",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          162,
+          83,
+          1037,
+          1368
+        ],
+        "retainedBox": [
+          160,
+          80,
+          1039,
+          1371
+        ],
+        "anchor": [
+          630.0,
+          1368
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          272,
+          312
+        ],
+        "scaledSize": [
+          991,
+          1456
+        ]
+      },
+      "strike": {
+        "path": "art-sources/poses/boneGuard/proposals/strike.png",
+        "sha256": "2f28b64fdc4d30ccdb82a3d73e4a4824ae6e8998e91ceb66ad6cb8cd29bffc1c",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          14,
+          186,
+          1080,
+          1282
+        ],
+        "retainedBox": [
+          11,
+          185,
+          1086,
+          1285
+        ],
+        "anchor": [
+          693.0,
+          1282
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          33,
+          527
+        ],
+        "scaledSize": [
+          1212,
+          1240
+        ]
+      },
+      "prepare": {
+        "path": "art-sources/poses/boneGuard/proposals/prepare.png",
+        "sha256": "2dae58bfe9340061ed95bb38a99ce203d6e0dd8c2e74b30c058d580d59ed05d0",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          86,
+          9,
+          1032,
+          1380
+        ],
+        "retainedBox": [
+          83,
+          5,
+          1035,
+          1382
+        ],
+        "anchor": [
+          573.0,
+          1380
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          249,
+          213
+        ],
+        "scaledSize": [
+          1074,
+          1553
+        ]
+      },
+      "hit": {
+        "path": "art-sources/poses/boneGuard/proposals/hit.png",
+        "sha256": "c2a801b9f68463a8e41bc71dfcac51ea4453eb8955db17cee5a1de9da987c348",
+        "size": [
+          1536,
+          1024
+        ],
+        "visibleBox": [
+          184,
+          15,
+          1411,
+          1002
+        ],
+        "retainedBox": [
+          182,
+          14,
+          1413,
+          1005
+        ],
+        "anchor": [
+          820.0,
+          1002
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          83,
+          650
+        ],
+        "scaledSize": [
+          1388,
+          1117
+        ]
+      },
+      "down": {
+        "path": "art-sources/poses/boneGuard/proposals/down.png",
+        "sha256": "4db259301c923d6f555cb5e8f48b9d32cca6f2a8be4072123dce48ac6fc2b181",
+        "size": [
+          1230,
+          1278
+        ],
+        "visibleBox": [
+          19,
+          310,
+          1208,
+          1200
+        ],
+        "retainedBox": [
+          17,
+          308,
+          1211,
+          1201
+        ],
+        "anchor": [
+          615.0,
+          1200
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          128,
+          758
+        ],
+        "scaledSize": [
+          1346,
+          1007
+        ]
+      }
+    }
+  },
+  "ashMage": {
+    "canvas": [
+      1245,
+      1800
+    ],
+    "pivotPixels": [
+      635,
+      1764
+    ],
+    "alphaNoiseClearedThrough": 1,
+    "baseScale": 1.08027,
+    "idleFraction": 0.8,
+    "poseScale": {},
+    "levels": {},
+    "sources": {
+      "idle": {
+        "path": "art-sources/poses/ashMage/proposals/idle.png",
+        "sha256": "35cb638c29428adcc610468132f6df6424415a1b45bc784f111670dd80be28c3",
+        "size": [
+          1087,
+          1446
+        ],
+        "visibleBox": [
+          164,
+          52,
+          1042,
+          1385
+        ],
+        "retainedBox": [
+          162,
+          50,
+          1045,
+          1387
+        ],
+        "anchor": [
+          510.0,
+          1385
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          259,
+          322
+        ],
+        "scaledSize": [
+          954,
+          1444
+        ]
+      },
+      "aim": {
+        "path": "art-sources/poses/ashMage/proposals/aim.png",
+        "sha256": "c8e0387c2f46a82ebcf993353867d22b98b8baf2b23e2e3fb22a824fe39b6c1f",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          48,
+          112,
+          1063,
+          1354
+        ],
+        "retainedBox": [
+          35,
+          110,
+          1066,
+          1357
+        ],
+        "anchor": [
+          593.0,
+          1354
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          32,
+          420
+        ],
+        "scaledSize": [
+          1114,
+          1347
+        ]
+      },
+      "shoot": {
+        "path": "art-sources/poses/ashMage/proposals/shoot.png",
+        "sha256": "f174976e56eabd3aa643c37852af317b5eafd661f1547d078551d9dc6c75f022",
+        "size": [
+          1088,
+          1446
+        ],
+        "visibleBox": [
+          50,
+          188,
+          991,
+          1285
+        ],
+        "retainedBox": [
+          49,
+          185,
+          991,
+          1288
+        ],
+        "anchor": [
+          477.0,
+          1285
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          173,
+          576
+        ],
+        "scaledSize": [
+          1018,
+          1192
+        ]
+      },
+      "prepare": {
+        "path": "art-sources/poses/ashMage/proposals/prepare.png",
+        "sha256": "f4e1a04cbef84d1bc8d2e2ae77e9cde5033b166e385812bc45e2b85a5eba246a",
+        "size": [
+          1087,
+          1447
+        ],
+        "visibleBox": [
+          82,
+          26,
+          1018,
+          1424
+        ],
+        "retainedBox": [
+          80,
+          13,
+          1020,
+          1427
+        ],
+        "anchor": [
+          593.0,
+          1424
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          81,
+          240
+        ],
+        "scaledSize": [
+          1015,
+          1528
+        ]
+      },
+      "hit": {
+        "path": "art-sources/poses/ashMage/proposals/hit.png",
+        "sha256": "582727b56526a2983694540dbc30358aca5a61e8b7343a445e4c81866b0d88c6",
+        "size": [
+          1087,
+          1447
+        ],
+        "visibleBox": [
+          142,
+          153,
+          1063,
+          1357
+        ],
+        "retainedBox": [
+          140,
+          151,
+          1067,
+          1360
+        ],
+        "anchor": [
+          547.0,
+          1357
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          195,
+          461
+        ],
+        "scaledSize": [
+          1001,
+          1306
+        ]
+      },
+      "down": {
+        "path": "art-sources/poses/ashMage/proposals/down.png",
+        "sha256": "ee0c05f939f40983ec83445a4a032279d4cd46395bc84a9d9a969c49579ee66f",
+        "size": [
+          1086,
+          1448
+        ],
+        "visibleBox": [
+          77,
+          148,
+          1037,
+          1349
+        ],
+        "retainedBox": [
+          74,
+          146,
+          1040,
+          1351
+        ],
+        "anchor": [
+          543.0,
+          1349
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          128,
+          464
+        ],
+        "scaledSize": [
+          1044,
+          1302
+        ]
+      }
+    }
+  },
+  "boneKing": {
+    "canvas": [
+      2126,
+      2159
+    ],
+    "pivotPixels": [
+      1191,
+      2121
+    ],
+    "alphaNoiseClearedThrough": 1,
+    "baseScale": 1.113689,
+    "idleFraction": 0.667,
+    "poseScale": {
+      "windup": 1.1,
+      "strike": 1.1,
+      "prepare": 1.22
+    },
+    "levels": {},
+    "sources": {
+      "idle": {
+        "path": "art-sources/poses/boneKing/proposals/idle.png",
+        "sha256": "243fcd5637b114d16fc13c00d3d1c9ba6adc2fead904294704c015697e2e3327",
+        "size": [
+          1088,
+          1446
+        ],
+        "visibleBox": [
+          173,
+          77,
+          990,
+          1370
+        ],
+        "retainedBox": [
+          172,
+          75,
+          991,
+          1372
+        ],
+        "anchor": [
+          544.0,
+          1370
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          777,
+          679
+        ],
+        "scaledSize": [
+          912,
+          1444
+        ]
+      },
+      "windup": {
+        "path": "art-sources/poses/boneKing/proposals/windup.png",
+        "sha256": "f3a189059b3ac6964c31c3550e30b4317ec9cba336ce94d6e0bc61673c06ec0f",
+        "size": [
+          1536,
+          1024
+        ],
+        "visibleBox": [
+          65,
+          15,
+          1497,
+          992
+        ],
+        "retainedBox": [
+          64,
+          13,
+          1497,
+          994
+        ],
+        "anchor": [
+          760.0,
+          992
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          416,
+          1031
+        ],
+        "scaledSize": [
+          1596,
+          1093
+        ]
+      },
+      "strike": {
+        "path": "art-sources/poses/boneKing/proposals/strike.png",
+        "sha256": "104d33e53b4aa0469df1a980d3dc60363a49fffac702ee4bf820c3167afcc7cb",
+        "size": [
+          1536,
+          1024
+        ],
+        "visibleBox": [
+          22,
+          14,
+          1536,
+          978
+        ],
+        "retainedBox": [
+          22,
+          14,
+          1536,
+          979
+        ],
+        "anchor": [
+          968.0,
+          978
+        ],
+        "sourceEdgePixels": {
+          "right": 2
+        },
+        "masterOffset": [
+          137,
+          1047
+        ],
+        "scaledSize": [
+          1686,
+          1075
+        ]
+      },
+      "prepare": {
+        "path": "art-sources/poses/boneKing/proposals/prepare.png",
+        "sha256": "74b29b1613e176bf87a6d386fdf6212287ef1d74ebb635240aa7d673fde1a300",
+        "size": [
+          1024,
+          1616
+        ],
+        "visibleBox": [
+          106,
+          42,
+          1009,
+          1579
+        ],
+        "retainedBox": [
+          105,
+          42,
+          1010,
+          1583
+        ],
+        "anchor": [
+          545.0,
+          1579
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          701,
+          409
+        ],
+        "scaledSize": [
+          1008,
+          1716
+        ]
+      },
+      "hit": {
+        "path": "art-sources/poses/boneKing/proposals/hit.png",
+        "sha256": "a12e409d421e0aa0241490998816ccbe6981095d9dd3b7efe5fcb062529bb39f",
+        "size": [
+          1055,
+          1491
+        ],
+        "visibleBox": [
+          28,
+          147,
+          1027,
+          1344
+        ],
+        "retainedBox": [
+          25,
+          144,
+          1029,
+          1346
+        ],
+        "anchor": [
+          507.0,
+          1344
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          654,
+          785
+        ],
+        "scaledSize": [
+          1118,
+          1339
+        ]
+      },
+      "down": {
+        "path": "art-sources/poses/boneKing/proposals/down.png",
+        "sha256": "cecc373c8680afb8d2907098c0c073bc09b4abb614c9fcd96cc6c8ed745aa529",
+        "size": [
+          1088,
+          1445
+        ],
+        "visibleBox": [
+          0,
+          144,
+          1088,
+          1371
+        ],
+        "retainedBox": [
+          0,
+          144,
+          1088,
+          1373
+        ],
+        "anchor": [
+          544.0,
+          1371
+        ],
+        "sourceEdgePixels": {
+          "left": 2,
+          "right": 5
+        },
+        "masterOffset": [
+          585,
+          755
+        ],
+        "scaledSize": [
+          1212,
+          1369
+        ]
+      }
+    }
+  },
+  "boneKingPhase2": {
+    "canvas": [
+      1813,
+      1800
+    ],
+    "pivotPixels": [
+      883,
+      1765
+    ],
+    "alphaNoiseClearedThrough": 1,
+    "baseScale": 1.10176,
+    "idleFraction": 0.8,
+    "poseScale": {
+      "windup": 1.1
+    },
+    "levels": {},
+    "sources": {
+      "idle": {
+        "path": "art-sources/poses/boneKingPhase2/proposals/idle.png",
+        "sha256": "4ec51ea5bc9a5819f81b6db0d582d3790598f723f13c6b2aabb03760ef559a5b",
+        "size": [
+          1088,
+          1445
+        ],
+        "visibleBox": [
+          86,
+          67,
+          1056,
+          1374
+        ],
+        "retainedBox": [
+          82,
+          65,
+          1058,
+          1376
+        ],
+        "anchor": [
+          544.0,
+          1374
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          374,
+          323
+        ],
+        "scaledSize": [
+          1075,
+          1444
+        ]
+      },
+      "windup": {
+        "path": "art-sources/poses/boneKingPhase2/proposals/windup.png",
+        "sha256": "28ece408b6799a27666a6e4a5487614f5b93f72c40b444193d570ef48c6f49a9",
+        "size": [
+          1536,
+          1024
+        ],
+        "visibleBox": [
+          60,
+          14,
+          1499,
+          992
+        ],
+        "retainedBox": [
+          58,
+          13,
+          1501,
+          994
+        ],
+        "anchor": [
+          760.0,
+          992
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          110,
+          686
+        ],
+        "scaledSize": [
+          1590,
+          1081
+        ]
+      },
+      "strike": {
+        "path": "art-sources/poses/boneKingPhase2/proposals/strike.png",
+        "sha256": "88e53c64aee17f59f1fceeaabff805e1c548638515711a2149e02e92db1bed05",
+        "size": [
+          1055,
+          1491
+        ],
+        "visibleBox": [
+          12,
+          126,
+          1042,
+          1406
+        ],
+        "retainedBox": [
+          0,
+          123,
+          1045,
+          1408
+        ],
+        "anchor": [
+          504.0,
+          1406
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          328,
+          351
+        ],
+        "scaledSize": [
+          1151,
+          1416
+        ]
+      },
+      "prepare": {
+        "path": "art-sources/poses/boneKingPhase2/proposals/prepare.png",
+        "sha256": "88b746571aeaeaa1dd271adc6ebad867c4e1acb68083ed6231bd00bd9a5b6aec",
+        "size": [
+          1055,
+          1491
+        ],
+        "visibleBox": [
+          15,
+          121,
+          1044,
+          1383
+        ],
+        "retainedBox": [
+          12,
+          119,
+          1046,
+          1385
+        ],
+        "anchor": [
+          494.0,
+          1383
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          352,
+          372
+        ],
+        "scaledSize": [
+          1139,
+          1395
+        ]
+      },
+      "hit": {
+        "path": "art-sources/poses/boneKingPhase2/proposals/hit.png",
+        "sha256": "5d3c99dc64ad158bd2a6a7299d5fc97006a95ba5060bc203da4e01affe6e22e6",
+        "size": [
+          1055,
+          1491
+        ],
+        "visibleBox": [
+          43,
+          125,
+          1055,
+          1421
+        ],
+        "retainedBox": [
+          41,
+          122,
+          1055,
+          1423
+        ],
+        "anchor": [
+          522.0,
+          1421
+        ],
+        "sourceEdgePixels": {
+          "right": 2
+        },
+        "masterOffset": [
+          353,
+          334
+        ],
+        "scaledSize": [
+          1117,
+          1433
+        ]
+      },
+      "down": {
+        "path": "art-sources/poses/boneKingPhase2/proposals/down.png",
+        "sha256": "6d9d8a02a6c8398aedcaf96ed835b1adb0427501d4c749c3035ec370d0a5f2e4",
+        "size": [
+          1088,
+          1445
+        ],
+        "visibleBox": [
+          17,
+          146,
+          1079,
+          1372
+        ],
+        "retainedBox": [
+          17,
+          143,
+          1087,
+          1374
+        ],
+        "anchor": [
+          540.0,
+          1372
+        ],
+        "sourceEdgePixels": {},
+        "masterOffset": [
+          307,
+          411
+        ],
+        "scaledSize": [
+          1179,
+          1356
+        ]
+      }
+    }
+  }
+}

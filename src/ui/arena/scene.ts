@@ -3,7 +3,7 @@ import { resolvePose } from '../../content/artpack';
 import type { Backend, QuadDraw, RenderTarget, Rgb, SpriteDraw, Tex } from './backend';
 import { coverTransform } from './backend';
 import { Canvas2DBackend } from './canvas2d';
-import { computeLayout, type Slot } from './layout';
+import { bossPoseHeightLimit, computeLayout, type Slot } from './layout';
 import { buildAtlas, buildNoise, type Atlas, type FxRegion } from './textures';
 import { WebGLBackend } from './webgl';
 
@@ -448,6 +448,11 @@ export class ArenaScene {
     const L = computeLayout({ width: this.cssW, height: this.cssH, heroes: heroes.length, enemies: foes.map((f) => ({ boss: f.spec.boss, wide: f.spec.wide })) });
     const W = this.cssW * this.dpr;
     const H = this.cssH * this.dpr;
+    const posedBoss = !this.setup.showcase ? foes.find((a) => a.spec.boss && a.posePack && !a.rig && !a.anim) : undefined;
+    // Both phases share the stricter limit: changing phase must not change the
+    // king's apparent size. The group retains the intended boss/hero ratio.
+    const bossPacks = [posedBoss?.spec.poses, posedBoss?.spec.poses2].filter((p): p is PosePack => !!p);
+    const bossHeightLimit = bossPoseHeightLimit(H, bossPacks.map((p) => p.figureHeight));
     const place = (a: Actor, s: Slot | undefined) => {
       if (!s) return;
       a.slot = s;
@@ -455,6 +460,12 @@ export class ArenaScene {
       a.y = s.y * H;
       const v = a.spec.variant ?? 0;
       a.h = s.h * H * (v === 1 ? 0.93 : v === 2 ? 0.97 : 1);
+      if (posedBoss && a === posedBoss) a.h = Math.min(a.h, bossHeightLimit);
+      else if (posedBoss && a.spec.side === 'hero') a.h = Math.min(a.h, bossHeightLimit / 1.33);
+      if (a === posedBoss && bossPacks.length) {
+        const belowFeet = Math.max(...bossPacks.map((p) => (1 - p.pivot[1]) / p.figureHeight));
+        a.y = Math.min(a.y, H - 6 * this.dpr - belowFeet * a.h);
+      }
       const box = a.rig?.rig.aabb;
       a.w = box ? (a.h * box.width) / box.height : a.anim ? (a.h * a.anim.frameWidth) / a.anim.frameHeight : a.tex ? (a.h * a.tex.w) / a.tex.h : a.h * 0.45;
       const pp = a.posePack;

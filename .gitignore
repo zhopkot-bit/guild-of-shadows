@@ -4,3 +4,5 @@ dist
 *.log
 qa-saves/
 qa-out/
+# Reproducible technical PNG derivatives; approved proposals remain versioned.
+art-sources/poses/*/masters/

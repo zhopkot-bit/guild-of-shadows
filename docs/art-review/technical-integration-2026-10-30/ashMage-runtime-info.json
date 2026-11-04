@@ -1,0 +1,13 @@
+{
+  "character": "ashMage",
+  "pack": "poses/ash_mage",
+  "scale": 0.4,
+  "frame": [
+    531,
+    768
+  ],
+  "pivot": [
+    0.51,
+    0.98
+  ]
+}

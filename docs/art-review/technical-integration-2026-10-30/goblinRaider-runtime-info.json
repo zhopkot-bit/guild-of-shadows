@@ -1,0 +1,13 @@
+{
+  "character": "goblinRaider",
+  "pack": "poses/goblin_raider",
+  "scale": 0.4,
+  "frame": [
+    767,
+    768
+  ],
+  "pivot": [
+    0.5295,
+    0.9789
+  ]
+}

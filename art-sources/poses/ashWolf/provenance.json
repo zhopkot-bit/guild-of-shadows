@@ -41,11 +41,13 @@
   "artReview": {
     "date": "2026-10-30",
     "reviewer": "Codex",
-    "status": "candidate_for_review",
+    "status": "approved_via_owner_review",
     "report": "docs/art-review/REVIEW_PR16_2026_10_30_RU.md",
-    "userAcceptance": false,
+    "userAcceptance": true,
     "finalManualRetouchPending": true,
-    "technicalQaDeferred": true
+    "technicalQaDeferred": true,
+    "approvalReview": "https://github.com/zhopkot-bit/guild-of-shadows/pull/16#pullrequestreview-5710438793",
+    "approvalDate": "2026-10-30"
   },
   "revisionHistory": [
     {
@@ -98,5 +100,14 @@
       "previousGitCommit": "f783935",
       "reason": "Dark fur matched to new reference; maintained resting silhouette."
     }
-  ]
+  ],
+  "technicalBuild": {
+    "layout": "art-sources/poses/technical-layout.json",
+    "generator": "tools/art/normalize_pose_masters.py",
+    "derivedMasters": "art-sources/poses/ashWolf/masters/",
+    "derivedMastersVersioned": false,
+    "report": "docs/art-review/technical-integration-2026-10-30/STATUS_RU.md",
+    "status": "implemented_renderer_recheck_pending",
+    "date": "2026-11-04"
+  }
 }

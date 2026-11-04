@@ -1,0 +1,13 @@
+{
+  "character": "boneKing",
+  "pack": "poses/bone_king",
+  "scale": 0.4,
+  "frame": [
+    756,
+    768
+  ],
+  "pivot": [
+    0.5602,
+    0.9824
+  ]
+}

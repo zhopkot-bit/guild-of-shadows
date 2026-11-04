@@ -1,0 +1,58 @@
+{
+  "targetIdlePixels": 1440,
+  "targetIdleFraction": 0.8,
+  "minimumCanvasHeight": 1448,
+  "marginPixels": 32,
+  "characters": {
+    "rook": {
+      "runtime": "poses/rook",
+      "poses": ["idle", "aim", "shoot", "hit", "down", "victory"],
+      "feetX": {"idle": 583, "aim": 558, "shoot": 622, "hit": 635, "down": 548, "victory": 627},
+      "poseScale": {"victory": 1.05}
+    },
+    "nora": {
+      "runtime": "poses/nora",
+      "poses": ["idle", "aim", "shoot", "cast", "hit", "down", "victory"],
+      "feetX": {"idle": 660, "aim": 695, "shoot": 678, "cast": 712, "hit": 663, "down": 620, "victory": 680},
+      "poseScale": {"cast": 1.16, "victory": 1.20}
+    },
+    "goblinRaider": {
+      "runtime": "poses/goblin_raider",
+      "poses": ["idle", "windup", "strike", "hit", "down"],
+      "feetX": {"idle": 648, "windup": 563, "strike": 800, "hit": 593, "down": 724},
+      "poseScale": {"hit": 1.1}
+    },
+    "ashWolf": {
+      "runtime": "poses/ash_wolf",
+      "poses": ["idle", "windup", "strike", "hit", "down"],
+      "feetX": {"idle": 768, "windup": 801, "strike": 887, "hit": 735, "down": 768},
+      "poseScale": {},
+      "quality": 86,
+      "levels": {"windup": {"outputWhite": 0.86}}
+    },
+    "boneGuard": {
+      "runtime": "poses/bone_guard",
+      "poses": ["idle", "windup", "strike", "prepare", "hit", "down"],
+      "feetX": {"idle": 647, "windup": 630, "strike": 693, "prepare": 573, "hit": 820, "down": 615},
+      "poseScale": {}
+    },
+    "ashMage": {
+      "runtime": "poses/ash_mage",
+      "poses": ["idle", "aim", "shoot", "prepare", "hit", "down"],
+      "feetX": {"idle": 510, "aim": 593, "shoot": 477, "prepare": 593, "hit": 547, "down": 543},
+      "poseScale": {}
+    },
+    "boneKing": {
+      "runtime": "poses/bone_king",
+      "poses": ["idle", "windup", "strike", "prepare", "hit", "down"],
+      "feetX": {"idle": 544, "windup": 760, "strike": 968, "prepare": 545, "hit": 507, "down": 544},
+      "poseScale": {"windup": 1.1, "strike": 1.1, "prepare": 1.22}
+    },
+    "boneKingPhase2": {
+      "runtime": "poses/bone_king_p2",
+      "poses": ["idle", "windup", "strike", "prepare", "hit", "down"],
+      "feetX": {"idle": 544, "windup": 760, "strike": 504, "prepare": 494, "hit": 522, "down": 540},
+      "poseScale": {"windup": 1.1}
+    }
+  }
+}

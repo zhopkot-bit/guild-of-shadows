@@ -1,0 +1,13 @@
+{
+  "character": "nora",
+  "pack": "poses/nora",
+  "scale": 0.4,
+  "frame": [
+    513,
+    768
+  ],
+  "pivot": [
+    0.6345,
+    0.9807
+  ]
+}

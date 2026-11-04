@@ -1,0 +1,13 @@
+{
+  "character": "boneGuard",
+  "pack": "poses/bone_guard",
+  "scale": 0.4,
+  "frame": [
+    643,
+    768
+  ],
+  "pivot": [
+    0.5325,
+    0.98
+  ]
+}

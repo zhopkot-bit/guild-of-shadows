@@ -10,7 +10,7 @@
 npm install
 npm run dev          # http://localhost:5173
 npm run typecheck    # tsc --noEmit (src + tests + tools)
-npm test             # vitest, 113 тестов
+npm test             # vitest, 129 тестов
 npm run sim          # симуляция баланса
 npm run build        # production-сборка в dist/
 npm run preview      # раздать dist/ локально
@@ -28,7 +28,7 @@ npm run preview      # раздать dist/ локально
 | `src/ui/arena/` | WebGL-сцена боя (деформация спрайтов, свет, частицы, эффекты) + Canvas 2D запасной путь |
 | `src/ui/battleView.ts` | Контроллер боя и HUD |
 | `src/ui/portrait.ts` | Портрет 48/64/96/128 по личности героя |
-| `public/art/v17/` | Производственные ассеты v1.7 + `asset-manifest.json` (provenance) + `art-pack.json` (реестр финального арта художника, пока пустой) |
+| `public/art/v17/` | Производственные ассеты + `asset-manifest.json` (provenance) + `art-pack.json` (подключены Мира и технический комплект PR №16; приёмка рендера ещё открыта) |
 | `src/content/artpack.ts`, `src/ui/arena/rig.ts` | Загрузка арта художника: скелеты DragonBones, листы кадров, слои арены |
 | `tools/art/validate_pack.mjs` | Проверка поставки художника (см. `docs/ARTIST_BRIEF_RU.md` в комплекте) |
 | `qa-fixtures/artpack-demo/` | Тестовый пакет арта: манекен DragonBones, лист кадров, передний план |
@@ -37,6 +37,8 @@ npm run preview      # раздать dist/ локально
 | `tools/qa/` | Браузерная приёмка: сейвы, скриншоты с аудитом вёрстки, сквозной сценарий, запись видео |
 
 ## Браузерная приёмка (Playwright + Chromium)
+
+План доведения до выпуска и ответственность команд: [RELEASE_ARCHITECTURE_RU.md](docs/RELEASE_ARCHITECTURE_RU.md).
 ```bash
 npm run build && npx vite preview --port 4173 &
 npm run qa:saves                                    # сейвы: бой, элита, босс I/II

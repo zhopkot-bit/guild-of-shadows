@@ -1,8 +1,19 @@
 {
   "version": 1,
   "heroes": {
-    "mira": { "poses": "heroes/mira/poses/poses.json" }
+    "mira": { "poses": "heroes/mira/poses/poses.json" },
+    "rook": { "poses": "poses/rook/poses.json" },
+    "nora": { "poses": "poses/nora/poses.json" }
   },
-  "enemies": {},
+  "enemies": {
+    "goblinRaider": { "poses": "poses/goblin_raider/poses.json" },
+    "ashWolf": { "poses": "poses/ash_wolf/poses.json" },
+    "boneGuard": { "poses": "poses/bone_guard/poses.json" },
+    "ashMage": { "poses": "poses/ash_mage/poses.json" },
+    "boneKing": {
+      "poses": "poses/bone_king/poses.json",
+      "phase2Poses": "poses/bone_king_p2/poses.json"
+    }
+  },
   "arenas": {}
 }
