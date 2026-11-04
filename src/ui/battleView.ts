@@ -19,6 +19,7 @@ import { sfx } from './sfx';
 export const battlePrefs = { manual: true, speed: 1 as 1 | 2 | 4 };
 
 interface View {
+  abort: AbortController;
   dead: boolean;
   fast: boolean;
   scene: ArenaScene;
@@ -41,6 +42,7 @@ export function stopBattleView(): void {
   current = null;
   if (!v) return;
   v.dead = true;
+  v.abort.abort();
   document.body.classList.remove('is-battle');
   for (const fn of v.cleanup) fn();
   v.scene.destroy();
@@ -215,13 +217,18 @@ export function battleScreen(ctx: Ctx): HTMLElement {
   const scene = new ArenaScene(arenaEl, { ...ARENAS[arenaId], layers: arenaLayers(arenaId), vfx: vfxPacksLoaded() }, specs);
   scene.speed = battlePrefs.speed;
 
-  const view: View = { dead: false, fast: false, scene, choice: null, pending: null, cleanup: [] };
+  const view: View = { abort: new AbortController(), dead: false, fast: false, scene, choice: null, pending: null, cleanup: [] };
   current = view;
   document.body.classList.add('is-battle');
   if (new URLSearchParams(window.location.search).has('qa')) {
     window.__gosArena = { stats: () => scene.stats(), battle: () => (current === view ? battle : null) };
   }
   const alive = () => !view.dead && current === view && ctx.run === run && run.battle === battle;
+  const ready = async () => await ctx.pause.wait(view.abort.signal) && alive();
+  view.cleanup.push(ctx.pause.subscribe((paused) => {
+    scene.paused = paused;
+    root.inert = paused;
+  }));
 
   // ---------- Плашки и позиции ----------
   const screenPos = new Map<string, ActorScreen>();
@@ -469,6 +476,7 @@ export function battleScreen(ctx: Ctx): HTMLElement {
     let phaseShift = false;
     const shown = new Set<BattleEvent>();
     const present = (filter: (e: BattleEvent) => boolean = () => true) => {
+      if (!alive()) return;
       for (const e of events) {
         if (shown.has(e) || !filter(e)) continue;
         shown.add(e);
@@ -503,13 +511,14 @@ export function battleScreen(ctx: Ctx): HTMLElement {
       }
     };
     const apply = () => {
-      if (applied) return;
+      if (applied || !alive() || ctx.pause.active) return;
       applied = true;
       events = applyAction(battle, action);
       addLog(events);
       ctx.save(); // сохранение после каждого боевого действия (Combat Spec: восстановление без повторной выдачи)
     };
     const impact = () => {
+      if (!alive() || ctx.pause.active) return;
       apply();
       present();
     };
@@ -525,10 +534,12 @@ export function battleScreen(ctx: Ctx): HTMLElement {
       banner(`${actor.name}: ${skill.name}`, 'hero');
       if (skill.effect === 'cover') {
         await scene.gesture(actor.id, [0.55, 0.75, 1]);
+        if (!await ready()) return;
         await scene.coverFx(actor.id, target.id);
         impact();
       } else if (skill.effect === 'heal') {
         await scene.gesture(actor.id, [0.75, 1, 0.7]);
+        if (!await ready()) return;
         await scene.heal(actor.id, target.id, 0);
         impact();
       } else if (skill.id === 'aimedShot') {
@@ -549,6 +560,7 @@ export function battleScreen(ctx: Ctx): HTMLElement {
       if (it.aoe) {
         apply();
         await scene.wave(actor.id, aliveUnits(battle, 'hero').map((u) => u.id).concat(events.filter((e): e is HitInfo => e.t === 'hit' && e.killed).map((e) => e.target)).filter((v, i, arr) => arr.indexOf(v) === i), (id) => present((e) => e.t === 'hit' && e.target === id));
+        if (!await ready()) return;
         present();
       } else {
         const tgt = it.targetId ? battle.units.find((u) => u.id === it.targetId && u.alive) : undefined;
@@ -560,6 +572,7 @@ export function battleScreen(ctx: Ctx): HTMLElement {
     } else {
       impact();
     }
+    if (!await ready()) return;
     if (!applied) impact();
     await Promise.all(pendingAnims);
     if (phaseShift && boss && alive()) {
@@ -577,6 +590,7 @@ export function battleScreen(ctx: Ctx): HTMLElement {
   };
 
   function onTarget(id: string): void {
+    if (ctx.pause.active || !alive()) return;
     const p = view.pending;
     if (!p || !p.targets.includes(id) || !view.choice) return;
     const resolve = view.choice;
@@ -611,6 +625,7 @@ export function battleScreen(ctx: Ctx): HTMLElement {
 
   let hotkeys: Record<string, () => void> = {};
   const onKey = (ev: KeyboardEvent) => {
+    if (ctx.pause.active || !alive()) return;
     const fn = hotkeys[ev.key];
     if (fn && !(ev.target instanceof HTMLInputElement)) {
       ev.preventDefault();
@@ -691,6 +706,7 @@ export function battleScreen(ctx: Ctx): HTMLElement {
   const speeds: Array<1 | 2 | 4> = [1, 2, 4];
   const finishBtn = h('button', { class: 'btn btn--ghost btn--small', type: 'button', title: 'Мгновенно доиграть бой автобоем' }, 'Досчитать');
   finishBtn.addEventListener('click', () => {
+    if (ctx.pause.active || !alive()) return;
     view.fast = true;
     scene.finishAll();
     resolveWithAuto();
@@ -714,19 +730,14 @@ export function battleScreen(ctx: Ctx): HTMLElement {
     soundBtn,
   );
 
-  // Пауза при уходе со вкладки: бой замирает на безопасной границе (анимации ждут RAF).
-  const onVis = () => {
-    scene.paused = document.visibilityState === 'hidden';
-  };
-  document.addEventListener('visibilitychange', onVis);
   view.cleanup.push(() => {
     document.removeEventListener('keydown', onKey);
-    document.removeEventListener('visibilitychange', onVis);
     window.clearTimeout(bannerTimer);
   });
 
   // ---------- Финал ----------
   const finishUi = async () => {
+    if (!await ready()) return;
     promptEl.classList.remove('is-on');
     setPending(null);
     paintAll();
@@ -813,6 +824,7 @@ export function battleScreen(ctx: Ctx): HTMLElement {
       await scene.wait(isBoss ? 1100 : 600);
     }
     while (alive()) {
+      if (!await ready()) return;
       const logStart = battle.log.length;
       const actor = advance(battle);
       addLog(battle.log.slice(logStart));
@@ -826,11 +838,12 @@ export function battleScreen(ctx: Ctx): HTMLElement {
         waitingBar(actor);
         action = autoAction(battle, actor);
       }
-      if (!alive()) return;
+      if (!await ready()) return;
       waitingBar(actor);
       await performAction(actor, action);
       if (!alive()) return;
       if (!view.fast) await scene.wait(260);
+      else await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
     }
     if (alive()) void finishUi();
   };

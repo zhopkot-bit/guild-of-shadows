@@ -5,7 +5,8 @@ import { deserialize, serialize } from '../core/save';
 import { newGame } from '../core/state';
 import type { GameState } from '../core/types';
 import type { Platform } from '../platform';
-import { deserializeRun, serializeRun, type Run } from '../expedition/run';
+import { serializeRun, type Run } from '../expedition/run';
+import { restoreActiveRun } from '../expedition/restore';
 import { stopBattleView } from './battleView';
 import type { Ctx, ModalButton } from './ctx';
 import { clear, h, type Child } from './dom';
@@ -17,6 +18,8 @@ import { squadScreen } from './squad';
 import { totalIncome } from '../core/economy';
 import { fill, SHARDS_NAME } from '../content/text';
 import T from '../content/ui-text.json';
+import { PauseController } from '../core/pause';
+import { sfx } from './sfx';
 
 type Tab = 'guild' | 'squad' | 'expedition';
 const TABS: Tab[] = ['guild', 'squad', 'expedition'];
@@ -24,9 +27,14 @@ const TABS: Tab[] = ['guild', 'squad', 'expedition'];
 const AUTOSAVE_MS = 15_000;
 const TICK_MS = 250;
 const BACKUP_KEY = 'gos_corrupt_backup';
+const RUN_BACKUP_KEY = 'gos_corrupt_run_backup';
 
 export async function startApp(platform: Platform, root: HTMLElement): Promise<void> {
   root.replaceChildren(h('div', { class: 'loading' }, T.loading));
+  const pause = new PauseController();
+  pause.set('platform', platform.isPaused());
+  pause.set('hidden', document.hidden);
+  platform.onPauseChange((p) => pause.set('platform', p));
 
   // Финальный арт художника (если поставлен): реестр art-pack.json и пакеты анимаций.
   await loadArtPack();
@@ -53,13 +61,22 @@ export async function startApp(platform: Platform, root: HTMLElement): Promise<v
     }
   }
 
+  const restored = restoreActiveRun(state, () => {
+    window.localStorage.setItem(RUN_BACKUP_KEY, raw ?? serialize(state));
+  });
+  if (restored.status === 'recovered') startNotice = T.notices.corruptRun;
+  else if (restored.status === 'blocked') {
+    saveEnabled = false;
+    startNotice = T.notices.corruptRunBlocked;
+  }
   const offline = loaded.ok ? applyOffline(state, platform.now()) : null;
+  if (startNotice || offline && offline.seconds >= 60) pause.set('modal', true);
 
-  let tab: Tab = state.activeRun ? 'expedition' : 'guild';
+  let tab: Tab = restored.run ? 'expedition' : 'guild';
   let live: Array<() => void> = [];
-  let run: Run | null = deserializeRun(state.activeRun);
-  if (!run) tab = 'guild';
-  let paused = false;
+  let run: Run | null = restored.run;
+  let gameplayActive = false;
+  let appReady = false;
   let lastTick = platform.now();
 
   const main = h('main', { id: 'screen' });
@@ -100,6 +117,7 @@ export async function startApp(platform: Platform, root: HTMLElement): Promise<v
   const ctx: Ctx = {
     state,
     platform,
+    pause,
     get run() {
       return run;
     },
@@ -118,7 +136,8 @@ export async function startApp(platform: Platform, root: HTMLElement): Promise<v
       window.setTimeout(() => el.remove(), 2600);
     },
     modal(title, body, buttons) {
-      ctx.closeModal();
+      pause.set('modal', true);
+      overlay?.remove();
       const row = h('div', { class: 'btn-row' });
       for (const b of buttons) row.append(modalButton(b));
       overlay = h('div', { class: 'overlay' }, h('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true' }, h('h3', null, title), ...body.map(wrap), row));
@@ -127,6 +146,7 @@ export async function startApp(platform: Platform, root: HTMLElement): Promise<v
     closeModal() {
       overlay?.remove();
       overlay = null;
+      pause.set('modal', false);
     },
   };
 
@@ -169,6 +189,7 @@ export async function startApp(platform: Platform, root: HTMLElement): Promise<v
       else el.removeAttribute('aria-current');
     }
     updateTopbar();
+    syncGameplay();
     // Переходы внутри экспедиции начинаются с верха экрана, остальное остаётся на месте.
     window.scrollTo(0, tab === 'expedition' ? 0 : keepScroll);
   }
@@ -177,19 +198,29 @@ export async function startApp(platform: Platform, root: HTMLElement): Promise<v
     const now = platform.now();
     const dt = Math.min(Math.max(0, (now - lastTick) / 1000), OFFLINE_CAP_SEC);
     lastTick = now;
-    if (paused) return;
+    if (pause.active) return;
     tick(state, dt);
     updateTopbar();
     for (const fn of [...live]) fn();
   }
 
-  platform.onPauseChange((p) => {
-    paused = p;
+  function syncGameplay(): void {
+    const active = appReady && tab === 'expedition' && run !== null && run.stage !== 'ended' && !pause.active;
+    if (active === gameplayActive) return;
+    gameplayActive = active;
+    if (active) platform.gameplayStart();
+    else platform.gameplayStop();
+  }
+
+  pause.subscribe((p) => {
     lastTick = platform.now();
-    if (p) void platform.flush();
+    sfx.setPaused(p);
+    syncGameplay();
+    if (p) { save(); void platform.flush(); }
   });
 
   document.addEventListener('visibilitychange', () => {
+    pause.set('hidden', document.hidden);
     if (document.visibilityState === 'hidden') {
       save();
       void platform.flush();
@@ -211,6 +242,8 @@ export async function startApp(platform: Platform, root: HTMLElement): Promise<v
   window.setInterval(onTick, TICK_MS);
   window.setInterval(save, AUTOSAVE_MS);
   platform.gameReady();
+  appReady = true;
+  syncGameplay();
 
   if (startNotice) ctx.modal(startNotice.title, [startNotice.text], [{ label: T.notices.ok }]);
   else if (offline && offline.seconds >= 60) {

@@ -2,6 +2,7 @@ import type { GameState } from '../core/types';
 import type { Platform } from '../platform';
 import type { Run } from '../expedition/run';
 import type { Child } from './dom';
+import type { PauseController } from '../core/pause';
 
 export interface ModalButton {
   label: string;
@@ -13,6 +14,7 @@ export interface ModalButton {
 export interface Ctx {
   state: GameState;
   platform: Platform;
+  pause: PauseController;
   run: Run | null;
   now(): number;
   /** Полная перерисовка текущего экрана (после структурных изменений). */

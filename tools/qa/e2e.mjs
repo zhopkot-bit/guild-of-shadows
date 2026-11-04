@@ -192,7 +192,10 @@ for (let guard = 0; guard < 400; guard++) {
     await shot('11-summary');
     const text = await page.locator('.summary').innerText();
     step(`итоги: ${text.replace(/\s+/g, ' ').slice(0, 220)}`);
-    const goldAfter = (await save()).gold;
+    const endedSave = await save();
+    const endedRun = JSON.parse(endedSave.activeRun);
+    if (endedRun.result === 'victory' && endedRun.nodesCleared !== 7) issues.push(`победа: завершено ${endedRun.nodesCleared} узлов вместо 7`);
+    const goldAfter = endedSave.gold;
     // Перезагрузка на экране итогов не должна начислить награду повторно.
     await page.reload({ waitUntil: 'networkidle' });
     await page.waitForTimeout(1000);
@@ -221,3 +224,4 @@ if (!steps.some((x) => x.startsWith('подготовка к боссу'))) issu
 writeFileSync(`${outDir}/e2e-report.json`, JSON.stringify({ viewport: `${W}x${H}`, steps, issues }, null, 2));
 console.log(JSON.stringify({ issues }, null, 1));
 await browser.close();
+if (issues.length) process.exitCode = 1;
