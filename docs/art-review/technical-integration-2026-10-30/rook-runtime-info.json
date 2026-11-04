@@ -1,0 +1,13 @@
+{
+  "character": "rook",
+  "pack": "poses/rook",
+  "scale": 0.4,
+  "frame": [
+    521,
+    768
+  ],
+  "pivot": [
+    0.5266,
+    0.9789
+  ]
+}

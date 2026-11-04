@@ -1,0 +1,13 @@
+{
+  "character": "ashWolf",
+  "pack": "poses/ash_wolf",
+  "scale": 0.4,
+  "frame": [
+    1067,
+    768
+  ],
+  "pivot": [
+    0.4966,
+    0.9794
+  ]
+}

@@ -1,0 +1,178 @@
+[
+  {
+    "id": "ashWolf",
+    "pose": "idle",
+    "file": "exec-eb47bf33-7162-4404-a6b2-662c258123cb.png",
+    "reason": "Matched dark charcoal fur to canon; preserved pose.",
+    "previousSource": {
+      "generatedFile": "exec-681e4289-673e-4691-bbfc-c934f92c2728.png",
+      "sha256": "88f6d5cc6065a6d43c66b08aa8cc9717acec325a51efb878fba756a33c3ba9cc"
+    },
+    "previousGitCommit": "f783935"
+  },
+  {
+    "id": "ashWolf",
+    "pose": "windup",
+    "file": "exec-f5895805-d92a-450d-bcb0-bd32e5c84287.png",
+    "reason": "Distinct low crouch with flexed rear legs and canon-dark fur.",
+    "previousSource": {
+      "generatedFile": "exec-d97491f8-532c-45bb-be62-ab3411af308a.png",
+      "sha256": "5f5dec9fe7da7cdca58f45b5a8b58bf959703d7250b12e83a07c12b354a4a22d"
+    },
+    "previousGitCommit": "f783935"
+  },
+  {
+    "id": "ashWolf",
+    "pose": "strike",
+    "file": "exec-9359d141-2421-4829-b7cb-738338513a0b.png",
+    "reason": "Dark fur matched to new reference; maintained four-legged silhouette.",
+    "previousSource": {
+      "generatedFile": "exec-3f7140ee-5ece-405c-bfec-2ca25b816ef0.png",
+      "sha256": "c9e44c2a2ed5d44c23d82c6fcf65b58c358ef731f580defe7a18cbadbe7410ee"
+    },
+    "previousGitCommit": "f783935"
+  },
+  {
+    "id": "ashWolf",
+    "pose": "hit",
+    "file": "exec-1e3ce16f-9f71-4d38-a44b-45405727f5b5.png",
+    "reason": "Dark fur matched to new reference; maintained recoil and raised head.",
+    "previousSource": {
+      "generatedFile": "exec-f5c14343-ed7d-4387-b4d7-54d9ba6ab5c2.png",
+      "sha256": "c1c6f743452da87253995eeaee09e733fc2085344a9b4de33b925676bd51a8fd"
+    },
+    "previousGitCommit": "f783935"
+  },
+  {
+    "id": "ashWolf",
+    "pose": "down",
+    "file": "exec-50c09841-e5b7-4d3b-b733-13d3671f7d3c.png",
+    "reason": "Dark fur matched to new reference; maintained resting silhouette.",
+    "previousSource": {
+      "generatedFile": "exec-52608814-95c6-4850-b28a-a018a0762d6f.png",
+      "sha256": "040f1419bb53cc4a6ac30327d351ed9685c0c33016c9c8269312d8078b03000a"
+    },
+    "previousGitCommit": "f783935"
+  },
+  {
+    "id": "goblinRaider",
+    "pose": "idle",
+    "file": "exec-3de16c9f-b303-4899-b634-65030b82cca2.png",
+    "reason": "Muted olive skin, dark clothing and cool metal matched to canon.",
+    "previousSource": {
+      "generatedFile": "exec-8ad46120-dff9-4887-8941-d9f07b70f299.png",
+      "sha256": "98de6a92ef225348fe8a37a534c9064d5f65398c2dd0f11d1835d9261cd43f6f"
+    },
+    "previousGitCommit": "f783935"
+  },
+  {
+    "id": "goblinRaider",
+    "pose": "strike",
+    "file": "exec-97804bec-c98e-4d48-8ebd-d090c02d16d7.png",
+    "reason": "Muted palette matched to idle; retained pose and two separate weapons.",
+    "previousSource": {
+      "generatedFile": "exec-18cb7d8f-6aa6-413a-8f97-e3580b985685.png",
+      "sha256": "cd30bb998f1f20b255acaa58617441737fb2f3822b1a2890bbb3db9816e51a01"
+    },
+    "previousGitCommit": "f783935"
+  },
+  {
+    "id": "goblinRaider",
+    "pose": "hit",
+    "file": "exec-0cc098f9-93b8-436c-bf75-466b305d393a.png",
+    "reason": "Muted palette matched to idle; retained recoil and two separate weapons.",
+    "previousSource": {
+      "generatedFile": "exec-260fc710-8605-471c-84c9-a24bc0399ea8.png",
+      "sha256": "08d996619399e676672044afd3191c44fc5a240a9b4f9b1b6e091b58ba2057a6"
+    },
+    "previousGitCommit": "f783935"
+  },
+  {
+    "id": "boneGuard",
+    "pose": "prepare",
+    "file": "exec-30334310-71ef-4670-9b11-d938f6ca067e.png",
+    "reason": "Shield visibly strapped behind back; both hands retain sword grip.",
+    "previousSource": {
+      "generatedFile": "exec-4433f2f1-a5be-4998-ae81-2db3d51d65ae.png",
+      "sha256": "8d1fdc9876dbf7d8deb50cd0b8ffdb029be8a6bf36ccd6febbd94803b116ee21"
+    },
+    "previousGitCommit": "f783935"
+  },
+  {
+    "id": "boneGuard",
+    "pose": "hit",
+    "file": "exec-deb430aa-4ab0-44d5-b29a-17495429e285.png",
+    "reason": "Skull tilted further back and remains facing left; shield and sword stay in place.",
+    "previousSource": {
+      "generatedFile": "exec-85757dd3-0cd4-4be3-b6b9-e7be52c3d46a.png",
+      "sha256": "7018d8498532d8f960fe18b1ea2b412b79d92b54123d071b79a49bf2cf001046"
+    },
+    "previousGitCommit": "f783935"
+  },
+  {
+    "id": "boneKing",
+    "pose": "prepare",
+    "file": "exec-e60ffbd7-871f-493a-b05d-92c375da57be.png",
+    "reason": "Added subdued red glow to crown; preserved pose and two-handed grip.",
+    "previousSource": {
+      "generatedFile": "exec-cc760676-e627-4c5f-95e7-3a3f315503f4.png",
+      "sha256": "457e02d97ad97287d5048043917c811fdd320efe06232eecd18433690ac8fb8d"
+    },
+    "previousGitCommit": "f783935"
+  },
+  {
+    "id": "ashMage",
+    "pose": "idle",
+    "file": "exec-d8b39097-210c-497f-993e-164ad73b0b9f.png",
+    "reason": "Bent flame-bearing arm so flame rests near chest; wand remains in other hand.",
+    "previousSource": {
+      "generatedFile": "exec-45828d10-e76f-4a6b-bdfe-099f4c335a4c.png",
+      "sha256": "4384178e3c0671ed47252f7a468a1b4e5e0dbab2e5f59db854e02a56d008c2c2"
+    },
+    "previousGitCommit": "f783935"
+  },
+  {
+    "id": "rook",
+    "pose": "shoot",
+    "file": "exec-21ab2f81-6a97-48b4-93e0-aec0037fe7bf.png",
+    "reason": "Raised crossbow and shifted shoulders backward for readable recoil; follow-up string correction blocked, exact string geometry remains open.",
+    "previousSource": {
+      "generatedFile": "exec-0199ec96-21c1-478b-b482-af81c37e3cd8.png",
+      "sha256": "a9ba8090d7f8f13ca42f4eb8186f98e0ae07f1141b2dde26d3a633a5221ae5a1"
+    },
+    "previousGitCommit": "f783935"
+  },
+  {
+    "id": "goblinRaider",
+    "pose": "down",
+    "file": "exec-1d7ced2d-12be-4060-ad30-7d3c9e06505d.png",
+    "reason": "Muted palette matched to canon; completed rear boot and kept figure within frame.",
+    "previousSource": {
+      "generatedFile": "exec-be535a8c-338d-4f75-ae3d-76dd9aa3e44a.png",
+      "sha256": "2a29b2312907a18a7bf6191e82cf900cb3599a04c136a6eb2caa9ac497fbc27f"
+    },
+    "previousGitCommit": "f783935"
+  },
+  {
+    "id": "boneKing",
+    "pose": "hit",
+    "file": "exec-23a072c7-1864-43ed-887c-316ddb0d5d06.png",
+    "reason": "Torso and head recoil while the king remains braced; preserved two-handed grip and complete sword.",
+    "previousSource": {
+      "generatedFile": "exec-18b0c8aa-5e93-4676-8cc7-e8528dda64e5.png",
+      "sha256": "238f59fe27efa14c0be17d59b0cf6de8b51b97291e2c202485f2c3ab397b607a"
+    },
+    "previousGitCommit": "f783935"
+  },
+  {
+    "id": "goblinRaider",
+    "pose": "windup",
+    "file": "exec-1f2b3715-5f37-4bb6-8a10-dc94bd7e7eb2.png",
+    "reason": "Both separate weapons clearly drawn back, muted canon palette and whole blades in frame.",
+    "previousSource": {
+      "generatedFile": "exec-63caaa45-eea7-4b27-8b62-75fafb30c17c.png",
+      "sha256": "e729a9b526f19b83f95782f7bd6fa51a8fb1fb11be8a8a067e2baff8c6595d59"
+    },
+    "previousGitCommit": "f783935"
+  }
+]

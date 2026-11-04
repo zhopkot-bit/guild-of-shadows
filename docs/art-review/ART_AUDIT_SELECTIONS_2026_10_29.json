@@ -1,0 +1,53 @@
+[
+  {
+    "character": "nora",
+    "pose": "shoot",
+    "generatedFile": "exec-2f1f25b2-ad04-4d84-86bf-ee9aa30dcb0d.png",
+    "change": "Restored forked staff head; corrected right garment edge. Lighting and saturation matched to idle.",
+    "previousGeneratedFile": "exec-893aa01e-2210-45f2-a1fd-b721d7cbad44.png"
+  },
+  {
+    "character": "goblinRaider",
+    "pose": "windup",
+    "generatedFile": "exec-63caaa45-eea7-4b27-8b62-75fafb30c17c.png",
+    "change": "Separated cleaver and dagger so they no longer touch or read as one weapon."
+  },
+  {
+    "character": "ashWolf",
+    "pose": "hit",
+    "generatedFile": "exec-f5c14343-ed7d-4387-b4d7-54d9ba6ab5c2.png",
+    "change": "Rebuilt reaction with horizontal quadruped torso and four distinct legs."
+  },
+  {
+    "character": "boneKing",
+    "pose": "windup",
+    "generatedFile": "exec-de7d1870-53e9-429c-ac47-ce7e0e965421.png",
+    "change": "Sword drawn back toward image right; short handle and two anatomically connected hands."
+  },
+  {
+    "character": "boneGuard",
+    "pose": "hit",
+    "generatedFile": "exec-85757dd3-0cd4-4be3-b6b9-e7be52c3d46a.png",
+    "change": "Head remains turned left while torso recoils right; sword and shield stay in their canonical hands; full shield visible. Lighting and saturation matched to idle.",
+    "previousGeneratedFile": "exec-446787cd-6e7f-489d-abf4-fe7ed889e1b7.png"
+  },
+  {
+    "character": "ashWolf",
+    "pose": "strike",
+    "generatedFile": "exec-3f7140ee-5ece-405c-bfec-2ca25b816ef0.png",
+    "change": "Exactly two distinct forepaws and two hind legs; full mane and tail contour."
+  },
+  {
+    "character": "boneKingPhase2",
+    "pose": "windup",
+    "generatedFile": "exec-f5d3989c-a184-4373-a155-f46b36c141d2.png",
+    "change": "Matched corrected phase-I sword direction, compact two-hand grip and pose; spectral material treatment retained."
+  },
+  {
+    "character": "nora",
+    "pose": "victory",
+    "generatedFile": "exec-c82619df-1dd6-4ab2-b1dc-a8afb1eaa835.png",
+    "change": "Raised staff clearly distinguishes victory from idle; completed upper staff tips. Lighting and saturation matched to idle.",
+    "previousGeneratedFile": "exec-7c9c35a4-86db-43bb-8959-1eb100a75eeb.png"
+  }
+]

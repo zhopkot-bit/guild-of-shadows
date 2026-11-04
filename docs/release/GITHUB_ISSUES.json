@@ -1,0 +1,45 @@
+{
+  "date": "2026-11-04",
+  "coordination": {
+    "number": 17,
+    "url": "https://github.com/zhopkot-bit/guild-of-shadows/issues/17"
+  },
+  "teams": [
+    {
+      "team": "T1",
+      "number": 18,
+      "url": "https://github.com/zhopkot-bit/guild-of-shadows/issues/18",
+      "title": "[T1] Игровой цикл и баланс: доведение до выпуска"
+    },
+    {
+      "team": "T2",
+      "number": 19,
+      "url": "https://github.com/zhopkot-bit/guild-of-shadows/issues/19",
+      "title": "[T2] Интерфейс и рендерер: доведение до выпуска"
+    },
+    {
+      "team": "T3",
+      "number": 20,
+      "url": "https://github.com/zhopkot-bit/guild-of-shadows/issues/20",
+      "title": "[T3] Арт и звук: доведение до выпуска"
+    },
+    {
+      "team": "T4",
+      "number": 21,
+      "url": "https://github.com/zhopkot-bit/guild-of-shadows/issues/21",
+      "title": "[T4] Платформа и сохранения: доведение до выпуска"
+    },
+    {
+      "team": "T5",
+      "number": 22,
+      "url": "https://github.com/zhopkot-bit/guild-of-shadows/issues/22",
+      "title": "[T5] QA и производительность: доведение до выпуска"
+    },
+    {
+      "team": "T6",
+      "number": 23,
+      "url": "https://github.com/zhopkot-bit/guild-of-shadows/issues/23",
+      "title": "[T6] Интеграция и выпуск: доведение до выпуска"
+    }
+  ]
+}

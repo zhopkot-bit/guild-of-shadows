@@ -27,6 +27,13 @@ export interface ArenaLayout {
   portrait: boolean;
 }
 
+/** Largest boss figure whose full pose canvas fits in either phase. */
+export function bossPoseHeightLimit(arenaHeight: number, figureHeights: readonly number[]): number {
+  const valid = figureHeights.filter((height) => Number.isFinite(height) && height > 0 && height <= 1);
+  // Keep some room for breathing and the camera during a pose change.
+  return valid.length ? arenaHeight * 0.92 * Math.min(...valid) : Infinity;
+}
+
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
