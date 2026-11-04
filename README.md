@@ -14,7 +14,7 @@
 ```bash
 npm install
 npm run dev     # http://localhost:5173
-npm test        # 113 тестов
+npm test        # автоматические тесты
 npm run build   # сборка для Яндекс Игр в dist/
 ```
 
