@@ -1,0 +1,165 @@
+{
+  "ok": true,
+  "sourceCommit": "1f0144fa83b74ea6a428a1482aad46265780e43d",
+  "frame": [
+    522,
+    768
+  ],
+  "figureHeight": 0.8063,
+  "pivot": [
+    0.4973,
+    0.9593
+  ],
+  "bytes": 623174,
+  "reproduced": true,
+  "poses": [
+    {
+      "pose": "idle",
+      "sourceSha256": "004b5b12d045d5af92b79fa9fadf4667916052538ea3f20dabe405eac4c352fd",
+      "runtimeSha256": "4e911295d425fed9448d9b16bb498b6063cdd90da57ab4bbfe748a62ca8a4934",
+      "bytes": 73926,
+      "bounds": [
+        113,
+        117,
+        440,
+        737
+      ],
+      "margins": [
+        113,
+        117,
+        82,
+        31
+      ],
+      "feetDeltaPx": 0.258,
+      "horizontalReach": 0.291
+    },
+    {
+      "pose": "windup",
+      "sourceSha256": "946b9c261992f8f5f69fb6166104f0a2039fc59403626f227add82cd1aeb6543",
+      "runtimeSha256": "805672959ea31ba9f69beed74347c49366bebc886a149ab18514da4ccb5941ef",
+      "bytes": 83102,
+      "bounds": [
+        28,
+        72,
+        505,
+        737
+      ],
+      "margins": [
+        28,
+        72,
+        17,
+        31
+      ],
+      "feetDeltaPx": 0.258,
+      "horizontalReach": 0.3958
+    },
+    {
+      "pose": "strike",
+      "sourceSha256": "a32a2d0785eeaf0fc499b1adc71eda17898f30eb271d803c7c09a8f15e6164e7",
+      "runtimeSha256": "85867ad76fe2b3031e0902f0abbd571e745452c423774d50c2f6f78da40a5b18",
+      "bytes": 101968,
+      "bounds": [
+        18,
+        174,
+        514,
+        737
+      ],
+      "margins": [
+        18,
+        174,
+        8,
+        31
+      ],
+      "feetDeltaPx": 0.258,
+      "horizontalReach": 0.4103
+    },
+    {
+      "pose": "cast",
+      "sourceSha256": "d8851a96f418b50abd6f07c96ae88d45bb484858c9be024a2fad3626a8cefbc8",
+      "runtimeSha256": "c7377b037bb565d69b59cd937cbd5a26064fb06904043ae553740c0e9bf87dbf",
+      "bytes": 102582,
+      "bounds": [
+        64,
+        129,
+        500,
+        737
+      ],
+      "margins": [
+        64,
+        129,
+        22,
+        31
+      ],
+      "feetDeltaPx": 0.258,
+      "horizontalReach": 0.3878
+    },
+    {
+      "pose": "hit",
+      "sourceSha256": "de27c66167d723c84b27bd00c787596b89f0de0e3d7676fa289436b18eda5f5f",
+      "runtimeSha256": "5a11caecb357644aaf717d0a5a9f77b10e93db447e7a20e9b3980e94dd05e9f1",
+      "bytes": 101336,
+      "bounds": [
+        40,
+        124,
+        504,
+        737
+      ],
+      "margins": [
+        40,
+        124,
+        18,
+        31
+      ],
+      "feetDeltaPx": 0.258,
+      "horizontalReach": 0.3942
+    },
+    {
+      "pose": "down",
+      "sourceSha256": "536a77e2fb80490bf58bd965f571a6441d9f57ff6f3a1ecec50134501cf5c31a",
+      "runtimeSha256": "0f9cc25cbeff629aea69033368913f0559a948210bb9061d67a222755d9e8874",
+      "bytes": 81876,
+      "bounds": [
+        88,
+        260,
+        469,
+        731
+      ],
+      "margins": [
+        88,
+        260,
+        53,
+        37
+      ],
+      "feetDeltaPx": 5.742,
+      "horizontalReach": 0.3378
+    },
+    {
+      "pose": "victory",
+      "sourceSha256": "85cded06f04f633f212fd6590d2bf48d8aae98cdfbb153308b3eb8a45cdc4fe1",
+      "runtimeSha256": "2c032cdf80d474f41e80966cc1b748d9d0051727cb36d68389ed8400c9224c73",
+      "bytes": 78384,
+      "bounds": [
+        108,
+        10,
+        456,
+        737
+      ],
+      "margins": [
+        108,
+        10,
+        66,
+        31
+      ],
+      "feetDeltaPx": 0.258,
+      "horizontalReach": 0.3168
+    }
+  ],
+  "limits": {
+    "alphaThreshold": 24,
+    "minimumMarginPx": 4,
+    "feetToleranceFraction": 0.015,
+    "maximumDownReach": 0.6,
+    "maximumPoseKiB": 160,
+    "maximumSetKiB": 1200
+  }
+}
