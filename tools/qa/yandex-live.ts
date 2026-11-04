@@ -14,9 +14,10 @@ if (localCert) {
   args.push(`--ignore-certificate-errors-spki-list=${pin}`); // trust this local development certificate only
 }
 const report: {
+  scope: 'initialization-only'; platformAcceptance: 'not_run'; sdkRuntime: 'official-dev-adapter' | 'platform-sdk' | 'unknown';
   status: 'passed' | 'blocked' | 'failed'; platform: string | null; sdk: Array<{ url: string; status: number; sha256: string; error?: string }>;
   pageErrors: string[]; error?: string;
-} = { status: 'failed', platform: null, sdk: [], pageErrors: [] };
+} = { scope: 'initialization-only', platformAcceptance: 'not_run', sdkRuntime: 'unknown', status: 'failed', platform: null, sdk: [], pageErrors: [] };
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/chromium', args });
 const pending: Promise<void>[] = [];
 try {
@@ -28,6 +29,8 @@ try {
     if (!/\/sdk\.js(?:\?|$)|\/sdk\/_\/v2\./.test(response.url())) return;
     pending.push((async () => {
       const body = await response.body();
+      if (body.includes(Buffer.from('webgames-dev-adapter'))) report.sdkRuntime = 'official-dev-adapter';
+      else if (body.includes(Buffer.from('YandexGamesSDK')) && report.sdkRuntime === 'unknown') report.sdkRuntime = 'platform-sdk';
       report.sdk.push({ url: response.url(), status: response.status(), sha256: createHash('sha256').update(body).digest('hex'),
         ...(response.status() >= 400 ? { error: body.toString('utf8').slice(0, 160) } : {}) });
     })());
