@@ -5,3 +5,4 @@ dist-yandex
 *.log
 qa-saves/
 qa-out/
+work/

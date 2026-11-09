@@ -1,0 +1,112 @@
+{
+  "date": "2026-11-09",
+  "appSourceCommit": "5b3e77722746a8769ce079afffbb9e09464e30c4",
+  "runtimeChangesSinceAppSource": false,
+  "node": "v24.19.0",
+  "checks": {
+    "typecheck": true,
+    "testFiles": 16,
+    "testsPassed": 167,
+    "build": true,
+    "buildYandex": true,
+    "artPackStrict": true,
+    "simulatedReliabilityScenarios": 20,
+    "officialDevAdapterChecks": 6
+  },
+  "platformAcceptance": "not_run",
+  "sdkLoader": {
+    "url": "https://games.s3.yandex.net/sdk.js",
+    "httpStatus": 200,
+    "sha256": "0ce9a0968aea36afbe58e939ff3f1c83201f708e666410c01086d737cda9d07a"
+  },
+  "officialDevAdapter": {
+    "url": "http://yastatic.net/s3/games-static/sdk-dev/yandex-dev-adapter.js",
+    "httpStatus": 200,
+    "sha256": "b0e5af365b02f7afed31efa0a03f9527fc0a1d4cbf0f19738a771581e76e4cc5"
+  },
+  "builds": {
+    "dist": {
+      "files": 43,
+      "bytes": 2252450,
+      "manifestSha256": "aa788133522d4c8fdbeed12b5dceefe1213686c960048254e9306205be98fd6f",
+      "entrypoints": [
+        {
+          "path": "assets/index-BmeFk-j1.css",
+          "bytes": 42145,
+          "sha256": "209c74aa12305fe144ef1734596b9b60835773608c25b6b08bb506640dd08be0"
+        },
+        {
+          "path": "assets/index-DxjQByz7.js",
+          "bytes": 192230,
+          "sha256": "5c6f20c8c313368d54549cbdf7ced2dcdca6697f4886f3d071bdc96ec680d472"
+        },
+        {
+          "path": "index.html",
+          "bytes": 965,
+          "sha256": "4b7a6e72a01b7135eddfbe70b919727370b4912456fa7edb409aa006bf9fcc0a"
+        }
+      ]
+    },
+    "dist-yandex": {
+      "files": 43,
+      "bytes": 2252450,
+      "manifestSha256": "8797531b9913228b520459612ed208c58c18db54b24207d815ee67abe6a9babb",
+      "entrypoints": [
+        {
+          "path": "assets/index-BmeFk-j1.css",
+          "bytes": 42145,
+          "sha256": "209c74aa12305fe144ef1734596b9b60835773608c25b6b08bb506640dd08be0"
+        },
+        {
+          "path": "assets/index-CsLgcZPi.js",
+          "bytes": 192230,
+          "sha256": "1c8d522c7f0971ad153b292478701b9a85b78e64ece69f89c67fc25bb14b905b"
+        },
+        {
+          "path": "index.html",
+          "bytes": 965,
+          "sha256": "019a8a006f593904cf29cccc26c4460bda0c80f64dfc352bb44dad0fa0b2f0ac"
+        }
+      ]
+    }
+  },
+  "archive": {
+    "path": "work/release/guild-of-shadows-t2-yandex-2026-11-09.zip",
+    "bytes": 2094349,
+    "sha256": "80c017bda538458e55712e577bb0391dadf6bca4a721dcfafaa964f980fb9666",
+    "indexAtRoot": true,
+    "zipIntegrity": true
+  },
+  "integration": {
+    "main": "17d707071767b24e963a0014b2721a330bbec544",
+    "mainIsAncestor": true,
+    "t1": "3f897cde8e4272677aeb0500d071e22fbf3e7e59",
+    "t1T2OverlappingPaths": [
+      ".gitignore",
+      "README.md",
+      "README_RU.md",
+      "package.json",
+      "src/content/ui-text.json",
+      "src/platform/local.ts",
+      "src/platform/yandex.ts",
+      "src/ui/app.ts",
+      "src/ui/battleView.ts",
+      "src/ui/ctx.ts",
+      "src/ui/expedition.ts",
+      "tests/pause.test.ts",
+      "tools/qa/e2e.mjs",
+      "tools/qa/make-saves.ts"
+    ]
+  },
+  "sourceCommitCI": {
+    "commit": "5b3e77722746a8769ce079afffbb9e09464e30c4",
+    "url": "https://github.com/zhopkot-bit/guild-of-shadows/actions/runs/42589910818",
+    "conclusion": "success",
+    "jobs": [
+      "checks",
+      "browser (webgl)",
+      "browser (canvas2d)"
+    ],
+    "includesNewSDKChecks": false
+  }
+}

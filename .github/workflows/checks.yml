@@ -24,6 +24,11 @@ jobs:
       - run: npm run build:yandex
       - run: node tools/art/validate_pack.mjs public/art/v17/art-pack.json --strict
       - run: npm run sim
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yandex-draft
+          path: dist-yandex/
+          if-no-files-found: error
 
   browser:
     runs-on: ubuntu-latest

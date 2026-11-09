@@ -14,6 +14,8 @@
     "qa:saves": "node --import tsx tools/qa/make-saves.ts qa-saves",
     "qa:platform": "node tools/qa/platform.mjs",
     "qa:reliability": "node tools/qa/reliability.mjs",
+    "qa:sdk-server": "node --use-env-proxy tools/qa/sdk-dev/server.cjs",
+    "qa:sdk-dev": "node tools/qa/sdk-dev/check.mjs",
     "qa:e2e": "node tools/qa/e2e.mjs http://127.0.0.1:4173/ qa-out/e2e",
     "qa:shot": "node tools/qa/shot.mjs",
     "qa:record": "node tools/qa/record.mjs",
