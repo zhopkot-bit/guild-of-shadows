@@ -22,6 +22,7 @@ import type { GameState, Hero, HeroIdentity } from '../core/types';
 import { eventDef, outcomesFor, pickEvent, type Choice, type Effect, type EventDef } from './events';
 import { generateMap, type MapNode } from './map';
 import { moduleDef, moduleEffects, normalizeModules, rollModules, type ModuleId } from './modules';
+import { validRun } from './validate';
 
 export type RunStage = 'map' | 'battle' | 'event' | 'eventResult' | 'chest' | 'camp' | 'prep' | 'ended';
 export type BattleKind = 'battle' | 'elite' | 'boss' | 'ambush';
@@ -70,6 +71,8 @@ export interface Run {
   enemyMult: number;
   fallen: string[];
   nodesCleared: number;
+  /** Завершённый префикс маршрута; optional для старых сейвов v2. */
+  completedNodes?: string[];
   elitesCleared: number;
   reviveLeft: number;
   result: 'victory' | 'defeat' | null;
@@ -99,27 +102,22 @@ export function deserializeRun(json: string | null): Run | null {
       if (Array.isArray(value)) return value.map(revive);
       if (value && typeof value === 'object') {
         const record = value as Record<string, unknown>;
-        if (typeof record.__gosRngState === 'number') return RNG.restore(record.__gosRngState);
-        const out: Record<string, unknown> = {};
+        if (Object.hasOwn(record, '__gosRngState')) {
+          const state = record.__gosRngState;
+          if (typeof state !== 'number' || !Number.isInteger(state) || state < 0 || state > 0xffffffff) throw new Error('Некорректный RNG');
+          return RNG.restore(state);
+        }
+        const out: Record<string, unknown> = Object.create(null) as Record<string, unknown>;
         for (const [key, item] of Object.entries(record)) out[key] = revive(item);
         return out;
       }
       return value;
     };
     const run = revive(parsed) as Run;
-    const stages: RunStage[] = ['map', 'battle', 'event', 'eventResult', 'chest', 'camp', 'prep', 'ended'];
-    if (
-      !run ||
-      !Number.isFinite(run.seed) ||
-      !Number.isInteger(run.tier) || run.tier < 1 || run.tier > MAX_TIER ||
-      !Array.isArray(run.map) || !Array.isArray(run.members) ||
-      !(run.rng instanceof RNG) ||
-      !stages.includes(run.stage) ||
-      typeof run.finished !== 'boolean' ||
-      (run.stage === 'battle' && (!run.battle || !(run.battle.rng instanceof RNG)))
-    ) return null;
+    if (!run || typeof run !== 'object' || Array.isArray(run)) return null;
     // Реликвии сейвов до v1.8 → модули Content Bible; Перо Феникса сохраняет свой отдельный эффект.
     const rawRelics = (run.relics as unknown as string[]) ?? [];
+    if (!Array.isArray(rawRelics) || !rawRelics.every((id) => typeof id === 'string')) return null;
     if (rawRelics.includes('phoenixFeather') && !run.battle) run.phoenixLeft = true;
     run.relics = normalizeModules(rawRelics);
     if (run.chestOffers) {
@@ -130,6 +128,14 @@ export function deserializeRun(json: string | null): Run | null {
         return mod ? { id: legacy.id, kind: 'module', module: mod } : { id: legacy.id, kind: 'essence', amount: 3 };
       });
     }
+    if (!validRun(run)) return null;
+    // Active saves used to count battles only. Finished summaries stay historical and are never reissued.
+    if (run.completedNodes === undefined && run.stage !== 'ended') {
+      run.completedNodes = run.visited.slice(0, run.stage === 'map' ? run.visited.length : Math.max(0, run.visited.length - 1));
+      run.nodesCleared = run.completedNodes.length;
+    }
+    // Event content comes from the current registry; saved presentation fields are not authoritative.
+    if (run.event) run.event = eventDef(run.event.id);
     return run;
   } catch {
     return null;
@@ -158,16 +164,18 @@ export function fateChance(state: GameState): number {
 }
 
 export function partyHeroes(state: GameState): Hero[] {
-  return state.party
+  return [...new Set(state.party)]
     .map((id) => state.heroes.find((h) => h.id === id))
     .filter((h): h is Hero => h !== undefined && h.status === 'ready');
 }
 
 export function canStartRun(state: GameState, nowMs: number, tier: number): { ok: true } | { ok: false; reason: string } {
+  if (!Number.isInteger(tier) || tier < 1 || tier > Math.min(state.maxTier, MAX_TIER)) return { ok: false, reason: 'Подземелье ещё закрыто' };
   refreshHeroes(state, nowMs);
-  if (tier < 1 || tier > Math.min(state.maxTier, MAX_TIER)) return { ok: false, reason: 'Подземелье ещё закрыто' };
   // Экспедиции — основной игровой цикл и не расходуют энергию/жетоны.
-  if (partyHeroes(state).length !== PARTY_SIZE) return { ok: false, reason: `В отряде должно быть ${PARTY_SIZE} готовых героя` };
+  if (state.party.length !== PARTY_SIZE || new Set(state.party).size !== PARTY_SIZE || partyHeroes(state).length !== PARTY_SIZE) {
+    return { ok: false, reason: `В отряде должно быть ${PARTY_SIZE} разных готовых героя` };
+  }
   return { ok: true };
 }
 
@@ -212,6 +220,7 @@ export function startRun(state: GameState, nowMs: number, tier: number): Run {
     enemyMult: TUTORIAL_ENEMY_SCALE[state.expeditionsCompleted] ?? 1,
     fallen: [],
     nodesCleared: 0,
+    completedNodes: [],
     elitesCleared: 0,
     reviveLeft: 1,
     result: null,
@@ -400,6 +409,13 @@ export function enterNode(run: Run, nodeId: string): void {
 
 // ---------- Бой ----------
 
+/** A route has one unresolved node. Rewards and ambushes finish that same node once. */
+function completeCurrentNode(run: Run): void {
+  if (run.currentNodeId === null) return;
+  run.completedNodes = [...run.visited];
+  run.nodesCleared = run.completedNodes.length;
+}
+
 /** Вызывать, когда battle.result != 'ongoing': переносит итоги боя в забег и двигает его дальше. */
 export function finishBattle(run: Run): void {
   const b = run.battle;
@@ -423,9 +439,8 @@ export function finishBattle(run: Run): void {
     run.result = 'defeat';
     return;
   }
-  run.nodesCleared += 1;
-
   if (kind === 'boss') {
+    completeCurrentNode(run);
     run.stage = 'ended';
     run.result = 'victory';
   } else if (kind === 'elite') {
@@ -438,6 +453,7 @@ export function finishBattle(run: Run): void {
     run.chestOffers = makeChest(run, true);
     run.stage = 'chest';
   } else {
+    completeCurrentNode(run);
     run.stage = 'map';
   }
 }
@@ -464,6 +480,7 @@ export function chooseChest(run: Run, offerId: string): string {
     text = `+${shards(offer.amount)}`;
   }
   run.chestOffers = null;
+  completeCurrentNode(run);
   run.stage = 'map';
   return text;
 }
@@ -481,6 +498,7 @@ export function chooseCamp(run: Run, option: 'rest' | 'train'): string {
     run.atkBuff += 0.1;
     text = 'Тренировка: +10% АТК до конца забега';
   }
+  completeCurrentNode(run);
   run.stage = 'map';
   return text;
 }
@@ -570,6 +588,7 @@ export function continueFromEvent(run: Run): void {
     const layer = run.currentNodeId ? nodeById(run, run.currentNodeId).layer : 1;
     startBattle(run, 'ambush', layer, null);
   } else {
+    completeCurrentNode(run);
     run.stage = 'map';
   }
 }

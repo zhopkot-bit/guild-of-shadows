@@ -10,13 +10,17 @@
 npm install
 npm run dev          # http://localhost:5173
 npm run typecheck    # tsc --noEmit (src + tests + tools)
-npm test             # vitest, 113 тестов
+npm test             # автоматические тесты Vitest
 npm run sim          # симуляция баланса
 npm run build        # production-сборка в dist/
 npm run preview      # раздать dist/ локально
 ```
 
 ## Структура
+
+Правила игрового цикла, переходы и дальнейшие задачи T1: [`docs/T1_GAMEPLAY.md`](docs/T1_GAMEPLAY.md).
+Материалы к рецензии и статус настоящего SDK: [`docs/T1_REVIEW.md`](docs/T1_REVIEW.md).
+
 | Путь | Назначение |
 |---|---|
 | `src/content/ui-text.json`, `src/content/text.ts` | Тексты интерфейса (выносятся из кода по мере работы), склонения и подстановки |
@@ -41,6 +45,8 @@ npm run preview      # раздать dist/ локально
 npm run build && npx vite preview --port 4173 &
 npm run qa:saves                                    # сейвы: бой, элита, босс I/II
 npm run qa:e2e                                      # гильдия → отряд → экспедиция → босс → итоги
+CHROME=/путь/к/chrome node --import tsx tools/qa/run-integrity.ts http://127.0.0.1:4173/ # сохранение выборов, воскрешение, повреждённый забег
+CHROME=/путь/к/chrome node --import tsx tools/qa/pause-flow.ts http://127.0.0.1:4173/    # пауза и отмена действий; тестовый двойник SDK
 node tools/qa/shot.mjs "http://127.0.0.1:4173/?qa=1" qa-saves/boss-phase2.json out.png 1920 1080
 node tools/qa/layout-probe.mjs qa-saves/battle.json qa-out/layout http://127.0.0.1:4173/   # зоны боя на альбомных разрешениях (свой набор: VIEWPORTS=844x390,...)
 ```

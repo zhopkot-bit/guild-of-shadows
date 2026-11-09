@@ -57,6 +57,7 @@ function walkTo(run: Run, type: string): boolean {
     if (run.stage !== 'map') {
       run.stage = 'map';
       run.battle = null;
+      run.battleKind = null;
       run.event = null;
       run.chestOffers = null;
     }

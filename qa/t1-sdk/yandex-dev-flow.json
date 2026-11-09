@@ -1,0 +1,42 @@
+{
+  "status": "passed",
+  "scope": "official-dev-adapter",
+  "platformAcceptance": "not_run",
+  "limitations": [
+    "SDK storage is localStorage, not Yandex cloud",
+    "SDK on() is a logging stub; platform pause/resume is not exercised",
+    "Advertising windows are official development simulations, not live ads"
+  ],
+  "checks": [
+    "Production app uses YandexPlatform; LoadingAPI.ready precedes GameplayAPI.start",
+    "Early official rewarded close gives no revive; ad pauses income and GameplayAPI, then resumes",
+    "Official rewarded onRewarded/onClose revives at 30% HP once and saves immediately",
+    "setData/getData roundtrip restores run and reward limit with gos.save removed (development storage only)",
+    "Official rewarded doubles summary gold once; reload preserves the flag and does not grant it again",
+    "Source-built YandexPlatform: official fullscreen callbacks pause/resume; overlapping rewarded is rejected"
+  ],
+  "sdk": [
+    {
+      "url": "https://localhost:8080/sdk.js",
+      "status": 200,
+      "sha256": "b0e5af365b02f7afed31efa0a03f9527fc0a1d4cbf0f19738a771581e76e4cc5"
+    },
+    {
+      "url": "https://localhost:8080/sdk.js",
+      "status": 200,
+      "sha256": "b0e5af365b02f7afed31efa0a03f9527fc0a1d4cbf0f19738a771581e76e4cc5"
+    }
+  ],
+  "features": [
+    "LoadingAPI.ready()",
+    "GameplayAPI.start()",
+    "GameplayAPI.stop()",
+    "GameplayAPI.start()",
+    "GameplayAPI.stop()",
+    "GameplayAPI.start()",
+    "LoadingAPI.ready()",
+    "GameplayAPI.start()",
+    "GameplayAPI.stop()"
+  ],
+  "pageErrors": []
+}
