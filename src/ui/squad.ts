@@ -99,7 +99,7 @@ function heroCard(ctx: Ctx, hero: Hero): HTMLElement {
   ctx.live(update);
 
   const open = h('button', { class: 'hero-card-lg__open', type: 'button', 'aria-label': `Открыть героя: ${hero.name}` }, heroPortrait(hero, 128));
-  open.addEventListener('click', () => heroSheet(hero));
+  open.addEventListener('click', () => heroSheet(ctx, hero));
 
   return h('article', { class: `hero-card-lg${inParty ? ' is-party' : ''} role-${hero.cls}`, 'data-hero': hero.identity ?? hero.id },
     h('div', { class: 'hero-card-lg__top' },
@@ -129,7 +129,7 @@ const ROLE_GLOW: Record<string, [number, number, number]> = {
 };
 
 /** Экран героя: живая фигура на WebGL-сцене (та же, что в бою) + биография, характеристики, умения. */
-function heroSheet(hero: Hero): void {
+function heroSheet(ctx: Ctx, hero: Hero): void {
   const art = heroArt(hero);
   const def = hero.identity ? identityDef(hero.identity) : null;
   const stats = heroStats(hero);
@@ -165,7 +165,9 @@ function heroSheet(hero: Hero): void {
     }]);
     scene.showcaseLoop(hero.id, ROLE_GLOW[hero.cls] ?? [1, 1, 1]);
   }
+  const unsubscribe = ctx.pause.subscribe((paused) => { if (scene) scene.paused = paused; });
   const shut = () => {
+    unsubscribe();
     scene?.destroy();
     overlay.remove();
     document.removeEventListener('keydown', onKey);

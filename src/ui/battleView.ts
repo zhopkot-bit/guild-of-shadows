@@ -217,6 +217,12 @@ export function battleScreen(ctx: Ctx): HTMLElement {
 
   const view: View = { dead: false, fast: false, scene, choice: null, pending: null, cleanup: [] };
   current = view;
+  const lifetime = new AbortController();
+  view.cleanup.push(() => lifetime.abort());
+  view.cleanup.push(ctx.pause.subscribe((paused) => {
+    scene.paused = paused;
+    root.inert = paused;
+  }));
   document.body.classList.add('is-battle');
   if (new URLSearchParams(window.location.search).has('qa')) {
     window.__gosArena = { stats: () => scene.stats(), battle: () => (current === view ? battle : null) };
@@ -503,13 +509,14 @@ export function battleScreen(ctx: Ctx): HTMLElement {
       }
     };
     const apply = () => {
-      if (applied) return;
+      if (applied || !alive()) return;
       applied = true;
       events = applyAction(battle, action);
       addLog(events);
       ctx.save(); // сохранение после каждого боевого действия (Combat Spec: восстановление без повторной выдачи)
     };
     const impact = () => {
+      if (!alive()) return;
       apply();
       present();
     };
@@ -577,6 +584,7 @@ export function battleScreen(ctx: Ctx): HTMLElement {
   };
 
   function onTarget(id: string): void {
+    if (ctx.pause.paused) return;
     const p = view.pending;
     if (!p || !p.targets.includes(id) || !view.choice) return;
     const resolve = view.choice;
@@ -611,6 +619,7 @@ export function battleScreen(ctx: Ctx): HTMLElement {
 
   let hotkeys: Record<string, () => void> = {};
   const onKey = (ev: KeyboardEvent) => {
+    if (ctx.pause.paused) return;
     const fn = hotkeys[ev.key];
     if (fn && !(ev.target instanceof HTMLInputElement)) {
       ev.preventDefault();
@@ -691,6 +700,7 @@ export function battleScreen(ctx: Ctx): HTMLElement {
   const speeds: Array<1 | 2 | 4> = [1, 2, 4];
   const finishBtn = h('button', { class: 'btn btn--ghost btn--small', type: 'button', title: 'Мгновенно доиграть бой автобоем' }, 'Досчитать');
   finishBtn.addEventListener('click', () => {
+    if (ctx.pause.paused) return;
     view.fast = true;
     scene.finishAll();
     resolveWithAuto();
@@ -714,14 +724,8 @@ export function battleScreen(ctx: Ctx): HTMLElement {
     soundBtn,
   );
 
-  // Пауза при уходе со вкладки: бой замирает на безопасной границе (анимации ждут RAF).
-  const onVis = () => {
-    scene.paused = document.visibilityState === 'hidden';
-  };
-  document.addEventListener('visibilitychange', onVis);
   view.cleanup.push(() => {
     document.removeEventListener('keydown', onKey);
-    document.removeEventListener('visibilitychange', onVis);
     window.clearTimeout(bannerTimer);
   });
 
@@ -813,6 +817,10 @@ export function battleScreen(ctx: Ctx): HTMLElement {
       await scene.wait(isBoss ? 1100 : 600);
     }
     while (alive()) {
+      while (ctx.pause.paused) {
+        if (!await ctx.pause.waitUntilResumed(lifetime.signal) || !alive()) return;
+      }
+      if (!alive()) return;
       const logStart = battle.log.length;
       const actor = advance(battle);
       addLog(battle.log.slice(logStart));
@@ -825,6 +833,10 @@ export function battleScreen(ctx: Ctx): HTMLElement {
       else {
         waitingBar(actor);
         action = autoAction(battle, actor);
+      }
+      if (!alive()) return;
+      while (ctx.pause.paused) {
+        if (!await ctx.pause.waitUntilResumed(lifetime.signal) || !alive()) return;
       }
       if (!alive()) return;
       waitingBar(actor);

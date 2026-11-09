@@ -1,5 +1,8 @@
 import type { Platform } from './platform';
 import { resolveSave } from './save-resolution';
+import { deserialize } from '../core/save';
+import { SaveLoadError } from './platform';
+import { withTimeout } from './timeout';
 
 /* Минимальное описание SDK Яндекс.Игр: только то, чем пользуемся. Сверено с документацией:
    https://yandex.ru/dev/games/doc/ru/sdk/sdk-about */
@@ -44,25 +47,31 @@ const MIN_SAVE_INTERVAL_MS = 15_000;
 
 export class YandexPlatform implements Platform {
   readonly name = 'yandex' as const;
+  get savesLocallyOnly(): boolean { return !this.cloudLoaded; }
   private ysdk!: Ysdk;
   private player: YaPlayer | null = null;
   private paused = false;
+  private sdkPaused = false;
+  private adActive = false;
   private pauseCbs: Array<(p: boolean) => void> = [];
   private pending: string | null = null;
   private lastSent = 0;
   private timer: number | null = null;
+  private sending: Promise<void> | null = null;
+  private flushRequested = false;
+  private cloudLoaded = false;
 
   async init(): Promise<void> {
     if (!window.YaGames) throw new Error('Яндекс SDK не загружен');
-    this.ysdk = await window.YaGames.init();
+    this.ysdk = await withTimeout(() => window.YaGames!.init(), 8000);
+    // Listen before getPlayer(): an ad can pause the game while player data is loading.
+    this.ysdk.on('game_api_pause', () => { this.sdkPaused = true; this.updatePause(); });
+    this.ysdk.on('game_api_resume', () => { this.sdkPaused = false; this.updatePause(); });
     try {
-      this.player = await this.ysdk.getPlayer();
+      this.player = await withTimeout(() => this.ysdk.getPlayer(), 5000);
     } catch {
       this.player = null; // игра работает на локальном хранилище
     }
-    // Платформа сама показывает рекламу при старте и просит паузу событиями — слушаем с первой секунды.
-    this.ysdk.on('game_api_pause', () => this.setPaused(true));
-    this.ysdk.on('game_api_resume', () => this.setPaused(false));
   }
 
   now(): number {
@@ -77,15 +86,23 @@ export class YandexPlatform implements Platform {
       /* нет доступа к localStorage */
     }
     let cloud: string | null = null;
+    this.cloudLoaded = false;
     if (this.player) {
       try {
-        const data = await this.player.getData([CLOUD_KEY]);
+        const data = await withTimeout(() => this.player!.getData([CLOUD_KEY]), 5000);
         const v = data[CLOUD_KEY];
         cloud = typeof v === 'string' ? v : null;
+        this.cloudLoaded = true;
       } catch {
         /* нет сети или игрок без доступа к данным */
         this.track('cloud_load_failed');
       }
+    }
+    // An unknown cloud copy must not be replaced by a fresh game or a background save.
+    // An existing local save can be played offline; cloud writes stay disabled this session.
+    if (!this.cloudLoaded) {
+      const fallback = deserialize(local, this.now());
+      if (!fallback.ok && fallback.reason !== 'newer') throw new SaveLoadError();
     }
     // Prefer the newest/most progressed valid candidate; don't decide by timestamp alone on a tie.
     const selected = resolveSave(local, cloud);
@@ -101,7 +118,11 @@ export class YandexPlatform implements Platform {
     } catch {
       /* ignore */
     }
-    if (this.timer !== null) return;
+    this.scheduleSave();
+  }
+
+  private scheduleSave(): void {
+    if (this.timer !== null || this.sending || !this.player || !this.cloudLoaded || this.pending === null) return;
     const wait = Math.max(0, this.lastSent + MIN_SAVE_INTERVAL_MS - Date.now());
     this.timer = window.setTimeout(() => {
       this.timer = null;
@@ -117,21 +138,44 @@ export class YandexPlatform implements Platform {
     await this.send(true);
   }
 
-  private async send(immediate: boolean): Promise<void> {
-    if (this.pending === null || !this.player) return;
-    const data = this.pending;
-    this.lastSent = Date.now();
-    try {
-      await this.player.setData({ [CLOUD_KEY]: data }, immediate);
-      if (this.pending === data) this.pending = null;
-      this.track('cloud_save_success', { immediate });
-    } catch {
-      // Оставляем pending: следующая попытка уйдёт со следующим save().
-      this.track('cloud_save_failed', { immediate });
+  private send(immediate: boolean): Promise<void> {
+    this.flushRequested ||= immediate;
+    if (this.sending) return this.sending;
+    if (this.pending === null || !this.player || !this.cloudLoaded) {
+      this.flushRequested = false;
+      return Promise.resolve();
     }
+    const player = this.player;
+    const drain = async () => {
+      do {
+        const data = this.pending;
+        const force = this.flushRequested;
+        this.flushRequested = false;
+        this.lastSent = Date.now();
+        try {
+          await player.setData({ [CLOUD_KEY]: data }, force);
+          if (this.pending === data) this.pending = null;
+          this.track('cloud_save_success', { immediate: force });
+        } catch {
+          // Keep the latest local snapshot and retry with the normal rate limit.
+          this.track('cloud_save_failed', { immediate: force });
+          break;
+        }
+        // A flush during an active request must also drain the newer snapshot.
+      } while (this.pending !== null && this.flushRequested);
+    };
+    this.sending = drain().finally(() => {
+      this.sending = null;
+      this.flushRequested = false;
+      this.scheduleSave();
+    });
+    return this.sending;
   }
 
   showRewarded(placement: string): Promise<boolean> {
+    if (this.adActive) return Promise.resolve(false);
+    this.adActive = true;
+    this.updatePause();
     const safePlacement = this.safeText(placement, 40) || 'unknown';
     this.track('rewarded_start', { placement: safePlacement });
     return new Promise((resolve) => {
@@ -142,6 +186,8 @@ export class YandexPlatform implements Platform {
         if (settled) return;
         settled = true;
         window.clearTimeout(timeout);
+        this.adActive = false;
+        this.updatePause();
         this.track(success ? 'rewarded_complete' : 'rewarded_failed', { placement: safePlacement, reason });
         resolve(success);
       };
@@ -160,6 +206,9 @@ export class YandexPlatform implements Platform {
   }
 
   showInterstitial(): Promise<void> {
+    if (this.adActive) return Promise.resolve();
+    this.adActive = true;
+    this.updatePause();
     this.track('interstitial_start');
     return new Promise((resolve) => {
       let settled = false;
@@ -168,6 +217,8 @@ export class YandexPlatform implements Platform {
         if (settled) return;
         settled = true;
         window.clearTimeout(timeout);
+        this.adActive = false;
+        this.updatePause();
         this.track(reason === 'closed' ? 'interstitial_complete' : 'interstitial_failed', { reason });
         resolve();
       };
@@ -246,5 +297,9 @@ export class YandexPlatform implements Platform {
     if (this.paused === p) return;
     this.paused = p;
     for (const cb of this.pauseCbs) cb(p);
+  }
+
+  private updatePause(): void {
+    this.setPaused(this.sdkPaused || this.adActive);
   }
 }

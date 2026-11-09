@@ -133,7 +133,6 @@ function lobby(ctx: Ctx): HTMLElement {
     }
     ctx.run = startRun(state, ctx.now(), selectedTier);
     summary = null;
-    ctx.platform.gameplayStart();
     ctx.platform.track('run_start', { tier: selectedTier });
     ctx.save();
     ctx.render();
@@ -429,7 +428,6 @@ function summaryView(ctx: Ctx, run: Run): HTMLElement {
     const wasAlreadyFinished = run.finished;
     summary = finishRun(run, ctx.state, ctx.now());
     if (!wasAlreadyFinished) {
-      ctx.platform.gameplayStop();
       ctx.platform.track('run_end', { result: summary.result, tier: summary.tier, nodes: summary.nodesCleared });
     }
     ctx.save();

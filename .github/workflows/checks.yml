@@ -1,0 +1,86 @@
+name: Checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run build:yandex
+      - run: node tools/art/validate_pack.mjs public/art/v17/art-pack.json --strict
+      - run: npm run sim
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        renderer: [webgl, canvas2d]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright-core install --with-deps chromium
+      - name: Select installed Chromium
+        run: |
+          node --input-type=module <<'JS'
+          import { appendFileSync } from 'node:fs';
+          import { chromium } from 'playwright-core';
+          appendFileSync(process.env.GITHUB_ENV, `CHROME=${chromium.executablePath()}\n`);
+          JS
+      - run: npm run build
+      - run: npm run build:yandex
+      - run: npm run qa:saves
+        env:
+          QA_PARTY: mira,rook,nora
+      - name: Check SDK pause, audio and battle in production
+        env:
+          NO_WEBGL: ${{ matrix.renderer == 'canvas2d' && '1' || '0' }}
+          RENDERER: ${{ matrix.renderer }}
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 --strictPort > "$RUNNER_TEMP/preview.log" 2>&1 &
+          preview_pid=$!
+          npm run preview -- --host 127.0.0.1 --port 4174 --strictPort --outDir dist-yandex > "$RUNNER_TEMP/preview-yandex.log" 2>&1 &
+          yandex_pid=$!
+          trap 'kill "$preview_pid" "$yandex_pid"' EXIT
+          node --input-type=module <<'JS'
+          import { setTimeout } from 'node:timers/promises';
+          for (let attempt = 0; ; attempt++) {
+            try {
+              const responses = await Promise.all([4173, 4174].map(port => fetch(`http://127.0.0.1:${port}/`)));
+              if (responses.every(response => response.ok)) break;
+            } catch {}
+            if (attempt === 49) throw new Error('Preview did not start');
+            await setTimeout(200);
+          }
+          JS
+          npm run qa:platform -- http://127.0.0.1:4173/ qa-saves/battle.json qa-out/platform
+          if [ "$RENDERER" = "webgl" ]; then
+            npm run qa:reliability -- http://127.0.0.1:4173/ qa-saves qa-out/reliability http://127.0.0.1:4174/
+            QA_FINISH_BOSS=1 node tools/qa/e2e.mjs http://127.0.0.1:4173/ qa-out/e2e-667x375 667 375
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: platform-${{ matrix.renderer }}
+          path: qa-out/
+          if-no-files-found: ignore
