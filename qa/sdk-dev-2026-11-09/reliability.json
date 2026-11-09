@@ -1,0 +1,141 @@
+{
+  "ok": true,
+  "rows": [
+    {
+      "name": "ordinary-without-sdk",
+      "expected": "guild",
+      "retry": false,
+      "ok": true,
+      "errors": []
+    },
+    {
+      "name": "known-yandex-without-sdk",
+      "expected": "error",
+      "retry": false,
+      "ok": true,
+      "errors": []
+    },
+    {
+      "name": "sdk-init-error",
+      "expected": "error",
+      "retry": false,
+      "ok": true,
+      "errors": []
+    },
+    {
+      "name": "sdk-init-timeout",
+      "expected": "error",
+      "retry": false,
+      "ok": true,
+      "errors": []
+    },
+    {
+      "name": "player-error-with-local",
+      "expected": "guild",
+      "retry": false,
+      "ok": true,
+      "errors": []
+    },
+    {
+      "name": "player-error-without-local",
+      "expected": "error",
+      "retry": false,
+      "ok": true,
+      "errors": []
+    },
+    {
+      "name": "player-timeout-with-local",
+      "expected": "guild",
+      "retry": false,
+      "ok": true,
+      "errors": []
+    },
+    {
+      "name": "cloud-error-with-local",
+      "expected": "guild",
+      "retry": false,
+      "ok": true,
+      "errors": []
+    },
+    {
+      "name": "cloud-error-local-retry",
+      "expected": "guild",
+      "retry": true,
+      "ok": true,
+      "errors": []
+    },
+    {
+      "name": "cloud-error-without-local-and-retry",
+      "expected": "error",
+      "retry": true,
+      "ok": true,
+      "errors": []
+    },
+    {
+      "name": "cloud-error-corrupt-local",
+      "expected": "error",
+      "retry": false,
+      "ok": true,
+      "errors": []
+    },
+    {
+      "name": "cloud-timeout-with-local",
+      "expected": "guild",
+      "retry": false,
+      "ok": true,
+      "errors": []
+    },
+    {
+      "name": "future-cloud-save",
+      "expected": "newer",
+      "retry": false,
+      "ok": true,
+      "errors": []
+    },
+    {
+      "name": "future-local-offline",
+      "expected": "newer",
+      "retry": false,
+      "ok": true,
+      "errors": []
+    },
+    {
+      "name": "yandex-build-without-sdk",
+      "expected": "error",
+      "retry": false,
+      "ok": true,
+      "errors": []
+    },
+    {
+      "name": "yandex-build-with-sdk",
+      "expected": "guild",
+      "retry": false,
+      "ok": true,
+      "errors": []
+    },
+    {
+      "name": "reward-ui-rewarded",
+      "ok": true,
+      "extraGold": 840,
+      "errors": []
+    },
+    {
+      "name": "reward-ui-closed",
+      "ok": true,
+      "extraGold": 0,
+      "errors": []
+    },
+    {
+      "name": "reward-ui-sdk-error",
+      "ok": true,
+      "extraGold": 0,
+      "errors": []
+    },
+    {
+      "name": "reward-ui-local",
+      "ok": true,
+      "extraGold": 840,
+      "errors": []
+    }
+  ]
+}

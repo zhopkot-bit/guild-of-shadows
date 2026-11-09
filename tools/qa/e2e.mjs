@@ -6,6 +6,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 const [base, outDir, W = '1920', H = '1080'] = process.argv.slice(2);
 mkdirSync(outDir, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+try {
 const ctx = await browser.newContext({ viewport: { width: +W, height: +H } });
 const page = await ctx.newPage();
 const issues = [];
@@ -62,6 +63,8 @@ const goldBefore = (await save()).gold;
 let manualDone = false;
 let reloadDone = false;
 let bossSeen = false;
+let completed = false;
+let fastFinishDone = false;
 const tipsShot = new Set();
 const shotStages = new Set();
 for (let guard = 0; guard < 400; guard++) {
@@ -128,6 +131,7 @@ for (let guard = 0; guard < 400; guard++) {
       continue;
     }
     if (!reloadDone) {
+      await page.waitForSelector('.action--attack', { timeout: 30000 });
       const before = await page.evaluate(() => { const b = window.__gosArena?.battle(); return b ? { round: b.round, hp: b.units.map((u) => u.hp), current: b.current } : null; });
       await page.waitForTimeout(400);
       const persisted = await save();
@@ -136,6 +140,7 @@ for (let guard = 0; guard < 400; guard++) {
       const after = await page.evaluate(() => { const b = window.__gosArena?.battle(); return b ? { round: b.round, hp: b.units.map((u) => u.hp), current: b.current } : null; });
       step(`перезагрузка посреди боя: до ${JSON.stringify(before)} → после ${JSON.stringify(after)}`);
       if (!after) issues.push('после перезагрузки бой не восстановлен');
+      else if (JSON.stringify(after) !== JSON.stringify(before)) issues.push('после перезагрузки изменились HP, раунд или текущий ход');
       void persisted;
       reloadDone = true;
       // Дальше — автобой на скорости ×4.
@@ -157,6 +162,11 @@ for (let guard = 0; guard < 400; guard++) {
     if (bossSeen && (await page.locator('.boss-bar.is-phase-two').count()) && !steps.some((x) => x.includes('фаза II'))) {
       step('фаза II Костяного короля');
       await shot('08b-boss-phase2');
+    }
+    if (process.env.QA_FINISH_BOSS === '1' && !fastFinishDone && await page.locator('.boss-bar.is-phase-two').count()) {
+      await page.getByRole('button', { name: 'Досчитать', exact: true }).click();
+      fastFinishDone = true;
+      step('босс после перехода во II фазу завершён штатной кнопкой «Досчитать»');
     }
     continue;
   }
@@ -193,10 +203,12 @@ for (let guard = 0; guard < 400; guard++) {
     const text = await page.locator('.summary').innerText();
     step(`итоги: ${text.replace(/\s+/g, ' ').slice(0, 220)}`);
     const goldAfter = (await save()).gold;
+    const completedBeforeReload = (await save()).expeditionsCompleted;
     // Перезагрузка на экране итогов не должна начислить награду повторно.
     await page.reload({ waitUntil: 'networkidle' });
     await page.waitForTimeout(1000);
     const goldReload = (await save()).gold;
+    if ((await save()).expeditionsCompleted !== completedBeforeReload) issues.push('перезагрузка итогов повторно засчитала экспедицию');
     step(`золото: до ${goldBefore} → после итогов ${goldAfter} → после перезагрузки ${goldReload}`);
     if (Math.abs(goldReload - goldAfter) > goldAfter * 0.01 + 50) issues.push('после перезагрузки итогов золото изменилось сверх фонового дохода');
     await page.getByRole('button', { name: 'В гильдию' }).click();
@@ -204,6 +216,7 @@ for (let guard = 0; guard < 400; guard++) {
     s = await save();
     step(`возврат в гильдию: activeRun=${s.activeRun === null ? 'null' : 'есть'}, экспедиций завершено ${s.expeditionsCompleted}`);
     await shot('12-guild-after');
+    completed = s.activeRun === null;
     break;
   }
   await page.waitForTimeout(300);
@@ -217,7 +230,10 @@ await page.setViewportSize({ width: +W, height: +H });
 await page.waitForTimeout(300);
 if (await page.locator('.rotate-hint').isVisible()) issues.push(`заставка «Поверните устройство» видна на ${W}×${H}`);
 if (!tipsShot.size) issues.push('подсказки обучения первого боя не показались');
+if (!completed) issues.push('сквозной цикл не завершён возвратом в гильдию');
+if (!reloadDone) issues.push('не проверена перезагрузка боя');
 if (!steps.some((x) => x.startsWith('подготовка к боссу'))) issues.push('экран подготовки к боссу не пройден');
 writeFileSync(`${outDir}/e2e-report.json`, JSON.stringify({ viewport: `${W}x${H}`, steps, issues }, null, 2));
 console.log(JSON.stringify({ issues }, null, 1));
-await browser.close();
+if (issues.length) process.exitCode = 1;
+} finally { await browser.close(); }

@@ -9,7 +9,8 @@ import { autoAction } from '../../src/combat/ai';
 import { serialize } from '../../src/core/save';
 import { newGame } from '../../src/core/state';
 import type { GameState } from '../../src/core/types';
-import { chooseBossPrep, enterNode, availableNodes, serializeRun, startRun, type Run } from '../../src/expedition/run';
+import { chooseBossPrep, enterNode, availableNodes, finishRun, serializeRun, startRun, type Run } from '../../src/expedition/run';
+import { autoPlayRun } from '../../src/expedition/autoplay';
 
 const out = process.argv[2] ?? 'qa-saves';
 mkdirSync(out, { recursive: true });
@@ -66,6 +67,15 @@ function walkTo(run: Run, type: string): boolean {
 
 // 1. Гильдия без забега.
 save('guild', game(), null);
+
+// Итоги через настоящие правила забега: проверка rewarded и восстановления после reload.
+{
+  const s = game();
+  const run = startRun(s, T0, 1);
+  autoPlayRun(run);
+  finishRun(run, s, T0);
+  save('summary', s, run);
+}
 
 // 2. Обычный бой на первом слое.
 {

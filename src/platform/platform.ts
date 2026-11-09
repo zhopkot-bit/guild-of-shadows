@@ -1,3 +1,11 @@
+/** A retryable startup failure: do not replace an unread save with a new game. */
+export class SaveLoadError extends Error {
+  constructor() {
+    super('Progress is temporarily unavailable');
+    this.name = 'SaveLoadError';
+  }
+}
+
 /**
  * Всё, что игра хочет от «площадки» (Яндекс.Игры или локальная разработка).
  * Игровая логика знает только этот интерфейс и никогда не обращается к SDK напрямую —
@@ -5,13 +13,15 @@
  */
 export interface Platform {
   readonly name: 'local' | 'yandex';
+  /** Текущая сессия сохраняет только на устройстве; облачная запись не разрешена. */
+  readonly savesLocallyOnly: boolean;
 
   init(): Promise<void>;
 
   /** Текущее время в мс. На Яндексе — серверное (игрок не может подкрутить часы). */
   now(): number;
 
-  /** Сырой текст сохранения или null. Разбор и миграции — в core/save.ts. */
+  /** Сырой текст сохранения или null. SaveLoadError — повторить загрузку без сброса прогресса. */
   load(): Promise<string | null>;
 
   /** Ставит сохранение в очередь; реальная отправка ограничена лимитами площадки. */

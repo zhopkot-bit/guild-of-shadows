@@ -13,14 +13,17 @@ function readStorage(): string | null {
 /** Локальная разработка и запуск вне Яндекса: сохранения в localStorage, реклама — заглушка. */
 export class LocalPlatform implements Platform {
   readonly name = 'local' as const;
+  readonly savesLocallyOnly = true;
   private paused = false;
+  private adActive = false;
   private pauseCbs: Array<(p: boolean) => void> = [];
   private pending: string | null = null;
   private debug = false;
 
   async init(): Promise<void> {
     this.debug = typeof location !== 'undefined' && location.search.includes('debug');
-    document.addEventListener('visibilitychange', () => this.setPaused(document.hidden));
+    document.addEventListener('visibilitychange', () => this.setPaused(document.hidden || this.adActive));
+    this.setPaused(document.hidden);
   }
 
   now(): number {
@@ -85,6 +88,9 @@ export class LocalPlatform implements Platform {
 
   /** Окошко-имитация ролика: 2 секунды, затем можно закрыть и получить награду. */
   private fakeAd(title: string, reward: boolean): Promise<boolean> {
+    if (this.adActive) return Promise.resolve(false);
+    this.adActive = true;
+    this.setPaused(true);
     return new Promise((resolve) => {
       const overlay = document.createElement('div');
       overlay.className = 'fake-ad';
@@ -114,6 +120,8 @@ export class LocalPlatform implements Platform {
       }, 1000);
       btn.addEventListener('click', () => {
         overlay.remove();
+        this.adActive = false;
+        this.setPaused(document.hidden);
         resolve(reward);
       });
     });

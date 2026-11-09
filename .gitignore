@@ -1,6 +1,8 @@
 node_modules
 dist
+dist-yandex
 .DS_Store
 *.log
 qa-saves/
 qa-out/
+work/

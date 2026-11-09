@@ -1,0 +1,41 @@
+{
+  "date": "2026-11-04",
+  "base_commit": "17d707071767b24e963a0014b2721a330bbec544",
+  "node": "v24.19.0",
+  "unit_tests": {
+    "files": 16,
+    "passed": 167
+  },
+  "reliability_cases": 20,
+  "sdk": "simulated",
+  "builds": {
+    "dist": {
+      "assets/index-BmeFk-j1.css": {
+        "bytes": 42145,
+        "sha256": "209c74aa12305fe144ef1734596b9b60835773608c25b6b08bb506640dd08be0"
+      },
+      "assets/index-DxjQByz7.js": {
+        "bytes": 192230,
+        "sha256": "5c6f20c8c313368d54549cbdf7ced2dcdca6697f4886f3d071bdc96ec680d472"
+      },
+      "index.html": {
+        "bytes": 965,
+        "sha256": "4b7a6e72a01b7135eddfbe70b919727370b4912456fa7edb409aa006bf9fcc0a"
+      }
+    },
+    "dist-yandex": {
+      "assets/index-BmeFk-j1.css": {
+        "bytes": 42145,
+        "sha256": "209c74aa12305fe144ef1734596b9b60835773608c25b6b08bb506640dd08be0"
+      },
+      "assets/index-CsLgcZPi.js": {
+        "bytes": 192230,
+        "sha256": "1c8d522c7f0971ad153b292478701b9a85b78e64ece69f89c67fc25bb14b905b"
+      },
+      "index.html": {
+        "bytes": 965,
+        "sha256": "019a8a006f593904cf29cccc26c4460bda0c80f64dfc352bb44dad0fa0b2f0ac"
+      }
+    }
+  }
+}

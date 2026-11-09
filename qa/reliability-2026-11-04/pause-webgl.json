@@ -1,0 +1,97 @@
+{
+  "ok": true,
+  "rows": [
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "scenario": "sdk",
+      "backend": "webgl",
+      "ok": true,
+      "audioStates": [
+        "suspended"
+      ],
+      "gameplay": [
+        "start",
+        "stop",
+        "start",
+        "stop",
+        "start",
+        "stop",
+        "start",
+        "stop",
+        "start"
+      ],
+      "errors": []
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "scenario": "offline",
+      "backend": "webgl",
+      "ok": true,
+      "audioStates": [
+        "suspended"
+      ],
+      "gameplay": [
+        "start",
+        "stop",
+        "start",
+        "stop",
+        "start",
+        "stop",
+        "start"
+      ],
+      "errors": []
+    },
+    {
+      "viewport": [
+        667,
+        375
+      ],
+      "scenario": "sdk",
+      "backend": "webgl",
+      "ok": true,
+      "audioStates": [
+        "suspended"
+      ],
+      "gameplay": [
+        "start",
+        "stop",
+        "start",
+        "stop",
+        "start",
+        "stop",
+        "start",
+        "stop",
+        "start"
+      ],
+      "errors": []
+    },
+    {
+      "viewport": [
+        667,
+        375
+      ],
+      "scenario": "offline",
+      "backend": "webgl",
+      "ok": true,
+      "audioStates": [
+        "suspended"
+      ],
+      "gameplay": [
+        "start",
+        "stop",
+        "start",
+        "stop",
+        "start",
+        "stop",
+        "start"
+      ],
+      "errors": []
+    }
+  ]
+}

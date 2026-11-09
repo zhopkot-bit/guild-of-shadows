@@ -10,9 +10,10 @@
 npm install
 npm run dev          # http://localhost:5173
 npm run typecheck    # tsc --noEmit (src + tests + tools)
-npm test             # vitest, 113 тестов
+npm test             # vitest, 167 тестов
 npm run sim          # симуляция баланса
 npm run build        # production-сборка в dist/
+npm run build:yandex # сборка для Яндекс Игр в dist-yandex/, SDK обязателен
 npm run preview      # раздать dist/ локально
 ```
 
@@ -28,8 +29,9 @@ npm run preview      # раздать dist/ локально
 | `src/ui/arena/` | WebGL-сцена боя (деформация спрайтов, свет, частицы, эффекты) + Canvas 2D запасной путь |
 | `src/ui/battleView.ts` | Контроллер боя и HUD |
 | `src/ui/portrait.ts` | Портрет 48/64/96/128 по личности героя |
-| `public/art/v17/` | Производственные ассеты v1.7 + `asset-manifest.json` (provenance) + `art-pack.json` (реестр финального арта художника, пока пустой) |
-| `src/content/artpack.ts`, `src/ui/arena/rig.ts` | Загрузка арта художника: скелеты DragonBones, листы кадров, слои арены |
+| `public/art/v17/` | Производственные ассеты + `asset-manifest.json` (provenance) + `art-pack.json` (восемь поз Миры подключены; для остальных используются текущие ассеты) |
+| `src/content/artpack.ts`, `src/ui/arena/` | Загрузка наборов поз и слоёв арены; совместимость с листами кадров и старыми ригами DragonBones |
+| `src/ui/pause.ts` | Общая пауза: SDK, реклама, скрытие вкладки и блокирующие окна |
 | `tools/art/validate_pack.mjs` | Проверка поставки художника (см. `docs/ARTIST_BRIEF_RU.md` в комплекте) |
 | `qa-fixtures/artpack-demo/` | Тестовый пакет арта: манекен DragonBones, лист кадров, передний план |
 | `tests/` | Юнит- и интеграционные тесты |
@@ -41,6 +43,8 @@ npm run preview      # раздать dist/ локально
 npm run build && npx vite preview --port 4173 &
 npm run qa:saves                                    # сейвы: бой, элита, босс I/II
 npm run qa:e2e                                      # гильдия → отряд → экспедиция → босс → итоги
+npm run qa:platform                                 # пауза SDK, офлайн-окно, бой и звук; имитация SDK
+npm run qa:reliability                              # сбои загрузки, повтор подключения и однократная награда
 node tools/qa/shot.mjs "http://127.0.0.1:4173/?qa=1" qa-saves/boss-phase2.json out.png 1920 1080
 node tools/qa/layout-probe.mjs qa-saves/battle.json qa-out/layout http://127.0.0.1:4173/   # зоны боя на альбомных разрешениях (свой набор: VIEWPORTS=844x390,...)
 ```
@@ -52,6 +56,18 @@ node tools/art/validate_pack.mjs public/art/v17/art-pack.json --strict
 node tools/qa/artpack-shot.mjs http://127.0.0.1:5173/ qa-saves/battle.json qa-out/artpack
 ```
 `CHROME=/путь/к/chrome` — если Chromium лежит не в `/opt/pw-browsers/chromium`.
+Для `qa:platform` путь по умолчанию — `/usr/bin/chromium`; `NO_WEBGL=1` включает проверку Canvas 2D.
+Тесты `qa:platform` используют локальную имитацию SDK: настоящие реклама и облако Яндекса требуют отдельной приёмки.
+
+В `.github/workflows/checks.yml` настроены проверки типов, тестов, сборки, арта и баланса, а также браузерная
+проверка паузы на WebGL и Canvas 2D. Текущее состояние описано в `docs/RUNTIME_STABILIZATION_RU.md`;
+отчёты `qa/v1.8/` относятся к исторической сборке от 23.10.2026.
+
+Для публикации в Яндекс Играх используйте `npm run build:yandex` и содержимое `dist-yandex/`.
+При недоступности SDK эта сборка предлагает повторить загрузку. Обычная `dist/` работает
+локально при отсутствии SDK. Если игра уже подключалась к Яндексу на этом origin,
+она запоминает это в `gos.platform` и также требует повторной загрузки SDK при его сбое.
+Сведения о выборе локального сохранения и облачной защите: `docs/PLATFORM_RELIABILITY_RU.md`.
 
 ## Ориентация экрана
 Игра поддерживает **только альбомную ориентацию** (решение заказчика).
