@@ -1,0 +1,5 @@
+{
+  "heroes": {
+    "bran": { "poses": "poses/bran/poses.json" }
+  }
+}

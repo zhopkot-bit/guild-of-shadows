@@ -1,0 +1,21 @@
+{
+ "version": 1,
+ "frameWidth": 522,
+ "frameHeight": 768,
+ "pivot": [
+  0.4973,
+  0.9593
+ ],
+ "figureHeight": 0.8063,
+ "figureWidth": 0.6261,
+ "poses": {
+  "idle": "idle.webp",
+  "windup": "windup.webp",
+  "strike": "strike.webp",
+  "cast": "cast.webp",
+  "hit": "hit.webp",
+  "down": "down.webp",
+  "victory": "victory.webp"
+ },
+ "fps": 12
+}

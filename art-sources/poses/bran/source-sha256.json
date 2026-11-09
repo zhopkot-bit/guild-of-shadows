@@ -1,0 +1,17 @@
+{
+  "sourceCommit": "1f0144fa83b74ea6a428a1482aad46265780e43d",
+  "poses": {
+    "idle": "004b5b12d045d5af92b79fa9fadf4667916052538ea3f20dabe405eac4c352fd",
+    "windup": "946b9c261992f8f5f69fb6166104f0a2039fc59403626f227add82cd1aeb6543",
+    "strike": "a32a2d0785eeaf0fc499b1adc71eda17898f30eb271d803c7c09a8f15e6164e7",
+    "cast": "d8851a96f418b50abd6f07c96ae88d45bb484858c9be024a2fad3626a8cefbc8",
+    "hit": "de27c66167d723c84b27bd00c787596b89f0de0e3d7676fa289436b18eda5f5f",
+    "down": "536a77e2fb80490bf58bd965f571a6441d9f57ff6f3a1ecec50134501cf5c31a",
+    "victory": "85cded06f04f633f212fd6590d2bf48d8aae98cdfbb153308b3eb8a45cdc4fe1"
+  },
+  "references": {
+    "public/art/v17/heroes/bran/sprite.webp": "f7d4822a5013756f2fb55f6d16b73e63b682c3307032174b2ab2e1d2df881ee8",
+    "public/art/v17/heroes/bran/portrait.webp": "0a5fe61100322b9c18ffa6fa3c075a2abd8f00e51bccb83c101d9e7e66bca75a",
+    "public/art/scenes/hero-lineup.webp": "d1590d24b521d533265ade300f15aab6f9f91242297f27c40a7300a681b323a2"
+  }
+}

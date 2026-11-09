@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-27",
+  "baseCommit": "bd05d79",
+  "tool": "OpenAI image_gen",
+  "status": "Art proposals pending review; not production-ready",
+  "sourceOutputFiles": {
+    "idle": "exec-472bad96-09ec-44be-acf9-11bf3953438a.png",
+    "windup": "exec-a83831f3-01b1-46f1-a4d9-593ffd8c7095.png",
+    "strike": "exec-b7b4512d-d34d-4c46-a74d-b2acfc1c2fdb.png",
+    "cast": "exec-9414505b-8a1c-4ec1-9f90-72fbbca157bd.png",
+    "hit": "exec-4e67143c-6ecd-4683-8ced-db60ce9605dc.png",
+    "down": "exec-c8dc24b3-e8d9-4d2e-a7bb-d21da2b48d3d.png",
+    "victory": "exec-385fd92c-c304-4790-bb04-575a1a132734.png"
+  },
+  "references": {
+    "public/art/v17/heroes/bran/sprite.webp": "f7d4822a5013756f2fb55f6d16b73e63b682c3307032174b2ab2e1d2df881ee8",
+    "public/art/v17/heroes/bran/portrait.webp": "0a5fe61100322b9c18ffa6fa3c075a2abd8f00e51bccb83c101d9e7e66bca75a",
+    "public/art/scenes/hero-lineup.webp": "d1590d24b521d533265ade300f15aab6f9f91242297f27c40a7300a681b323a2"
+  },
+  "sourceTransform": "Original generated PNG bytes copied without retouching or resampling. Browser sheets are layout-only previews.",
+  "manualRetouch": false,
+  "gameRegistryChanged": false
+}
