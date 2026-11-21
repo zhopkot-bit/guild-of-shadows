@@ -1,0 +1,61 @@
+name: Verify T1 SDK probe
+on:
+  push:
+    branches: [qa/t1-sdk-probe-20261121]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 7e28d0891c380cf905549066ce404759d8c26f87
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Verify iframe selection and failure outcomes in Chromium
+        env:
+          CHROME: /usr/bin/google-chrome
+        run: node tools/qa/yandex-probe-check.mjs
+      - name: Check official scripts and development initialization on the production build
+        env:
+          CHROME: /usr/bin/google-chrome
+          YANDEX_QA_CERT: work/yandex-sdk/localhost.crt
+        run: |
+          set -euo pipefail
+          mkdir -p work/qa-out
+          curl -fsS --max-time 30 https://games.s3.yandex.net/sdk.js -o work/sdk.js
+          sha256sum work/sdk.js
+          node --input-type=module <<'JS'
+          import { readFileSync } from 'node:fs';
+          const s = readFileSync('work/sdk.js','utf8');
+          console.log({length:s.length, productionSignature:s.includes('YandexGamesSDK'), mentions: s.match(/.{0,40}\/sdk\/_\/v2\..{0,50}/g)?.slice(0,2)});
+          JS
+          npm install --prefix work/yandex-sdk --no-save @yandex-games/sdk-dev-proxy@0.0.2
+          node --use-env-proxy tools/qa/yandex-dev-server.cjs > work/official-proxy.log 2>&1 &
+          sdk_pid=$!
+          trap 'kill "$sdk_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if test -f "$YANDEX_QA_CERT" && curl -fsS --cacert "$YANDEX_QA_CERT" https://localhost:8080/ -o /dev/null; then break; fi
+            sleep 1
+          done
+          node --import tsx tools/qa/yandex-live.ts https://localhost:8080/ work/qa-out/yandex-init.json
+          cmp qa/t1-sdk/yandex-init.json work/qa-out/yandex-init.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: t1-sdk-initialization-7e28d08
+          path: work/qa-out/
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        with:
+          name: guild-of-shadows-t1-7e28d08
+          path: dist/
+          if-no-files-found: error
