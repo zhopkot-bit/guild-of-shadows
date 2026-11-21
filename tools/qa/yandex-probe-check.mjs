@@ -25,7 +25,7 @@ try {
     const kind = url.searchParams.get('kind');
     if (url.pathname === '/sdk.js') {
       res.writeHead(kind === 'denied' ? 403 : 200, { 'Content-Type': 'application/javascript' });
-      res.end(({ dev: '/* webgames-dev-adapter */', fallback: '/* YandexGamesSDK */' })[kind] ?? '/* fixture */');
+      res.end(({ dev: '/* webgames-dev-adapter */', fallback: '/* YandexGamesSDK */', lookalike: '/* YandexGamesSDK */' })[kind] ?? '/* fixture */');
       return;
     }
     // Even an apparent game_start on Yandex must not satisfy a draft probe with an unknown script.
@@ -51,7 +51,8 @@ try {
     ['dev', 1, 'failed', 'official-dev-adapter', 200],
     ['unknown', 1, 'failed', 'unknown', 200],
     ['denied', 2, 'blocked', 'unknown', 403],
-    ['fallback', 1, 'failed', 'platform-sdk', 200],
+    ['fallback', 1, 'failed', 'unknown', 200],
+    ...(process.argv.includes('--cdn') ? [['lookalike', 1, 'failed', 'unknown', 200]] : []),
   ]) {
     const path = join(dir, kind + '.json');
     const result = await exec(process.execPath, ['--import', 'tsx', probe, '--draft', shell + '/?kind=' + kind, path])
@@ -65,6 +66,13 @@ try {
     assert.equal(report.platformAcceptance, 'not_run');
     assert.equal(report.gameFrameOrigin, game);
     assert.deepEqual(report.sdk.map((entry) => [entry.url, entry.status]), [[game + '/sdk.js', http]]);
+    if (kind === 'lookalike') {
+      const [reference] = report.sdkReferences;
+      assert.equal(reference.url, 'https://games.s3.yandex.net/sdk.js');
+      assert.equal(reference.status, 200);
+      assert.match(reference.sha256, /^[a-f0-9]{64}$/);
+      assert.notEqual(reference.sha256, report.sdk[0].sha256);
+    }
     console.log('PASS nested cross-origin game, ' + kind + ': ' + status);
   }
 } finally {
