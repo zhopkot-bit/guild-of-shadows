@@ -507,6 +507,7 @@ export class ArenaScene {
 
   /** Твин: при fast-режиме мгновенно завершается (досчёт боя). */
   tween(ms: number, fn: (t: number) => void, e: (t: number) => number = ease.outCubic): Promise<void> {
+    if (this.destroyed) return Promise.resolve();
     if (this.fast || ms <= 0) {
       fn(1);
       return Promise.resolve();
@@ -1348,6 +1349,7 @@ export class ArenaScene {
       a.p.lean = -0.05 * k * dir;
       a.p.offX = -6 * this.dpr * k * dir;
     });
+    if (this.destroyed) return;
     const from = a.chest();
     from.x += a.w * 0.32 * dir;
     from.y -= a.h * 0.05;

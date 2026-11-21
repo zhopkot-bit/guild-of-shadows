@@ -1,4 +1,5 @@
 import type { Platform } from './platform';
+import { PauseController } from '../core/pause';
 
 const KEY = 'gos.save';
 
@@ -13,14 +14,14 @@ function readStorage(): string | null {
 /** Локальная разработка и запуск вне Яндекса: сохранения в localStorage, реклама — заглушка. */
 export class LocalPlatform implements Platform {
   readonly name = 'local' as const;
-  private paused = false;
-  private pauseCbs: Array<(p: boolean) => void> = [];
+  private readonly pause = new PauseController();
   private pending: string | null = null;
   private debug = false;
 
   async init(): Promise<void> {
     this.debug = typeof location !== 'undefined' && location.search.includes('debug');
-    document.addEventListener('visibilitychange', () => this.setPaused(document.hidden));
+    this.pause.set('hidden', document.hidden);
+    document.addEventListener('visibilitychange', () => this.pause.set('hidden', document.hidden));
   }
 
   now(): number {
@@ -47,6 +48,7 @@ export class LocalPlatform implements Platform {
   }
 
   showRewarded(placement: string): Promise<boolean> {
+    if (this.adOpen) return Promise.resolve(false);
     return this.fakeAd(`Реклама за награду («${placement}»)`, true);
   }
 
@@ -62,11 +64,11 @@ export class LocalPlatform implements Platform {
   gameplayStop(): void {}
 
   onPauseChange(cb: (paused: boolean) => void): void {
-    this.pauseCbs.push(cb);
+    this.pause.subscribe(cb);
   }
 
   isPaused(): boolean {
-    return this.paused;
+    return this.pause.active;
   }
 
   getLang(): string {
@@ -77,14 +79,12 @@ export class LocalPlatform implements Platform {
     if (this.debug) console.debug('[track]', event, params ?? {});
   }
 
-  private setPaused(p: boolean): void {
-    if (this.paused === p) return;
-    this.paused = p;
-    for (const cb of this.pauseCbs) cb(p);
-  }
+  private adOpen = false;
 
   /** Окошко-имитация ролика: 2 секунды, затем можно закрыть и получить награду. */
   private fakeAd(title: string, reward: boolean): Promise<boolean> {
+    this.adOpen = true;
+    this.pause.set('ad', true);
     return new Promise((resolve) => {
       const overlay = document.createElement('div');
       overlay.className = 'fake-ad';
@@ -114,6 +114,8 @@ export class LocalPlatform implements Platform {
       }, 1000);
       btn.addEventListener('click', () => {
         overlay.remove();
+        this.adOpen = false;
+        this.pause.set('ad', false);
         resolve(reward);
       });
     });

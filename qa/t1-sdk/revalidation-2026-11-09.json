@@ -1,0 +1,77 @@
+{
+  "completedAt": "2026-11-09T08:44:43.050805+00:00",
+  "testedSourceCommit": "1d4a32dcb2f37cfc409817210856f98b994c1a84",
+  "baseCommit": "17d707071767b24e963a0014b2721a330bbec544",
+  "status": "passed",
+  "scope": "local-production-build-and-official-dev-adapter",
+  "platformAcceptance": "not_run",
+  "platformBlocker": "Owner confirmed that no Yandex Games draft exists yet",
+  "dependencies": "npm ci from committed package-lock.json",
+  "checks": [
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "tests": 188,
+      "files": 18
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0
+    },
+    {
+      "command": "node --import tsx tools/qa/yandex-live.ts",
+      "exitCode": 0,
+      "matchesReport": "yandex-init.json"
+    },
+    {
+      "command": "node --import tsx tools/qa/yandex-dev-flow.ts",
+      "exitCode": 0,
+      "matchesReport": "yandex-dev-flow.json"
+    },
+    {
+      "command": "node --import tsx tools/qa/run-integrity.ts http://127.0.0.1:4173/",
+      "exitCode": 0,
+      "pageErrors": []
+    },
+    {
+      "command": "node --import tsx tools/qa/pause-flow.ts http://127.0.0.1:4173/",
+      "exitCode": 0,
+      "pageErrors": [],
+      "sdkRuntime": "test-double"
+    },
+    {
+      "command": "CHROME=/usr/bin/chromium npm run qa:e2e",
+      "exitCode": 0,
+      "report": "e2e-2026-11-09.json"
+    }
+  ],
+  "network": [
+    {
+      "url": "https://games.s3.yandex.net/sdk.js",
+      "status": 200,
+      "sha256": "0ce9a0968aea36afbe58e939ff3f1c83201f708e666410c01086d737cda9d07a"
+    },
+    {
+      "url": "http://yastatic.net/s3/games-static/sdk-dev/yandex-dev-adapter.js",
+      "status": 200,
+      "sha256": "b0e5af365b02f7afed31efa0a03f9527fc0a1d4cbf0f19738a771581e76e4cc5"
+    }
+  ],
+  "remainingBeforePublication": [
+    "Production SDK in the Yandex Games draft iframe without LocalPlatform fallback",
+    "Real cloud save restoration in a clean browser profile",
+    "Live rewarded and fullscreen advertisements",
+    "Platform pause/resume with overlapping visibility and advertisement pauses"
+  ],
+  "githubAtTestedSourceCommit": {
+    "mergeable": true,
+    "draft": false,
+    "unresolvedReviewThreads": 0,
+    "reportedCommitStatuses": 0,
+    "reportedPullRequestWorkflowRuns": 0
+  }
+}

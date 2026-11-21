@@ -141,6 +141,9 @@ describe('модули экспедиции MOD01–MOD08', () => {
   it('реликвии старых сейвов переводятся в модули без дублей', () => {
     expect(normalizeModules(['guardShield', 'wolfFang', 'guardianMail', 'phoenixFeather', 'nope'])).toEqual(['guardianMail', 'hawkEye']);
     const run = freshRun();
+    const node = run.map.find((n) => n.layer === 1)!;
+    node.type = 'chest';
+    enterNode(run, node.id);
     (run as unknown as { relics: string[] }).relics = ['fireRune', 'phoenixFeather'];
     run.chestOffers = [{ id: 'relic0', kind: 'relic', relic: 'lifeChalice' } as never];
     run.stage = 'chest';
@@ -160,7 +163,13 @@ describe('подготовка к боссу', () => {
     const run = freshRun();
     const boss = run.map.find((n) => n.type === 'boss')!;
     run.map.filter((n) => n.layer === boss.layer - 1).forEach((n) => (n.next = [boss.id]));
-    run.currentNodeId = run.map.find((n) => n.layer === boss.layer - 1)!.id;
+    let node = run.map.find((n) => n.layer === 1)!;
+    while (node.layer < boss.layer - 1) {
+      run.visited.push(node.id);
+      node = run.map.find((n) => n.id === node.next[0])!;
+    }
+    run.visited.push(node.id);
+    run.currentNodeId = node.id;
     enterNode(run, boss.id);
     return run;
   }

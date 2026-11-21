@@ -1,0 +1,15 @@
+{
+  "scope": "initialization-only",
+  "platformAcceptance": "not_run",
+  "sdkRuntime": "official-dev-adapter",
+  "status": "passed",
+  "platform": "yandex",
+  "sdk": [
+    {
+      "url": "https://localhost:8080/sdk.js",
+      "status": 200,
+      "sha256": "b0e5af365b02f7afed31efa0a03f9527fc0a1d4cbf0f19738a771581e76e4cc5"
+    }
+  ],
+  "pageErrors": []
+}

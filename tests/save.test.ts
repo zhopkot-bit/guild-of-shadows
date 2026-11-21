@@ -29,6 +29,13 @@ describe('сохранения', () => {
     expect(deserialize(json, T0)).toEqual({ ok: false, reason: 'newer' });
   });
 
+  it('убирает повторяющиеся id отряда до применения ограничения размера', () => {
+    const s = newGame(T0);
+    const [a, b, c] = s.party;
+    const loaded = deserialize(JSON.stringify({ ...s, party: [a, a, 'ghost', b, c] }), T0);
+    expect(loaded.ok && loaded.state.party).toEqual([a, b, c]);
+  });
+
   it('NaN, минус и бесконечность в числах заменяются безопасными значениями', () => {
     const s = newGame(T0);
     const json = serialize({ ...s, gold: Number.NaN, essence: -50, relicarium: Infinity });

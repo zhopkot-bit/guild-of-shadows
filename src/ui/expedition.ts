@@ -133,7 +133,6 @@ function lobby(ctx: Ctx): HTMLElement {
     }
     ctx.run = startRun(state, ctx.now(), selectedTier);
     summary = null;
-    ctx.platform.gameplayStart();
     ctx.platform.track('run_start', { tier: selectedTier });
     ctx.save();
     ctx.render();
@@ -190,6 +189,7 @@ function runHead(ctx: Ctx, run: Run): HTMLElement {
           if (!ok) return;
           const hero = reviveFallen(run);
           if (hero) ctx.toast(`${hero.name} вернулся в строй`);
+          ctx.save();
           ctx.render();
         }, 'btn btn--small btn--ghost'),
       ),
@@ -227,6 +227,7 @@ function mapView(ctx: Ctx, run: Run): HTMLElement {
       (b as HTMLButtonElement).disabled = !canGo;
       b.addEventListener('click', () => {
         enterNode(run, node.id);
+        ctx.save();
         ctx.render();
       });
       nodeEls.set(node.id, b);
@@ -309,6 +310,7 @@ function eventView(ctx: Ctx, run: Run): HTMLElement {
     b.addEventListener('click', () => {
       if (!available) return;
       chooseEventOption(run, choice.id);
+      ctx.save();
       ctx.render();
     });
     list.append(b);
@@ -326,6 +328,7 @@ function eventResultView(ctx: Ctx, run: Run): HTMLElement {
     h('div', { class: 'outcome' }, h('p', null, res.text), res.lines.length > 0 ? h('ul', null, ...res.lines.map((l) => h('li', null, l))) : null),
     btn('Дальше', () => {
       continueFromEvent(run);
+      ctx.save();
       ctx.render();
     }, 'btn btn--block'),
   );
@@ -429,7 +432,6 @@ function summaryView(ctx: Ctx, run: Run): HTMLElement {
     const wasAlreadyFinished = run.finished;
     summary = finishRun(run, ctx.state, ctx.now());
     if (!wasAlreadyFinished) {
-      ctx.platform.gameplayStop();
       ctx.platform.track('run_end', { result: summary.result, tier: summary.tier, nodes: summary.nodesCleared });
     }
     ctx.save();

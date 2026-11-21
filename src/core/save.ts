@@ -119,8 +119,8 @@ function normalize(raw: Raw, nowMs: number): GameState {
   }
   const finalHeroes = heroes.length > 0 ? heroes : base.heroes;
   const alive = new Set(finalHeroes.filter((h) => h.status !== 'lost').map((h) => h.id));
-  const party = (Array.isArray(raw.party) ? raw.party : [])
-    .filter((id): id is string => typeof id === 'string' && alive.has(id))
+  const party = [...new Set((Array.isArray(raw.party) ? raw.party : [])
+    .filter((id): id is string => typeof id === 'string' && alive.has(id)))]
     .slice(0, PARTY_SIZE);
 
   const t = isObject(raw.tickets) ? raw.tickets : {};

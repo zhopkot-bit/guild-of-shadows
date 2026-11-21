@@ -1,32 +1,10 @@
 import type { Platform } from './platform';
 import { resolveSave } from './save-resolution';
+import { PauseController } from '../core/pause';
+import type { SDK, Player } from 'ysdk';
 
-/* Минимальное описание SDK Яндекс.Игр: только то, чем пользуемся. Сверено с документацией:
-   https://yandex.ru/dev/games/doc/ru/sdk/sdk-about */
-interface AdCallbacks {
-  onOpen?: () => void;
-  onRewarded?: () => void;
-  onClose?: (wasShown: boolean) => void;
-  onError?: (error: unknown) => void;
-}
-interface YaPlayer {
-  getData(keys?: string[]): Promise<Record<string, unknown>>;
-  setData(data: Record<string, unknown>, flush?: boolean): Promise<void>;
-}
-export interface Ysdk {
-  getPlayer(): Promise<YaPlayer>;
-  adv: {
-    showFullscreenAdv(opts: { callbacks: AdCallbacks }): void;
-    showRewardedVideo(opts: { callbacks: AdCallbacks }): void;
-  };
-  features?: {
-    LoadingAPI?: { ready(): void };
-    GameplayAPI?: { start(): void; stop(): void };
-  };
-  on(event: string, listener: () => void): void;
-  serverTime(): number;
-  environment: { i18n: { lang: string } };
-}
+// Type definitions only; the runtime SDK is supplied by Yandex Games at /sdk.js.
+export type Ysdk = SDK;
 declare global {
   interface Window {
     YaGames?: { init(): Promise<Ysdk> };
@@ -45,9 +23,9 @@ const MIN_SAVE_INTERVAL_MS = 15_000;
 export class YandexPlatform implements Platform {
   readonly name = 'yandex' as const;
   private ysdk!: Ysdk;
-  private player: YaPlayer | null = null;
-  private paused = false;
-  private pauseCbs: Array<(p: boolean) => void> = [];
+  private player: Player | null = null;
+  private readonly pause = new PauseController();
+  private adPending = false;
   private pending: string | null = null;
   private lastSent = 0;
   private timer: number | null = null;
@@ -55,14 +33,13 @@ export class YandexPlatform implements Platform {
   async init(): Promise<void> {
     if (!window.YaGames) throw new Error('Яндекс SDK не загружен');
     this.ysdk = await window.YaGames.init();
+    this.ysdk.on('game_api_pause', () => this.pause.set('platform', true));
+    this.ysdk.on('game_api_resume', () => this.pause.set('platform', false));
     try {
       this.player = await this.ysdk.getPlayer();
     } catch {
       this.player = null; // игра работает на локальном хранилище
     }
-    // Платформа сама показывает рекламу при старте и просит паузу событиями — слушаем с первой секунды.
-    this.ysdk.on('game_api_pause', () => this.setPaused(true));
-    this.ysdk.on('game_api_resume', () => this.setPaused(false));
   }
 
   now(): number {
@@ -132,6 +109,8 @@ export class YandexPlatform implements Platform {
   }
 
   showRewarded(placement: string): Promise<boolean> {
+    if (this.adPending) return Promise.resolve(false);
+    this.adPending = true;
     const safePlacement = this.safeText(placement, 40) || 'unknown';
     this.track('rewarded_start', { placement: safePlacement });
     return new Promise((resolve) => {
@@ -141,6 +120,8 @@ export class YandexPlatform implements Platform {
       const finish = (success: boolean, reason: string) => {
         if (settled) return;
         settled = true;
+        this.adPending = false;
+        this.pause.set('ad', false);
         window.clearTimeout(timeout);
         this.track(success ? 'rewarded_complete' : 'rewarded_failed', { placement: safePlacement, reason });
         resolve(success);
@@ -148,7 +129,8 @@ export class YandexPlatform implements Platform {
       try {
         this.ysdk.adv.showRewardedVideo({
           callbacks: {
-            onRewarded: () => { rewarded = true; }, // eligibility comes from this callback, not onClose
+            onOpen: () => { if (!settled) this.pause.set('ad', true); },
+            onRewarded: () => { if (!settled) rewarded = true; }, // eligibility comes from this callback, not onClose
             onClose: () => finish(rewarded, rewarded ? 'rewarded' : 'closed_without_reward'),
             onError: () => finish(false, 'sdk_error'),
           },
@@ -160,6 +142,8 @@ export class YandexPlatform implements Platform {
   }
 
   showInterstitial(): Promise<void> {
+    if (this.adPending) return Promise.resolve();
+    this.adPending = true;
     this.track('interstitial_start');
     return new Promise((resolve) => {
       let settled = false;
@@ -167,6 +151,8 @@ export class YandexPlatform implements Platform {
       const finish = (reason: string) => {
         if (settled) return;
         settled = true;
+        this.adPending = false;
+        this.pause.set('ad', false);
         window.clearTimeout(timeout);
         this.track(reason === 'closed' ? 'interstitial_complete' : 'interstitial_failed', { reason });
         resolve();
@@ -174,7 +160,9 @@ export class YandexPlatform implements Platform {
       try {
         this.ysdk.adv.showFullscreenAdv({
           callbacks: {
+            onOpen: () => { if (!settled) this.pause.set('ad', true); },
             onClose: (wasShown) => finish(wasShown ? 'closed' : 'not_shown'),
+            onOffline: () => finish('offline'),
             onError: () => finish('sdk_error'),
           },
         });
@@ -197,11 +185,11 @@ export class YandexPlatform implements Platform {
   }
 
   onPauseChange(cb: (paused: boolean) => void): void {
-    this.pauseCbs.push(cb);
+    this.pause.subscribe(cb);
   }
 
   isPaused(): boolean {
-    return this.paused;
+    return this.pause.active;
   }
 
   getLang(): string {
@@ -242,9 +230,4 @@ export class YandexPlatform implements Platform {
     return value.replace(/[\r\n\t]/g, ' ').slice(0, maxLength);
   }
 
-  private setPaused(p: boolean): void {
-    if (this.paused === p) return;
-    this.paused = p;
-    for (const cb of this.pauseCbs) cb(p);
-  }
 }
