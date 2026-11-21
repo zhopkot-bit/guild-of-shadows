@@ -1,0 +1,18 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Король I · масштаб и силуэт</title>
+<style>body{max-width:980px;margin:28px auto;padding:0 14px;background:#191d24;color:#e8edf2;font:16px/1.5 system-ui}select{font:inherit}canvas{display:block;width:100%;max-width:900px;margin-top:14px;background:#55595d}a{color:#9cc7ff}</style>
+<h1>Король I · стойка и высокий замах</h1><p>Сравнение при одинаковом росте стоящего босса и общей линии опоры. Тонкая рамка показывает высоту расчётного общего холста. Для замаха выбран масштаб <select id="choice" aria-label="Масштаб замаха"></select>.</p>
+<output id="metric" aria-live="polite"></output><canvas id="panel" width="900" height="510"></canvas><p>Слева — стойка, справа — замах. Для сравнения используется существующий WebP. Варианты масштаба служат иллюстрацией решения до экспорта. Мобильный интерфейс проверяется отдельно.</p><a href="../HANDOFF_RU.md">К вопросам рецензии</a>
+<script type="module">
+const options=[{"scale":1.22,"canvas":[2126,2159],"idleFraction":0.666975451597962,"headSizeRelativeToCurrent":1},{"scale":1.1,"canvas":[2126,1952],"idleFraction":0.7377049180327869,"headSizeRelativeToCurrent":0.9016393442622952},{"scale":1.08,"canvas":[2126,1918],"idleFraction":0.7507820646506778,"headSizeRelativeToCurrent":0.8852459016393444},{"scale":1,"canvas":[2126,1800],"idleFraction":0.8,"headSizeRelativeToCurrent":0.819672131147541}];
+const choice=document.querySelector('#choice'),metric=document.querySelector('#metric'),panel=document.querySelector('#panel');options.forEach((o,i)=>choice.add(new Option(o.scale.toFixed(2),i)));
+const root='../../../../public/art/v17/poses/bone_king/';
+const images=await Promise.all(['idle','prepare'].map(async name=>{const image=new Image();image.src=root+name+'.webp';await image.decode();return image;}));
+const pack=await (await fetch(root+'poses.json')).json();function draw(){
+ const selected=options[Number(choice.value)],ctx=panel.getContext('2d');ctx.clearRect(0,0,900,510);
+ metric.textContent='Холст '+selected.canvas.join('×')+' · доля стойки '+(100*selected.idleFraction).toFixed(2)+'% · размер головы в замахе '+(100*selected.headSizeRelativeToCurrent).toFixed(2)+'% от принятой позы.';
+ const baseline=475, refH=450, refW=refH*pack.frameWidth/pack.frameHeight;
+ const masterScale=refH/2159, frameH=selected.canvas[1]*masterScale, below=refH*(1-pack.pivot[1]);
+ [230,675].forEach((x,i)=>{ctx.strokeStyle='#d4c6a2';ctx.strokeRect(x-205,baseline+below-frameH,410,frameH);const k=i===0?1:selected.headSizeRelativeToCurrent;ctx.drawImage(images[i],x-refW*k*pack.pivot[0],baseline-refH*k*pack.pivot[1],refW*k,refH*k);});
+ ctx.fillStyle='#dbba7c';ctx.fillRect(18,baseline,864,1);
+}choice.onchange=draw;draw();
+</script></html>
