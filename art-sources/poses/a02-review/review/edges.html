@@ -1,0 +1,38 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A-02 · Контуры исходных PNG</title>
+<style>body{font:17px/1.5 system-ui,sans-serif;max-width:1060px;margin:24px auto;padding:0 16px;color:#e6e8ed;background:#181c24}h1{font-size:1.7em}button,select{font:inherit;padding:.35em}label{display:inline-block;margin:0 .7em .6em 0}canvas{max-width:100%;height:auto;image-rendering:pixelated;background:#72757a;border:1px solid #999}output{display:block;margin:.6em 0}a{color:#a9ceff}</style>
+<h1>Контуры исходных PNG</h1>
+<p>Выберите фрагмент. Красная риска обозначает сторону исходного холста, а цвет подложки помогает различить полупрозрачные кончики ткани. Измерение использует исходный альфа-канал при α &gt; 24.</p>
+<label>Фрагмент <select id="asset"></select></label><label>Подложка <select id="bg"><option value="#72757a">серая</option><option value="#f0f1f2">светлая</option><option value="#191c21">тёмная</option></select></label>
+<output id="stats" aria-live="polite"></output><canvas id="view" width="750" height="500"></canvas>
+<p><a href="../HANDOFF_RU.md">Таблица решений для рецензента</a></p>
+<script type="module">
+const cases=[
+ ['Нора · shoot · низ','nora','shoot','bottom',[760,1168,326,280],26],
+ ['Гоблин · hit · справа','goblinRaider','hit','right',[800,500,286,380],103],
+ ['Король I · strike · справа','boneKing','strike','right',[1336,448,200,200],2],
+ ['Король I · down · слева','boneKing','down','left',[0,1048,200,200],2],
+ ['Король I · down · справа','boneKing','down','right',[888,1060,200,280],5],
+ ['Король II · hit · справа','boneKingPhase2','hit','right',[855,804,200,200],2]];
+const select=document.querySelector('#asset'),bg=document.querySelector('#bg'),view=document.querySelector('#view'),stats=document.querySelector('#stats');
+cases.forEach(([name],i)=>select.add(new Option(name,i)));
+let request=0;
+async function render(){
+ const id=++request;
+ const [,actor,pose,side,[x,y,w,h],expected]=cases[Number(select.value)];
+ const img=new Image(); img.src='../../'+actor+'/proposals/'+pose+'.png';
+ try{
+  await img.decode(); if(id!==request)return;
+  const raw=document.createElement('canvas'); raw.width=img.width;raw.height=img.height;
+  const rc=raw.getContext('2d');rc.drawImage(img,0,0);
+  const edge=side==='bottom'?[0,img.height-1,img.width,1]:[side==='left'?0:img.width-1,0,1,img.height];
+  const bytes=rc.getImageData(...edge).data;const runs=[];let count=0,max=0;
+  for(let i=0;i<bytes.length/4;i++){const alpha=bytes[i*4+3];if(alpha>24){count++;max=Math.max(max,alpha);const last=runs.at(-1);if(last&&last[1]===i-1)last[1]=i;else runs.push([i,i]);}}
+  stats.textContent='На границе '+count+' px · α до '+max+' · '+(side==='bottom'?'x':'y')+' = '+runs.map(([a,b])=>a+'…'+b).join(', ')+(expected===count?'':' · Отличается от базового измерения '+expected);
+  const scale=2,pad=12;view.width=w*scale+2*pad;view.height=h*scale+2*pad;
+  const ctx=view.getContext('2d');ctx.fillStyle=bg.value;ctx.fillRect(0,0,view.width,view.height);ctx.imageSmoothingEnabled=false;ctx.drawImage(img,x,y,w,h,pad,pad,w*scale,h*scale);
+  ctx.fillStyle='#f26a60';if(side==='bottom')ctx.fillRect(pad,pad+h*scale+2,w*scale,2);else ctx.fillRect(side==='left'?pad-4:pad+w*scale+2,pad,2,h*scale);
+ }catch(e){if(id===request)stats.textContent='Не удалось прочитать исходный PNG. Откройте страницу через локальный сервер из корня репозитория. '+e.message;}
+}
+select.onchange=render;bg.onchange=render;render();
+</script></html>
