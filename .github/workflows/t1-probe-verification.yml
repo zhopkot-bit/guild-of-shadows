@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 7e28d0891c380cf905549066ce404759d8c26f87
+          ref: 1e0a495e0d8734ab18c47cd3fdd8186949c250cf
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -23,7 +23,7 @@ jobs:
       - name: Verify iframe selection and failure outcomes in Chromium
         env:
           CHROME: /usr/bin/google-chrome
-        run: node tools/qa/yandex-probe-check.mjs
+        run: node tools/qa/yandex-probe-check.mjs --cdn
       - name: Check official scripts and development initialization on the production build
         env:
           CHROME: /usr/bin/google-chrome
@@ -51,11 +51,32 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: t1-sdk-initialization-7e28d08
+          name: t1-sdk-initialization-1e0a495
           path: work/qa-out/
           if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         with:
-          name: guild-of-shadows-t1-7e28d08
+          name: guild-of-shadows-t1-1e0a495
           path: dist/
           if-no-files-found: error
+      - uses: actions/download-artifact@v4
+        with:
+          name: guild-of-shadows-t1-1e0a495
+          path: work/upload-readback
+      - name: Check the downloadable archive against the built game
+        run: |
+          set -euo pipefail
+          test -s work/upload-readback/index.html
+          diff -qr dist work/upload-readback
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          root = Path('work/upload-readback')
+          class CheckEntrypoints(HTMLParser):
+              def handle_starttag(self, tag, attrs):
+                  for name, value in attrs:
+                      if (tag, name) in {('script', 'src'), ('link', 'href')} and not value.startswith('data:'):
+                          assert (root / value).is_file(), value
+          CheckEntrypoints().feed((root / 'index.html').read_text())
+          print('Archive read back with index.html at root and', sum(p.is_file() for p in root.rglob('*')), 'files')
+          PY

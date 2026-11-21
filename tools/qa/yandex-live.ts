@@ -3,7 +3,7 @@ import { createHash, X509Certificate } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { parseArgs } from 'node:util';
-import { chromium, type Frame, type Page, type Request, type Response } from 'playwright-core';
+import { chromium, type APIRequestContext, type Frame, type Page, type Request, type Response } from 'playwright-core';
 
 const { values, positionals } = parseArgs({ options: { draft: { type: 'boolean' } }, allowPositionals: true });
 if (positionals.length > 2 || (values.draft && !positionals[0])) {
@@ -19,13 +19,15 @@ if (process.env.YANDEX_QA_CERT) {
 
 type Runtime = 'official-dev-adapter' | 'platform-sdk' | 'unknown';
 type SdkResponse = { url: string; status: number; sha256?: string; error?: string };
+type SdkReference = { url: string; status?: number; sha256?: string };
 type GameSignals = { platform: string | null; errors: string[] };
 declare global { interface Window { __gosLiveProbe: GameSignals } }
 
 const report: {
   scope: 'initialization-only'; platformAcceptance: 'not_run'; sdkRuntime: Runtime;
   status: 'passed' | 'blocked' | 'failed'; platform: string | null; sdk: SdkResponse[];
-  gameFrameOrigin?: string; pageErrors: string[]; error?: string;
+  launchOrigin?: string; gameFrameOrigin?: string; sdkReferences?: SdkReference[];
+  pageErrors: string[]; error?: string;
 } = { scope: 'initialization-only', platformAcceptance: 'not_run', sdkRuntime: 'unknown', status: 'failed', platform: null, sdk: [], pageErrors: [] };
 
 const gameNavigation = '#app > main#screen + nav.tabbar button.tab';
@@ -53,12 +55,38 @@ async function findGameFrame(page: Page): Promise<Frame> {
   });
 }
 
-function isSdkScript(request: Request): boolean {
-  if (request.resourceType() !== 'script') return false;
+function sdkPath(request: Request): string | undefined {
+  if (request.resourceType() !== 'script') return;
   for (let hop: Request | null = request; hop; hop = hop.redirectedFrom()) {
-    if (/\/sdk\.js$|\/sdk\/_\/v2\.[^/]+\.js$/.test(new URL(hop.url()).pathname)) return true;
+    const { pathname } = new URL(hop.url());
+    if (pathname === '/sdk.js' || /^\/sdk\/_\/v2\.[0-9a-f]+\.js$/i.test(pathname)) return pathname;
   }
-  return false;
+}
+
+const sha256 = (body: Buffer) => createHash('sha256').update(body).digest('hex');
+
+async function confirmPlatformScript(api: APIRequestContext, observed: ReadonlyMap<string, string>) {
+  const references: SdkReference[] = [];
+  report.sdkReferences = references;
+  for (const [path, observedHash] of observed) {
+    const ref: SdkReference = { url: 'https://games.s3.yandex.net' + path };
+    references.push(ref);
+    try {
+      const response = await api.get(ref.url, { timeout: 15_000 });
+      ref.status = response.status();
+      if (!response.ok()) continue;
+      ref.sha256 = sha256(await response.body());
+      if (ref.sha256 === observedHash) {
+        report.sdkRuntime = 'platform-sdk';
+        return;
+      }
+    } catch { /* Try the versioned bundle if the current loader cannot be compared. */ }
+  }
+  if (!references.some((ref) => ref.sha256)) {
+    report.status = 'blocked';
+    throw new Error('Official Yandex CDN reference unavailable; SDK origin could not be verified');
+  }
+  throw new Error('Game SDK bytes did not match the official Yandex CDN reference');
 }
 
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/chromium', args });
@@ -75,28 +103,34 @@ try {
     window.addEventListener('unhandledrejection', (e) => signals.errors.push(String(e.reason?.message ?? e.reason)));
   });
   const page = await context.newPage();
-  const responses: Response[] = [];
+  const responses: Array<{ path: string; response: Response }> = [];
   page.on('response', (response) => {
-    if (isSdkScript(response.request()) && !(response.status() >= 300 && response.status() < 400)) responses.push(response);
+    const path = sdkPath(response.request());
+    if (path && !(response.status() >= 300 && response.status() < 400)) responses.push({ path, response });
   });
   await page.goto(base, { waitUntil: 'domcontentloaded', timeout: 30_000 });
   const frame = await findGameFrame(page);
   const signals = await frame.evaluate(() => window.__gosLiveProbe);
   report.platform = signals.platform;
   report.pageErrors = signals.errors;
-  if (values.draft) report.gameFrameOrigin = new URL(frame.url()).origin;
+  if (values.draft) {
+    report.launchOrigin = new URL(page.url()).origin;
+    report.gameFrameOrigin = new URL(frame.url()).origin;
+  }
 
-  for (const response of responses.filter((res) => !res.request().serviceWorker() && res.frame() === frame)) {
+  const platformScripts = new Map<string, string>();
+  for (const { path, response } of responses) {
+    if (response.request().serviceWorker() || response.frame() !== frame) continue;
     const url = new URL(response.url());
     // Draft launch links may carry access parameters. Only record the script origin and path.
     const entry: SdkResponse = { url: url.origin + url.pathname, status: response.status() };
     report.sdk.push(entry);
     try {
       const body = await response.body();
-      entry.sha256 = createHash('sha256').update(body).digest('hex');
+      entry.sha256 = sha256(body);
       if (!response.ok()) continue;
       if (body.includes(Buffer.from('webgames-dev-adapter'))) report.sdkRuntime = 'official-dev-adapter';
-      else if (report.sdkRuntime === 'unknown' && body.includes(Buffer.from('YandexGamesSDK'))) report.sdkRuntime = 'platform-sdk';
+      else if (body.includes(Buffer.from('YandexGamesSDK'))) platformScripts.set(path, entry.sha256);
     } catch {
       entry.error = 'Could not read SDK script body';
     }
@@ -108,10 +142,12 @@ try {
   if (!report.sdk.length || report.sdk.some((entry) => entry.status >= 400 || entry.error)) {
     throw new Error('SDK script did not load in the game frame');
   }
-  if (report.sdkRuntime === 'unknown') throw new Error('Unrecognized SDK script in the game frame');
-  if (values.draft && report.sdkRuntime !== 'platform-sdk') throw new Error('Draft probe found the development adapter in the game iframe');
+  if (report.sdkRuntime === 'unknown' && platformScripts.size === 0) throw new Error('Unrecognized SDK script in the game frame');
+  if (values.draft && report.sdkRuntime === 'official-dev-adapter') throw new Error('Draft probe found the development adapter in the game iframe');
   if (report.platform !== 'yandex') throw new Error('The game did not report starting on YandexPlatform');
   if (report.pageErrors.length) throw new Error('JavaScript errors in the game frame during initialization');
+  if (values.draft) await confirmPlatformScript(context.request, platformScripts);
+  else if (report.sdkRuntime === 'unknown' && platformScripts.size > 0) report.sdkRuntime = 'platform-sdk';
   report.status = 'passed';
 } catch (error) {
   report.error = error instanceof Error ? error.message : String(error);
