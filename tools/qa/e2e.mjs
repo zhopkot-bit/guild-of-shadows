@@ -122,21 +122,20 @@ for (let guard = 0; guard < 400; guard++) {
         const target = page.locator('.plate--enemy.is-target, .hero-card.is-target').first();
         await target.click();
         step('ручное умение');
-        await page.waitForTimeout(1500);
       }
       manualDone = true;
       continue;
     }
     if (!reloadDone) {
+      // Для обоих снимков ждём ручного хода, когда модель остановилась до выбора игрока.
+      await page.waitForSelector('.action-bar:not(.is-targeting) .action--attack', { timeout: 30000 });
       const before = await page.evaluate(() => { const b = window.__gosArena?.battle(); return b ? { round: b.round, hp: b.units.map((u) => u.hp), current: b.current } : null; });
-      await page.waitForTimeout(400);
-      const persisted = await save();
       await page.reload({ waitUntil: 'networkidle' });
-      await page.waitForTimeout(1500);
+      await page.waitForSelector('.action-bar:not(.is-targeting) .action--attack', { timeout: 30000 });
       const after = await page.evaluate(() => { const b = window.__gosArena?.battle(); return b ? { round: b.round, hp: b.units.map((u) => u.hp), current: b.current } : null; });
       step(`перезагрузка посреди боя: до ${JSON.stringify(before)} → после ${JSON.stringify(after)}`);
       if (!after) issues.push('после перезагрузки бой не восстановлен');
-      void persisted;
+      else if (JSON.stringify(after) !== JSON.stringify(before)) issues.push('после перезагрузки изменились HP, раунд или текущий ход');
       reloadDone = true;
       // Дальше — автобой на скорости ×4.
       await page.locator('.segmented button', { hasText: 'Авто' }).click();
