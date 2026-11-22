@@ -91,10 +91,13 @@ test('source files and paths escaping the archive are rejected', (t) => {
   assert(result.errors.some((error) => error.includes('escapes dist')));
 });
 
+const firstTurn = { round: 1, hp: [208, 124, 167, 50, 68], current: 'h4' };
+const reloadStep = (before, after) => `перезагрузка посреди боя: до ${JSON.stringify(before)} → после ${JSON.stringify(after)}`;
+
 function completeReport() {
   return { viewport: '1366x768', issues: [], steps: [
     'новая игра: экран гильдии', 'экран героя: {}', 'экспедиция начата: карта',
-    'ручная атака по выбранной цели', 'ручное умение', 'перезагрузка посреди боя: {}',
+    'ручная атака по выбранной цели', 'ручное умение', reloadStep(firstTurn, firstTurn),
     'подготовка к боссу: щиты', 'бой с Костяным королём', 'фаза II Костяного короля',
     'итоги: победа', 'золото: до 1 → после итогов 2',
     'возврат в гильдию: activeRun=null, экспедиций завершено 1',
@@ -115,6 +118,31 @@ test('incomplete cycle, wrong viewport and malformed reports cannot pass', () =>
   const report = completeReport();
   report.steps = report.steps.filter((step) => !step.startsWith('фаза II'));
   assert(e2eErrors(report, '1366x768').some((error) => error.includes('фаза II')));
+});
+
+test('E2E cannot pass with a different or unreadable battle after reload', () => {
+  const original = reloadStep(firstTurn, firstTurn);
+  for (const after of [
+    { ...firstTurn, hp: [220, 124, 167, 50, 68] },
+    { ...firstTurn, current: 'h1' },
+    { ...firstTurn, round: 2 },
+    { ...firstTurn, hp: [] }, {}, null,
+  ]) {
+    const report = completeReport();
+    report.steps[report.steps.indexOf(original)] = reloadStep(firstTurn, after);
+    assert(e2eErrors(report, '1366x768').some((error) => error.includes('reload')));
+  }
+  for (const incomplete of ['перезагрузка посреди боя: {}', 'перезагрузка посреди боя: до { → после {']) {
+    const report = completeReport();
+    report.steps[report.steps.indexOf(original)] = incomplete;
+    assert(e2eErrors(report, '1366x768').some((error) => error.includes('reload')));
+  }
+});
+
+test('fresh E2E profile must finish the expedition exactly once', () => {
+  const report = completeReport();
+  report.steps[report.steps.length - 1] = 'возврат в гильдию: activeRun=null, экспедиций завершено 2';
+  assert(e2eErrors(report, '1366x768').some((error) => error.includes('exactly one')));
 });
 
 test('E2E CLI returns failure for issues and for a missing report', (t) => {
