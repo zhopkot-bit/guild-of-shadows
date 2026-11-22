@@ -1,0 +1,130 @@
+name: Release verification
+
+on:
+  pull_request:
+  push:
+    branches: [main, 'release/**', 'integration/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verification-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - name: Test release gates (including negative cases)
+        run: node --test tools/release/gate-checks.mjs
+      - run: npm run build
+      - name: Validate source registry
+        run: |
+          mkdir -p qa-out/release
+          node tools/art/validate_pack.mjs public/art/v17/art-pack.json --strict > qa-out/release/source-registry.json
+      - name: Verify exact production resources
+        run: |
+          node tools/release/verify-dist.mjs dist public qa-out/release/dist-inventory.json
+          node tools/art/validate_pack.mjs dist/art/v17/art-pack.json --strict > qa-out/release/dist-registry.json
+          git rev-parse HEAD > qa-out/release/source-sha.txt
+          node --import tsx tools/qa/make-saves.ts qa-saves/release
+      - name: Save tested build for browser jobs
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-${{ github.sha }}
+          path: |
+            dist/
+            qa-saves/release/
+            qa-out/release/dist-inventory.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Save static verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: static-evidence-${{ github.sha }}
+          path: qa-out/release/
+          if-no-files-found: warn
+          retention-days: 14
+
+  smoke:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        backend: [webgl, canvas2d]
+        viewport:
+          - { width: 1920, height: 1080 }
+          - { width: 667, height: 375 }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node node_modules/playwright-core/cli.js install --with-deps chromium
+      - uses: actions/download-artifact@v4
+        with:
+          name: production-${{ github.sha }}
+      - name: Check downloaded build and registry
+        run: |
+          node tools/release/verify-dist.mjs dist public qa-out/release/downloaded-inventory.json qa-out/release/dist-inventory.json
+          node tools/art/validate_pack.mjs dist/art/v17/art-pack.json --strict
+      - name: Production renderer smoke
+        run: node tools/release/browser-smoke.mjs qa-out/release/smoke ${{ matrix.viewport.width }} ${{ matrix.viewport.height }} ${{ matrix.backend }}
+      - name: Save browser evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-${{ matrix.backend }}-${{ matrix.viewport.width }}x${{ matrix.viewport.height }}-${{ github.sha }}
+          path: qa-out/release/smoke/
+          if-no-files-found: warn
+          retention-days: 14
+
+  e2e:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node node_modules/playwright-core/cli.js install --with-deps chromium
+      - uses: actions/download-artifact@v4
+        with:
+          name: production-${{ github.sha }}
+      - name: Check downloaded build
+        run: node tools/release/verify-dist.mjs dist public qa-out/release/downloaded-inventory.json qa-out/release/dist-inventory.json
+      - name: Full production cycle with mandatory report gate
+        run: node tools/release/run-e2e.mjs qa-out/release/e2e 1366 768
+      - name: Save E2E evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-${{ github.sha }}
+          path: qa-out/release/e2e/
+          if-no-files-found: warn
+          retention-days: 14
