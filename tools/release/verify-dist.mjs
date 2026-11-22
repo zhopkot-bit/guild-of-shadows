@@ -21,13 +21,19 @@ export function verifyDist(distDir, publicDir) {
     const rel = relative(root, path);
     return rel !== '..' && !rel.startsWith(`..${sep}`) && !isAbsolute(rel);
   }
-  function reference(ref, from) {
+  function reference(ref, from, base = dirname(from)) {
     if (!ref || ref.startsWith('#') || /^(?:data:|https?:|mailto:|blob:|\/\/)/i.test(ref)) return;
     const clean = ref.split(/[?#]/)[0];
     if (!clean) return;
     let path;
-    try { path = resolve(clean.startsWith('/') ? root : dirname(from), `.${clean.startsWith('/') ? '' : '/'}${decodeURIComponent(clean)}`); }
-    catch { errors.push(`Invalid URL ${ref} in ${relative(root, from)}`); return; }
+    try {
+      const decoded = decodeURIComponent(clean);
+      if (decoded.startsWith('/') || decoded.includes('\\')) {
+        errors.push(`Asset URL must be relative to the game: ${ref} in ${relative(root, from)}`);
+        return;
+      }
+      path = resolve(base, decoded);
+    } catch { errors.push(`Invalid URL ${ref} in ${relative(root, from)}`); return; }
     if (!inside(path)) errors.push(`Reference escapes dist: ${ref}`);
     else {
       try { if (!statSync(path).isFile()) throw new Error(); }
@@ -39,7 +45,7 @@ export function verifyDist(distDir, publicDir) {
       const name = relative(root, path).split(sep).join('/');
       const data = readFileSync(path);
       files.push({ path: name, bytes: data.length, sha256: sha256(data) });
-      if (/(?:^|\/)(?:art-sources|node_modules|qa-fixtures|masters)(?:\/|$)|\.(?:psd|kra|py|ts|map)$/i.test(name)) {
+      if (/(?:^|\/)(?:art-sources|node_modules|qa-fixtures|qa-saves|qa-out|masters)(?:\/|$)|\.(?:psd|kra|py|ts|map)$/i.test(name)) {
         errors.push(`Development/source file in dist: ${name}`);
       }
       if (/\.html$/.test(name)) {
@@ -53,7 +59,7 @@ export function verifyDist(distDir, publicDir) {
         // Literal game asset URLs are relative to the document, not the JS chunk.
         // Dynamic paths are covered by the strict registry and browser requests.
         for (const match of data.toString('utf8').matchAll(/["'`]((?:\.\/|\/)?art\/[^"'`\s${}]+\.(?:webp|png|jpg|svg|json|mp3|ogg|wav))["'`]/g)) {
-          reference(`/${match[1].replace(/^(?:\.\/|\/)/, '')}`, path);
+          reference(match[1], path, root);
         }
       }
     });

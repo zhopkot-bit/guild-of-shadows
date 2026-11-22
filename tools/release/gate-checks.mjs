@@ -46,6 +46,31 @@ test('literal JS URLs must resolve even when absent from the source registry', (
   assert(verifyDist(dist, source).errors.some((error) => error.includes('missing.webp')));
 });
 
+test('HTML, CSS and JS asset URLs must work below a platform subdirectory', (t) => {
+  const { dist, source } = fixture(t);
+  writeFileSync(join(dist, 'index.html'), '<script type="module" src="/assets/app.js"></script>');
+  writeFileSync(join(dist, 'assets/app.css'), 'body { background: url(/art/hero.webp); }');
+  writeFileSync(join(dist, 'assets/app.js'), 'console.log("/art/hero.webp");');
+  const { errors } = verifyDist(dist, source);
+  for (const file of ['index.html', 'assets/app.css', 'assets/app.js']) {
+    assert(errors.some((error) => error.includes('must be relative') && error.endsWith(file)), file);
+  }
+});
+
+test('QA saves and reports copied from public cannot enter the production inventory', (t) => {
+  const { dist, source } = fixture(t);
+  for (const folder of ['qa-saves', 'qa-out']) {
+    for (const dir of [dist, source]) {
+      mkdirSync(join(dir, folder, 'release'), { recursive: true });
+      writeFileSync(join(dir, folder, 'release/battle.json'), '{}');
+    }
+  }
+  const { errors } = verifyDist(dist, source);
+  for (const folder of ['qa-saves', 'qa-out']) {
+    assert(errors.includes(`Development/source file in dist: ${folder}/release/battle.json`));
+  }
+});
+
 test('changed public assets and broken HTML/CSS references reject the build', (t) => {
   const { dist, source } = fixture(t);
   writeFileSync(join(dist, 'art/hero.webp'), 'wrong');

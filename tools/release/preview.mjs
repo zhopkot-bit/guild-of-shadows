@@ -23,8 +23,9 @@ export async function withPreview(out, run) {
   await once(probe, 'listening');
   const port = probe.address().port;
   await new Promise((done) => probe.close(done));
-  const base = `http://127.0.0.1:${port}/`;
-  const child = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { stdio: ['ignore', 'pipe', 'pipe'] });
+  const mount = '/verification/';
+  const base = `http://127.0.0.1:${port}${mount}`;
+  const child = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--base', mount, '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { stdio: ['ignore', 'pipe', 'pipe'] });
   let log = '';
   let failure;
   child.on('error', (error) => { failure = error; });
