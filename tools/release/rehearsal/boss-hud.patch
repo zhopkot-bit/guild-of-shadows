@@ -1,7 +1,7 @@
 diff --git a/src/ui/style.css b/src/ui/style.css
 --- a/src/ui/style.css
 +++ b/src/ui/style.css
-@@ -762,6 +762,19 @@
+@@ -762,6 +762,22 @@
    .action__label { font-size: 11px; }
    .coach { width: min(300px, 78%); }
    .coach p { font-size: 12px; }
@@ -15,7 +15,10 @@ diff --git a/src/ui/style.css b/src/ui/style.css
 +  .arena--boss .hud__top, .arena--boss .intents {
 +    position: static; grid-column: 1; width: 100%;
 +  }
-+  .arena--boss .boss-bar__phase { white-space: normal; }
++  .arena--boss .boss-bar__row { display: grid; grid-template-columns: minmax(0, 1fr); }
++  .arena--boss .boss-bar__name, .arena--boss .boss-bar__phase {
++    white-space: normal; overflow: visible; overflow-wrap: anywhere;
++  }
 +  .arena--boss .turns { left: auto; right: 8px; flex-direction: column; max-height: calc(100% - 16px); }
 +  .arena--boss .turns__sep { width: auto; height: 1px; margin: 2px 4px; }
  }

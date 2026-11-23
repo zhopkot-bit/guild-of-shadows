@@ -139,6 +139,42 @@ async function observeBattle() {
   sample();
 }
 
+function hudTextSnapshot() {
+  const boss = window.__gosArena.battle().units.find(unit => unit.boss);
+  const rect = el => { const r = el.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom]; };
+  const el = document.querySelector('.boss-bar');
+  const fields = ['.boss-bar__name', '.boss-bar__phase', '.boss-bar__hp'].map(selector => {
+    const field = el.querySelector(selector);
+    const range = document.createRange();
+    range.selectNodeContents(field);
+    const lines = [...range.getClientRects()].filter(r => r.width > 0 && r.height > 0);
+    const box = el.getBoundingClientRect();
+    return {
+      selector, text: field.textContent, box: rect(field), lines: lines.length,
+      overflowX: field.scrollWidth-field.clientWidth, overflowY: field.scrollHeight-field.clientHeight,
+      insidePanel: lines.every(r => r.left >= box.left-1 && r.right <= box.right+1 && r.top >= box.top-1 && r.bottom <= box.bottom+1),
+    };
+  });
+  const intent = document.querySelector('.intent--armed');
+  return { phase: boss.bossPhase, expectedName: boss.name, fields, track: rect(el.querySelector('.boss-bar__track')), panel: rect(el),
+    turns: rect(document.querySelector('.turns')), intent: intent ? rect(intent) : null,
+    coachVisible: !document.querySelector('.coach').hidden,
+    bannerOpacity: Number(getComputedStyle(document.querySelector('.hud__banner')).opacity) };
+}
+
+function assertReadableHud(snap) {
+  assert.equal(snap.fields[0].text, snap.expectedName, 'Show the full canonical boss name');
+  assert(snap.fields.every(f => f.text.trim() && f.insidePanel && f.overflowX <= 1 && f.overflowY <= 1), 'Full boss name, phase and HP must remain readable in phase ' + snap.phase);
+  if (width === 667) {
+    const overlap = (a, b) => Math.min(a[2],b[2])-Math.max(a[0],b[0]) > 1 && Math.min(a[3],b[3])-Math.max(a[1],b[1]) > 1;
+    const contents = [...snap.fields.map(f => f.box), snap.track];
+    for (let i = 0; i < contents.length; i++) {
+      for (const other of contents.slice(i+1)) assert(!overlap(contents[i], other), 'Boss name, phase, health and track must not overlap');
+    }
+    assert(!overlap(snap.panel, snap.turns) && (!snap.intent || (!overlap(snap.panel, snap.intent) && !overlap(snap.turns, snap.intent))), 'Boss HUD, queue and telegraph must stay separate');
+  }
+}
+
 async function checkLive() {
   const save = JSON.parse(readFileSync('qa-saves/mira/boss.json', 'utf8'));
   save.lastSeen = Date.now();
@@ -164,6 +200,7 @@ async function checkLive() {
     const first = await page.evaluate(() => window.__r01ArtTrace);
     assert.equal(first.backend, backend, 'Live renderer');
     assert(first.initialPhase === 1 && first.startsWithFirstPack, 'Live run must start in phase I');
+    report.phaseHud = { first: await page.evaluate(hudTextSnapshot) };
     await page.screenshot({ path: resolve(out, 'live-phase-I.png') });
     const coach = page.locator('.coach:not([hidden]) button');
     if (await coach.count()) await coach.first().click();
@@ -172,8 +209,22 @@ async function checkLive() {
     await page.waitForFunction(() => window.__r01ArtTrace.hits.length > 0, null, { timeout: 60000 });
     await page.screenshot({ path: resolve(out, 'live-after-hit.png') });
     await page.waitForFunction(() => window.__r01ArtTrace.transition && window.__r01ArtTrace.animationEnd && window.__r01ArtTrace.secondPackFrames > 1, null, { timeout: 150000 });
+    report.phaseHud.transition = await page.evaluate(hudTextSnapshot);
     await page.screenshot({ path: resolve(out, 'live-phase-II.png') });
+    await page.getByRole('button', { name: 'Вручную', exact: true }).click();
+    await page.locator('.action-bar:not(.is-targeting) .action--attack').waitFor({ timeout: 60000 });
+    const tutorial = page.locator('.coach:not([hidden]) button');
+    if (await tutorial.count()) await tutorial.first().click();
+    await page.waitForFunction(() => document.querySelector('.coach').hidden
+      && !document.querySelector('.hud__banner.is-on')
+      && Number(getComputedStyle(document.querySelector('.hud__banner')).opacity) < 0.02, null, { timeout: 10000 });
+    report.phaseHud.settled = await page.evaluate(hudTextSnapshot);
+    await page.screenshot({ path: resolve(out, 'live-phase-II-settled.png') });
     await emitPreview(browser, resolve(out, 'live-phase-II.png'), 'live-phase-II');
+    await emitPreview(browser, resolve(out, 'live-phase-II-settled.png'), 'settled-phase-II');
+    assert.equal(report.phaseHud.settled.phase, 2, 'Settled screenshot must remain in the same phase-II battle');
+    assertReadableHud(report.phaseHud.first);
+    assertReadableHud(report.phaseHud.settled);
     const trace = await page.evaluate(() => window.__r01ArtTrace);
     assert(trace.firstPackFrames > 0 && trace.secondPackFrames > 0 && trace.framesWithMotion > 0);
     assert(trace.hits.length && trace.transition.hp < trace.hpStart);
@@ -220,7 +271,9 @@ async function checkRestoredPhase() {
       await scene.bossPhase2(actor.spec.id);
       return { backend: scene.backendKind, before, afterDuplicate: state(), sameShards: shards === scene.shards };
     });
+    report.restored.hud = await page.evaluate(hudTextSnapshot);
     await page.screenshot({ path: resolve(out, 'restored-phase-II.png') });
+    assertReadableHud(report.restored.hud);
     assert.equal(report.restored.backend, backend);
     assert(report.restored.before.secondPack && report.restored.sameShards, 'Restoring/replaying a phase must reuse its visuals');
     assert.deepEqual(report.restored.before, report.restored.afterDuplicate, 'A duplicate phase notification must preserve the restored visuals');
@@ -369,6 +422,6 @@ try {
   server.kill('SIGTERM');
   report.ok = report.errors.length === 0;
   writeFileSync(resolve(out, 'rehearsal.json'), JSON.stringify(report, null, 2) + '\n');
-  console.log(JSON.stringify({ ok: report.ok, testedSha, testedTree, baseline, patches, backend, width, height, errors: report.errors, sword: report.sword, live: report.live, restored: report.restored }));
+  console.log(JSON.stringify({ ok: report.ok, testedSha, testedTree, baseline, patches, backend, width, height, errors: report.errors, sword: report.sword, live: report.live, restored: report.restored, phaseHud: report.phaseHud }));
   if (!report.ok) process.exitCode = 1;
 }
