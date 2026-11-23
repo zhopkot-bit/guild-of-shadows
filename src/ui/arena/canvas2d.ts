@@ -1,4 +1,4 @@
-import { coverTransform, type AffinePart, type Backend, type BackgroundParams, type QuadDraw, type RenderTarget, type SpriteDraw, type Tex } from './backend';
+import { coverTransform, type AffinePart, type Backend, type BackgroundParams, type QuadDraw, type RenderTarget, type Rgb, type SpriteDraw, type Tex } from './backend';
 
 /**
  * Запасной рендерер для устройств без WebGL. Сцена, анимации и эффекты те же; вместо деформации
@@ -98,24 +98,30 @@ export class Canvas2DBackend implements Backend {
     c.shadowBlur = 0;
     c.shadowColor = 'transparent';
     c.filter = 'none';
-    if (d.mode === 0 && (d.flash > 0.02 || d.emissiveStrength > 0.02)) {
-      // Вспышка/свечение: цветной силуэт через scratch-канвас, добавленный режимом lighter.
-      const s = this.scratch;
-      s.width = Math.max(1, Math.round(d.w));
-      s.height = Math.max(1, Math.round(d.h));
-      const sc = s.getContext('2d') as CanvasRenderingContext2D;
-      sc.clearRect(0, 0, s.width, s.height);
-      const src = d.emissive && d.emissiveStrength > 0.02 && d.flash < 0.02 ? d.emissive : d.tex;
-      sc.drawImage(src.source, d.uv[0] * src.w, d.uv[1] * src.h, (d.uv[2] - d.uv[0]) * src.w, (d.uv[3] - d.uv[1]) * src.h, 0, 0, s.width, s.height);
-      sc.globalCompositeOperation = 'source-in';
-      const col = d.flash > 0.02 ? d.flashColor : d.emissiveColor;
-      sc.fillStyle = `rgb(${col.map((v) => Math.round(Math.min(1, v) * 255)).join(',')})`;
-      sc.fillRect(0, 0, s.width, s.height);
-      c.globalCompositeOperation = 'lighter';
-      c.globalAlpha = Math.min(1, Math.max(d.flash, d.emissiveStrength * 0.6));
-      c.drawImage(s, -d.w / 2, -d.h, d.w, d.h);
+    if (d.mode === 0) {
+      const flash = Math.min(1, d.flash);
+      if (d.emissive && d.emissiveStrength > 0.02 && flash < 1) {
+        const glow = Math.min(1, d.emissiveStrength * 0.6) * (1 - flash);
+        this.drawSpriteOverlay(d, d.emissive, d.emissiveColor, glow);
+      }
+      if (flash > 0.02) this.drawSpriteOverlay(d, d.tex, d.flashColor, flash);
     }
     c.restore();
+  }
+
+  private drawSpriteOverlay(d: SpriteDraw, src: Tex, color: Rgb, alpha: number): void {
+    const s = this.scratch;
+    s.width = Math.max(1, Math.round(d.w));
+    s.height = Math.max(1, Math.round(d.h));
+    const sc = s.getContext('2d') as CanvasRenderingContext2D;
+    const [u0, v0, u1, v1] = d.uv;
+    sc.drawImage(src.source, u0 * src.w, v0 * src.h, (u1 - u0) * src.w, (v1 - v0) * src.h, 0, 0, s.width, s.height);
+    sc.globalCompositeOperation = 'source-in';
+    sc.fillStyle = `rgb(${color.map((v) => Math.round(Math.min(1, v) * 255)).join(',')})`;
+    sc.fillRect(0, 0, s.width, s.height);
+    this.ctx.globalCompositeOperation = 'lighter';
+    this.ctx.globalAlpha = alpha;
+    this.ctx.drawImage(s, -d.w / 2, -d.h, d.w, d.h);
   }
 
   drawQuads(tex: Tex, quads: QuadDraw[]): void {

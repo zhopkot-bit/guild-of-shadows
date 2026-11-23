@@ -138,11 +138,12 @@ class Actor {
   flashColor: Rgb = [1, 1, 1];
   dead = false;
   fallen = false;
-  phase2 = false;
+  bossPhase: 1 | 'awakening' | 'restoring' | 2;
+  get phase2(): boolean { return this.bossPhase === 2 || this.bossPhase === 'restoring'; }
   status: ActorStatus = { active: false, targetable: null, hovered: false, cover: false, threatened: null, charging: null };
   constructor(public spec: ActorSpec) {
     this.dead = !!spec.dead;
-    this.phase2 = !!spec.phase2;
+    this.bossPhase = spec.phase2 ? 'restoring' : 1;
     if (this.dead && spec.side === 'enemy') this.p.dissolve = 1;
     if (this.dead && spec.side === 'hero') this.setFallenPose();
     if (this.phase2) this.p.emissive = 1;
@@ -415,7 +416,7 @@ export class ArenaScene {
     this.layerTex = await Promise.all(layerJobs);
     await Promise.all(vfxJobs);
     this.layout();
-    const boss = [...this.actors.values()].find((a) => a.spec.boss && a.phase2);
+    const boss = [...this.actors.values()].find((a) => a.spec.boss && a.spec.phase2);
     if (boss) this.enterPhase2Visuals(boss, true);
   }
 
@@ -1682,7 +1683,8 @@ export class ArenaScene {
   }
 
   private enterPhase2Visuals(a: Actor, instant: boolean): void {
-    a.phase2 = true;
+    if (a.bossPhase === 2) return;
+    a.bossPhase = 2;
     // Финальный арт II фазы от художника заменяет модель; процедурное свечение тогда не накладывается.
     if (a.spec.anim2 && a.animTex2.length) {
       a.anim = a.spec.anim2;
@@ -1720,6 +1722,8 @@ export class ArenaScene {
   /** Пробуждение короля: доспехи трескаются, проявляется призрачное ядро, свет меняется. */
   async bossPhase2(actorId: string): Promise<void> {
     const a = this.actor(actorId);
+    if (a.bossPhase !== 1) return;
+    a.bossPhase = 'awakening';
     a.status.charging = null;
     this.shake(20);
     this.flashScreen([0.8, 0.9, 1], 0.9);
@@ -1808,11 +1812,6 @@ export class ArenaScene {
       else a.setFallenPose();
     }
     if (alive && a.pose === 'down') a.pose = 'idle';
-  }
-
-  setPhase2(id: string): void {
-    const a = this.actors.get(id);
-    if (a && !a.phase2) this.enterPhase2Visuals(a, true);
   }
 
   stats(): { backend: string; actors: number; particles: number; errors: string[]; units: Array<{ id: string; x: number; offX: number; alpha: number; dissolve: number; clip: string | null; pose: PoseName | null; anim: boolean }> } {

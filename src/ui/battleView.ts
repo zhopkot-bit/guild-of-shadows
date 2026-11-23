@@ -395,7 +395,6 @@ export function battleScreen(ctx: Ctx): HTMLElement {
     }
     for (const u of battle.units) {
       scene.syncAlive(u.id, u.alive);
-      if (u.boss && u.bossPhase === 2) scene.setPhase2(u.id);
       scene.setStatus(u.id, {
         active: battle.current === u.id && battle.result === 'ongoing',
         cover: (u.cover ?? 0) > 0,
