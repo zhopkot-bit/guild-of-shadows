@@ -22,7 +22,7 @@ assert.equal(actualSha, testedSha);
 const sourceTree = execFileSync('git', ['rev-parse', 'HEAD^{tree}'], { encoding: 'utf8' }).trim();
 const testedTree = execFileSync('git', ['write-tree'], { encoding: 'utf8' }).trim();
 assert.equal(baseline, sourceTree === testedTree, 'Expected the reference tree or the patched candidate');
-const patches = baseline ? [] : ['boss-hud.patch', 'boss-phase.patch'].map(file => ({
+const patches = baseline ? [] : ['boss-hud.patch', 'boss-phase.patch', 'canvas-emissive.patch'].map(file => ({
   file, sha256: createHash('sha256').update(readFileSync(new URL('./rehearsal/' + file, import.meta.url))).digest('hex'),
 }));
 const report = { testedSha, testedTree, patches, baseline, harnessSha: process.env.GITHUB_SHA, backend, width, height, errors: [] };
@@ -46,6 +46,83 @@ async function emitPreview(browser, file, label) {
     const chunks = jpeg.match(/.{1,1800}/g);
     chunks.forEach((data, i) => console.log(['U01_PREVIEW', label, i, chunks.length, data].join('|')));
   } finally { await page.close(); }
+}
+
+// Compare the same two real phase-II texels on opaque swatches. Each backend is compared
+// to its own unlit reference: their normal grading and camera presentation may differ.
+async function checkEmission() {
+  const browser = await chromium.launch({
+    args: backend === 'canvas2d' ? ['--disable-webgl', '--disable-3d-apis'] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+  });
+  try {
+    const page = await browser.newPage();
+    await page.goto(base);
+    report.emission = await page.evaluate(async kind => {
+      const { Canvas2DBackend } = await import('/src/ui/arena/canvas2d.ts');
+      const { WebGLBackend } = await import('/src/ui/arena/webgl.ts');
+      const canvas = (w,h) => { const c = document.createElement('canvas'); c.width=w; c.height=h; return c; };
+      const art = new Image();
+      art.src = new URL('art/v17/poses/bone_king_p2/idle.webp', location.href).href;
+      await art.decode();
+      const source = canvas(art.naturalWidth, art.naturalHeight);
+      const gc = source.getContext('2d');
+      gc.drawImage(art,0,0);
+      const rgba = gc.getImageData(0,0,source.width,source.height).data;
+      let armour, glow, armourScore=Infinity, glowScore=-Infinity;
+      for (let y=Math.floor(source.height*.22); y<source.height*.72; y++) {
+        for (let x=Math.floor(source.width*.3); x<source.width*.72; x++) {
+          const i = 4*(y*source.width+x), r=rgba[i], g=rgba[i+1], b=rgba[i+2];
+          if (rgba[i+3] !== 255) continue;
+          const greyCost = Math.abs(r-57)+Math.abs(g-50)+Math.abs(b-48);
+          if (greyCost < armourScore) { armourScore=greyCost; armour={ xy:[x,y], rgb:[r,g,b] }; }
+          const blueScore=b-r + (g-r)*.25;
+          if (b>65 && b<195 && blueScore>glowScore) { glowScore=blueScore; glow={ xy:[x,y], rgb:[r,g,b] }; }
+        }
+      }
+      if (!armour || !glow || glowScore < 20) throw Error('Missing opaque armour / baked-blue texels in boss II artwork');
+      const swatch = canvas(32,16), maskCanvas = canvas(32,16);
+      const paint = swatch.getContext('2d');
+      [armour,glow].forEach((p,i) => { paint.fillStyle='rgb('+p.rgb.join(',')+')'; paint.fillRect(i*16,0,16,16); });
+      const mc=maskCanvas.getContext('2d'); mc.fillStyle='#fff'; mc.fillRect(0,0,16,16);
+      const target=canvas(32,16), noise=canvas(2,2);
+      const renderer=kind==='webgl' ? new WebGLBackend(target,noise) : new Canvas2DBackend(target);
+      renderer.resize(32,16);
+      renderer.setView(1,0,0);
+      const tex=renderer.createTexture(swatch,32,16), mask=renderer.createTexture(maskCanvas,32,16);
+      const readback=canvas(32,16).getContext('2d',{willReadFrequently:true});
+      const d={ tex, emissive:null, uv:[0,0,1,1], x:16,y:16,w:32,h:16, flip:false,time:0,phase:0,
+        breath:0,sway:0,bob:0,lean:0,sx:1,sy:1,rot:0,tint:[1,1,1],alpha:1,flash:0,flashColor:[1,.55,.25],
+        dissolve:0,desat:0,emissiveStrength:0,emissiveColor:[0,.65,1], rim:0,rimColor:[0,0,0],outline:0,outlineColor:[0,0,0],mode:0 };
+      function pixels(extra) {
+        renderer.begin();
+        renderer.drawSprite({...d,...extra});
+        renderer.end();
+        readback.clearRect(0,0,32,16); readback.drawImage(target,0,0);
+        return [8,24].map(x => [...readback.getImageData(x,8,1,1).data].slice(0,3));
+      }
+      return { source: 'public/art/v17/poses/bone_king_p2/idle.webp', armour, glow, backend:renderer.kind,
+        plain:pixels({}), noMask:pixels({emissiveStrength:1.6}), zeroMask:pixels({emissive:mask}),
+        masked:pixels({emissive:mask,emissiveStrength:.45}), flash:pixels({flash:.25}),
+        unmaskedFlash:pixels({flash:.25,emissiveStrength:1.6}),
+        maskedFlash:pixels({flash:.25,emissive:mask,emissiveStrength:.45}) };
+    }, backend);
+    const p=report.emission;
+    assert.equal(p.backend,backend);
+    assert(p.plain.flat().some(x=>x>25), 'Actual sprite must be drawn');
+    const diff = (a,b) => Math.max(...a.map((v,i)=>Math.abs(v-b[i])));
+    p.unmaskedDelta=p.plain.map((rgb,i)=>diff(rgb,p.noMask[i]));
+    p.flashWeightDelta=p.flash.map((rgb,i)=>diff(rgb,p.unmaskedFlash[i]));
+    if (baseline && backend === 'canvas2d') {
+      assert(p.unmaskedDelta.every(d=>d>20), 'Original fallback must reproduce the full-body emission regression');
+      return;
+    }
+    assert(p.unmaskedDelta.every(d=>d<=1), 'Baked artwork without a mask must preserve both original texels at strength 1.6');
+    assert(p.flashWeightDelta.every(d=>d<=1), 'Unused emission strength must not amplify a hit flash');
+    assert(p.plain.every((rgb,i)=>diff(rgb,p.zeroMask[i])<=1), 'An explicit mask with zero strength must be inert');
+    assert(diff(p.plain[0],p.masked[0])>8 && diff(p.plain[1],p.masked[1])<=1, 'An explicit mask must brighten only its opaque part');
+    assert(p.plain.every((rgb,i)=>diff(rgb,p.flash[i])>8), 'Hit flash must affect both opaque body texels');
+    assert(diff(p.flash[0],p.maskedFlash[0])>5 && diff(p.flash[1],p.maskedFlash[1])<=1, 'Combined flash and mask must retain emission locality');
+  } finally { await browser.close(); }
 }
 
 async function checkStatic() {
@@ -411,7 +488,8 @@ try {
     await delay(150);
   }
   assert(ready, 'Vite failed to start');
-  const checks = baseline ? [['reference HUD', checkBossHud]] : [['static', checkStatic], ['live', checkLive], ['restored phase II', checkRestoredPhase], ['HUD', checkBossHud]];
+  const checks = baseline ? [['reference HUD', checkBossHud], ['reference emission', checkEmission]]
+    : [['static', checkStatic], ['live', checkLive], ['restored phase II', checkRestoredPhase], ['HUD', checkBossHud], ['emission controls', checkEmission]];
   for (const [name, check] of checks) {
     try { await check(); }
     catch (error) { report.errors.push(name + ': ' + (error.stack ?? error.message)); }
@@ -422,6 +500,6 @@ try {
   server.kill('SIGTERM');
   report.ok = report.errors.length === 0;
   writeFileSync(resolve(out, 'rehearsal.json'), JSON.stringify(report, null, 2) + '\n');
-  console.log(JSON.stringify({ ok: report.ok, testedSha, testedTree, baseline, patches, backend, width, height, errors: report.errors, sword: report.sword, live: report.live, restored: report.restored, phaseHud: report.phaseHud }));
+  console.log(JSON.stringify({ ok: report.ok, testedSha, testedTree, baseline, patches, backend, width, height, errors: report.errors, sword: report.sword, live: report.live, restored: report.restored, phaseHud: report.phaseHud, emission: report.emission }));
   if (!report.ok) process.exitCode = 1;
 }

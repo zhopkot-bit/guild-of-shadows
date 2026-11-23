@@ -1,10 +1,11 @@
-name: R-01 Mira export reproduction
+name: R-01 Mira encoder comparison
 
 on:
   push:
     branches: [integration/r01-rehearsal]
     paths:
       - .github/workflows/r01-mira-assets.yml
+      - tools/release/r01-mira-profiles.py
       - tools/release/r01-mira-compare.py
       - tools/art/build_poses.py
       - art-sources/poses/mira/proposals/**
@@ -14,26 +15,82 @@ permissions:
   contents: read
 
 jobs:
-  reproduce:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 8
+  measure:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: ubuntu22-system, runner: ubuntu-22.04, pillow: system, webp: system }
+          - { name: ubuntu24-system, runner: ubuntu-24.04, pillow: system, webp: system }
+          - { name: debian12-system, runner: ubuntu-24.04, pillow: debian, webp: '1.2.4' }
+          - { name: wheel-1.4, runner: ubuntu-24.04, pillow: '10.4.0', webp: '1.4.0' }
+          - { name: wheel-1.5, runner: ubuntu-24.04, pillow: '11.3.0', webp: '1.5.0' }
+          - { name: wheel-1.6, runner: ubuntu-24.04, pillow: '12.0.0', webp: '1.6.0' }
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - if: matrix.pillow != 'system' && matrix.pillow != 'debian'
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install Pillow with the bundled WebP codec
+      - name: Select packaged encoder
+        if: matrix.pillow != 'debian'
+        env:
+          PILLOW_VERSION: ${{ matrix.pillow }}
         run: |
-          python -m pip install --disable-pip-version-check --only-binary=:all: 'Pillow==11.3.0'
-      - name: Rebuild and compare all nine files
-        run: python tools/release/r01-mira-compare.py "$RUNNER_TEMP/r01-mira"
-      - name: Archive source and output hashes and pixel comparison
-        if: always()
+          if [ "$PILLOW_VERSION" = system ]; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -q python3-pil
+            echo 'PROFILE_PYTHON=/usr/bin/python3' >> "$GITHUB_ENV"
+          else
+            python -m pip install --disable-pip-version-check --only-binary=:all: "Pillow==$PILLOW_VERSION"
+            echo 'PROFILE_PYTHON=python' >> "$GITHUB_ENV"
+          fi
+      - name: Measure bytes, decoded pixels and WebP chunks
+        if: matrix.pillow != 'debian'
+        env:
+          PROFILE: ${{ matrix.name }}
+          EXPECTED_WEBP: ${{ matrix.webp }}
+        run: |
+          "$PROFILE_PYTHON" tools/release/r01-mira-profiles.py measure "$RUNNER_TEMP/mira-profile" "$PROFILE" "$EXPECTED_WEBP"
+      - name: Measure Debian bookworm system encoder
+        if: matrix.pillow == 'debian'
+        env:
+          PROFILE: ${{ matrix.name }}
+          EXPECTED_WEBP: ${{ matrix.webp }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/mira-profile"
+          docker run --rm -e GITHUB_SHA -e PROFILE -e EXPECTED_WEBP \
+            -v "$GITHUB_WORKSPACE:/workspace:ro" -v "$RUNNER_TEMP/mira-profile:/evidence" \
+            -w /workspace debian:bookworm-slim sh -ec '
+              apt-get update -qq
+              apt-get install -y -q --no-install-recommends python3-pil
+              /usr/bin/python3 tools/release/r01-mira-profiles.py measure /evidence "$PROFILE" "$EXPECTED_WEBP"
+            '
+      - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mira-export-${{ github.sha }}
-          path: ${{ runner.temp }}/r01-mira/report.json
+          name: mira-profile-${{ matrix.name }}-${{ github.sha }}
+          path: ${{ runner.temp }}/mira-profile/report.json
           if-no-files-found: error
           retention-days: 14
+
+  compare:
+    needs: measure
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: mira-profile-*-${{ github.sha }}
+          path: ${{ runner.temp }}/mira-profiles
+      - name: Require complete evidence and one byte-identical profile
+        run: |
+          python3 tools/release/r01-mira-profiles.py collect "$RUNNER_TEMP/mira-profiles"
