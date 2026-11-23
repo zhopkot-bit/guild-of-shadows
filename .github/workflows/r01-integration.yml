@@ -1,0 +1,75 @@
+name: R-01 integration rehearsal
+
+on:
+  push:
+    branches: [integration/r01-rehearsal]
+
+permissions:
+  contents: read
+
+jobs:
+  merge-tree:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Record native three-way merge for the two source branches
+        env:
+          T1_SHA: 1e0a495e0d8734ab18c47cd3fdd8186949c250cf
+          T2_SHA: e2a3a05aed1647d92074b4543733ce1cdee25f05
+        run: |
+          git merge-base "$T1_SHA" "$T2_SHA"
+          merge_code=0
+          git merge-tree --write-tree --name-only --no-messages "$T1_SHA" "$T2_SHA" > merge-tree.txt || merge_code=$?
+          cat merge-tree.txt
+          test "$merge_code" -le 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source-merge-tree-${{ github.sha }}
+          path: merge-tree.txt
+          if-no-files-found: error
+
+  contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: node node_modules/playwright-core/cli.js install --with-deps chromium
+      - name: Check run integrity, pause and SDK probe against the candidate
+        run: |
+          export CHROME="$(node --input-type=module -e "import { chromium } from 'playwright-core'; console.log(chromium.executablePath())")"
+          mkdir -p qa-out/r01
+          node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port 4173 --strictPort > qa-out/r01/preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" || true' EXIT
+          node --input-type=module <<'JS'
+          import { setTimeout } from 'node:timers/promises';
+          for (let attempt = 0; ; attempt++) {
+            try { if ((await fetch('http://127.0.0.1:4173/')).ok) break; } catch {}
+            if (attempt >= 60) throw new Error('Production preview did not start');
+            await setTimeout(200);
+          }
+          JS
+          suite_status=0
+          node --import tsx tools/qa/run-integrity.ts http://127.0.0.1:4173/ > qa-out/r01/run-integrity.log 2>&1 || suite_status=1
+          node --import tsx tools/qa/pause-flow.ts http://127.0.0.1:4173/ > qa-out/r01/pause-flow.log 2>&1 || suite_status=1
+          node tools/qa/yandex-probe-check.mjs > qa-out/r01/sdk-probe.log 2>&1 || suite_status=1
+          cat qa-out/r01/run-integrity.log qa-out/r01/pause-flow.log qa-out/r01/sdk-probe.log
+          exit "$suite_status"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-contracts-${{ github.sha }}
+          path: qa-out/r01/
+          if-no-files-found: warn

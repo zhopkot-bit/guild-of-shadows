@@ -8,13 +8,25 @@ describe('общая пауза', () => {
     const off = pause.subscribe(listener);
     pause.set('platform', true);
     pause.set('modal', true);
+    pause.set('hidden', true);
     pause.set('platform', false);
     expect(pause.active).toBe(true);
     pause.set('modal', false);
+    expect(pause.active).toBe(true);
+    expect(listener.mock.calls).toEqual([[false], [true]]);
+    pause.set('hidden', false);
     expect(listener.mock.calls.map(([value]) => value)).toEqual([false, true, false]);
     off();
     pause.set('hidden', true);
     expect(listener).toHaveBeenCalledTimes(3);
+  });
+
+  it('сообщает новому экрану уже действующую паузу', () => {
+    const pause = new PauseController();
+    pause.set('platform', true);
+    const listener = vi.fn();
+    pause.subscribe(listener);
+    expect(listener).toHaveBeenCalledWith(true);
   });
 
   it('не продолжает ожидание, пока осталась хотя бы одна причина', async () => {
@@ -54,5 +66,6 @@ describe('общая пауза', () => {
     expect(await waiting).toBe(false);
     pause.set('platform', false);
     expect(await pause.wait(controller.signal)).toBe(false);
+    expect(await pause.wait(new AbortController().signal)).toBe(true);
   });
 });

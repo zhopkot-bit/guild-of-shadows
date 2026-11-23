@@ -33,7 +33,6 @@ export async function startApp(platform: Platform, root: HTMLElement): Promise<v
   root.replaceChildren(h('div', { class: 'loading' }, T.loading));
   const pause = new PauseController();
   pause.set('platform', platform.isPaused());
-  pause.set('hidden', document.hidden);
   platform.onPauseChange((p) => pause.set('platform', p));
 
   // Финальный арт художника (если поставлен): реестр art-pack.json и пакеты анимаций.
@@ -43,17 +42,15 @@ export async function startApp(platform: Platform, root: HTMLElement): Promise<v
   platform.track('game_start', { platform: platform.name, save_status: loaded.ok ? 'loaded' : loaded.reason });
   let state: GameState;
   let saveEnabled = true;
+  let localConsentPending = loaded.ok && platform.name === 'yandex' && platform.savesLocallyOnly;
   let startNotice: { title: string; text: string } | null = null;
   if (loaded.ok) {
     state = loaded.state;
   } else {
     state = newGame(platform.now());
     if (loaded.reason === 'corrupt' && raw) {
-      try {
-        window.localStorage.setItem(BACKUP_KEY, raw);
-      } catch {
-        /* хранилище недоступно — резервной копии не будет */
-      }
+      // If preserving the only copy fails, the startup screen can safely offer a retry.
+      window.localStorage.setItem(BACKUP_KEY, raw);
       startNotice = T.notices.corrupt;
     } else if (loaded.reason === 'newer') {
       saveEnabled = false;
@@ -70,7 +67,8 @@ export async function startApp(platform: Platform, root: HTMLElement): Promise<v
     startNotice = T.notices.corruptRunBlocked;
   }
   const offline = loaded.ok ? applyOffline(state, platform.now()) : null;
-  if (startNotice || offline && offline.seconds >= 60) pause.set('modal', true);
+  pause.set('hidden', document.hidden);
+  if (localConsentPending || startNotice || offline && offline.seconds >= 60) pause.set('modal', true);
 
   let tab: Tab = restored.run ? 'expedition' : 'guild';
   let live: Array<() => void> = [];
@@ -164,7 +162,7 @@ export async function startApp(platform: Platform, root: HTMLElement): Promise<v
   }
 
   function save(): void {
-    if (!saveEnabled) return;
+    if (!saveEnabled || localConsentPending) return;
     state.lastSeen = platform.now();
     state.activeRun = run ? serializeRun(run) : null;
     platform.save(serialize(state));
@@ -245,7 +243,14 @@ export async function startApp(platform: Platform, root: HTMLElement): Promise<v
   appReady = true;
   syncGameplay();
 
-  if (startNotice) ctx.modal(startNotice.title, [startNotice.text], [{ label: T.notices.ok }]);
+  if (localConsentPending) {
+    const body = saveEnabled ? [T.notices.localOnly.text] : [];
+    if (startNotice) body.push(startNotice.text);
+    ctx.modal(startNotice?.title ?? T.notices.localOnly.title, body, [
+      { label: T.notices.continue, onClick: () => { localConsentPending = false; save(); } },
+      { label: T.startup.retry, ghost: true, onClick: () => window.location.reload() },
+    ]);
+  } else if (startNotice) ctx.modal(startNotice.title, [startNotice.text], [{ label: T.notices.ok }]);
   else if (offline && offline.seconds >= 60) {
     const text = fill(T.offline.text, { time: fmtDuration(offline.seconds), capped: offline.capped ? T.offline.capped : '', gold: fmt(offline.gold) });
     ctx.modal(T.offline.title, [text], [{ label: T.offline.take }]);

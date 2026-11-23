@@ -38,10 +38,15 @@ describe('контракт адаптера Яндекс SDK', () => {
   it('подписывается на паузу до ожидания getPlayer', async () => {
     const f = fixture();
     let release!: (player: Player) => void;
-    f.sdk.getPlayer.mockImplementationOnce(() => new Promise((resolve) => { release = resolve; }));
+    let notifyPlayerRequested!: () => void;
+    const playerRequested = new Promise<void>((resolve) => { notifyPlayerRequested = resolve; });
+    f.sdk.getPlayer.mockImplementationOnce(() => new Promise((resolve) => {
+      release = resolve;
+      notifyPlayerRequested();
+    }));
     const platform = new YandexPlatform();
     const init = platform.init();
-    await Promise.resolve();
+    await playerRequested;
     f.emit('game_api_pause');
     expect(platform.isPaused()).toBe(true);
     release(f.player);

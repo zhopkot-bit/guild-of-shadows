@@ -1,0 +1,73 @@
+{
+  "status": "passed",
+  "scope": "official-dev-adapter",
+  "platformAcceptance": "not_run",
+  "limitations": [
+    "Development storage uses localStorage, not Yandex cloud",
+    "Development ads are test windows, not live ads",
+    "SDK on() only logs; real platform pause/resume is not exercised"
+  ],
+  "checks": [
+    {
+      "name": "strict-build-sdk-startup",
+      "ok": true,
+      "features": [
+        "LoadingAPI.ready()",
+        "GameplayAPI.start()"
+      ]
+    },
+    {
+      "name": "official-rewarded-pauses-income-and-gameplay-then-resumes",
+      "ok": true,
+      "features": [
+        "LoadingAPI.ready()",
+        "GameplayAPI.start()",
+        "GameplayAPI.stop()",
+        "GameplayAPI.start()"
+      ]
+    },
+    {
+      "name": "rewarded-close-without-reward-and-overlap",
+      "ok": true,
+      "extraGold": 0
+    },
+    {
+      "name": "rewarded-complete-once-and-reload",
+      "ok": true,
+      "extraGold": 840
+    },
+    {
+      "name": "official-setData-getData-without-game-local-save",
+      "ok": true,
+      "storage": "development-localStorage"
+    },
+    {
+      "name": "official-fullscreen-close-pause-and-overlap",
+      "ok": true,
+      "scope": "source-built-adapter"
+    }
+  ],
+  "sdk": [
+    {
+      "url": "https://localhost:8080/sdk.js",
+      "status": 200,
+      "sha256": "b0e5af365b02f7afed31efa0a03f9527fc0a1d4cbf0f19738a771581e76e4cc5"
+    },
+    {
+      "url": "https://localhost:8080/sdk.js",
+      "status": 200,
+      "sha256": "b0e5af365b02f7afed31efa0a03f9527fc0a1d4cbf0f19738a771581e76e4cc5"
+    },
+    {
+      "url": "https://localhost:8080/sdk.js",
+      "status": 200,
+      "sha256": "b0e5af365b02f7afed31efa0a03f9527fc0a1d4cbf0f19738a771581e76e4cc5"
+    },
+    {
+      "url": "https://localhost:8080/sdk.js",
+      "status": 200,
+      "sha256": "b0e5af365b02f7afed31efa0a03f9527fc0a1d4cbf0f19738a771581e76e4cc5"
+    }
+  ],
+  "pageErrors": []
+}

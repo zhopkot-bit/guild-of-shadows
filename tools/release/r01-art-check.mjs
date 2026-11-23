@@ -1,0 +1,256 @@
+import assert from 'node:assert/strict';
+import { execFileSync, spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { closeSync, mkdirSync, openSync, readFileSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
+
+const testedSha = '8307ef7910f3bd80fc05a51939a034aa8bd3fbd2';
+const [backend, widthText, heightText] = process.argv.slice(2);
+assert(['webgl', 'canvas2d'].includes(backend));
+const width = Number(widthText), height = Number(heightText);
+assert([[1920, 1080], [667, 375]].some(([w, h]) => w === width && h === height));
+const chromium = createRequire(resolve('package.json'))('playwright-core').chromium;
+const out = resolve('qa-out/u01');
+const base = 'http://127.0.0.1:5173/';
+mkdirSync(out, { recursive: true });
+const actualSha = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+assert.equal(actualSha, testedSha);
+const report = { testedSha, harnessSha: process.env.GITHUB_SHA, backend, width, height, errors: [] };
+const serverLog = openSync(resolve(out, 'vite.log'), 'w');
+const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', '5173', '--strictPort'], { stdio: ['ignore', serverLog, serverLog] });
+closeSync(serverLog);
+
+async function checkStatic() {
+  const env = { ...process.env, CHROME: chromium.executablePath(), VIEWPORTS: width + 'x' + height };
+  if (backend === 'canvas2d') env.NO_WEBGL = '1';
+  else delete env.NO_WEBGL;
+  const run = spawn(process.execPath, ['tools/qa/approved-pose-integration.mjs', base, 'qa-saves/pose-sets', out], { env, stdio: 'inherit' });
+  const [exitCode] = await once(run, 'exit');
+  const fixtureReport = JSON.parse(readFileSync(resolve(out, 'report.json'), 'utf8'));
+  report.staticCases = fixtureReport.rows.map(row => ({
+    scenario: row.scenario, backend: row.backend, viewport: row.viewport, poses: row.poses?.length,
+    ok: row.ok, errors: row.errors, clipped: row.clipped,
+  }));
+  assert.deepEqual(fixtureReport.rows.map(row => row.scenario).sort(), ['boss', 'boss-phase2', 'mage', 'mixed']);
+  for (const row of fixtureReport.rows) {
+    assert.equal(row.backend, backend, 'Actual backend of ' + row.scenario);
+    assert.deepEqual(row.viewport, [width, height]);
+    assert(row.poses?.length > 0 && row.ok, 'Static bounds or resources failed in ' + row.scenario);
+  }
+  assert.equal(exitCode, 0, 'Static pose script failed');
+}
+
+// Sample the real game with the combat controls. This observer only reads scene/model state.
+async function observeBattle() {
+  const moduleUrl = performance.getEntriesByType('resource').map(entry => entry.name).findLast(url => /\/src\/ui\/arena\/scene\.ts(?:\?|$)/.test(url));
+  const { ArenaScene } = await import(moduleUrl ?? '/src/ui/arena/scene.ts');
+  const original = ArenaScene.prototype.stats;
+  let scene;
+  ArenaScene.prototype.stats = function () { scene = this; return original.call(this); };
+  try { window.__gosArena.stats(); } finally { ArenaScene.prototype.stats = original; }
+  const battle = window.__gosArena.battle();
+  const boss = battle.units.find(unit => unit.boss);
+  const actor = scene.actors.get(boss.id);
+  const canvas = scene.canvas.getBoundingClientRect();
+  const bar = document.querySelector('.boss-bar').getBoundingClientRect();
+  const trace = {
+    backend: scene.backendKind, initialPhase: boss.bossPhase,
+    startsWithFirstPack: actor.posePack === actor.spec.poses,
+    heroIds: battle.units.filter(unit => unit.side === 'hero').map(unit => unit.id),
+    logStart: battle.log.length, bossId: boss.id, hpStart: boss.hp, hits: [], transition: null,
+    firstPackFrames: 0, secondPackFrames: 0, framesWithMotion: 0, sequence: [],
+    canvas: [canvas.width, canvas.height],
+    hud: [bar.left-canvas.left, bar.top-canvas.top, bar.right-canvas.left, bar.bottom-canvas.top],
+  };
+  window.__r01ArtTrace = trace;
+  // Observe the completion of the game's own animation independently from the model/HUD switch.
+  const animatePhase = scene.bossPhase2;
+  scene.bossPhase2 = async function (id) {
+    trace.animationStart = { id, ms: Math.round(performance.now()) };
+    try {
+      const result = await animatePhase.call(this, id);
+      trace.animationEnd = { id, ms: Math.round(performance.now()) };
+      return result;
+    } finally {
+      delete this.bossPhase2;
+    }
+  };
+  let previous = '';
+  function sample() {
+    const live = window.__gosArena.battle();
+    if (live !== battle) return;
+    const pose = scene.shownPose(actor);
+    const phase = actor.phase2 ? 2 : 1;
+    if (actor.posePack === actor.spec.poses && !actor.phase2) trace.firstPackFrames++;
+    if (actor.posePack === actor.spec.poses2 && actor.phase2) trace.secondPackFrames++;
+    if ([...scene.actors.values()].some(a => Math.abs(a.p.offX) > 1 || Math.abs(a.p.offY) > 1 || Math.abs(a.p.lean) > 0.015)) trace.framesWithMotion++;
+    const marker = phase + '/' + pose;
+    if (marker !== previous) {
+      trace.sequence.push({ ms: Math.round(performance.now()), state: marker });
+      previous = marker;
+    }
+    const log = battle.log.slice(trace.logStart);
+    trace.hits = log.filter(e => e.t === 'hit' && e.target === boss.id && e.dmg > 0 && trace.heroIds.includes(e.actor))
+      .map(e => ({ actor: e.actor, target: e.target, dmg: e.dmg, via: e.via }));
+    if (!trace.transition && log.some(e => e.t === 'bossPhase') && boss.bossPhase === 2 && actor.phase2
+        && actor.posePack === actor.spec.poses2 && document.querySelector('.boss-bar.is-phase-two')) {
+      trace.transition = { ms: Math.round(performance.now()), hp: boss.hp, pose, round: battle.round };
+    }
+    requestAnimationFrame(sample);
+  }
+  sample();
+}
+
+async function checkLive() {
+  const save = JSON.parse(readFileSync('qa-saves/mira/boss.json', 'utf8'));
+  save.lastSeen = Date.now();
+  const browser = await chromium.launch({
+    args: backend === 'canvas2d' ? ['--disable-webgl', '--disable-3d-apis'] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+  });
+  report.browser = browser.version();
+  const context = await browser.newContext({
+    viewport: { width, height }, deviceScaleFactor: 1,
+    storageState: { cookies: [], origins: [{ origin: new URL(base).origin, localStorage: [{ name: 'gos.save', value: JSON.stringify(save) }] }] },
+  });
+  const page = await context.newPage();
+  page.on('pageerror', error => report.errors.push('Live page: ' + error.message));
+  page.on('response', response => {
+    if (response.status() >= 400 && !(response.url() === new URL('/sdk.js', base).href && response.status() === 404)) {
+      report.errors.push('HTTP ' + response.status() + ' ' + response.url());
+    }
+  });
+  try {
+    await page.goto(base + '?qa=1', { waitUntil: 'networkidle' });
+    await page.locator('.action--attack').waitFor();
+    await page.evaluate(observeBattle);
+    const first = await page.evaluate(() => window.__r01ArtTrace);
+    assert.equal(first.backend, backend, 'Live renderer');
+    assert(first.initialPhase === 1 && first.startsWithFirstPack, 'Live run must start in phase I');
+    await page.screenshot({ path: resolve(out, 'live-phase-I.png') });
+    const coach = page.locator('.coach:not([hidden]) button');
+    if (await coach.count()) await coach.first().click();
+    await page.getByRole('button', { name: '×2', exact: true }).click();
+    await page.getByRole('button', { name: 'Авто', exact: true }).click();
+    await page.waitForFunction(() => window.__r01ArtTrace.hits.length > 0, null, { timeout: 60000 });
+    await page.screenshot({ path: resolve(out, 'live-after-hit.png') });
+    await page.waitForFunction(() => window.__r01ArtTrace.transition && window.__r01ArtTrace.animationEnd && window.__r01ArtTrace.secondPackFrames > 1, null, { timeout: 150000 });
+    await page.screenshot({ path: resolve(out, 'live-phase-II.png') });
+    const trace = await page.evaluate(() => window.__r01ArtTrace);
+    assert(trace.firstPackFrames > 0 && trace.secondPackFrames > 0 && trace.framesWithMotion > 0);
+    assert(trace.hits.length && trace.transition.hp < trace.hpStart);
+    assert(trace.animationStart.id === trace.bossId && trace.animationEnd.id === trace.bossId && trace.animationEnd.ms > trace.animationStart.ms);
+  } finally {
+    report.live = await page.evaluate(() => window.__r01ArtTrace ?? null).catch(() => null);
+    if (!report.live?.transition) await page.screenshot({ path: resolve(out, 'live-failure.png') }).catch(() => {});
+    await browser.close();
+  }
+}
+
+// In a separate scene, pin the phase-I overhead pose and inspect three points on the blade.
+// Test actual upper-blade pixels from the loaded WebP against the browser's painted hit regions.
+async function checkBossHud() {
+  const browser = await chromium.launch({
+    args: backend === 'canvas2d' ? ['--disable-webgl', '--disable-3d-apis'] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+  });
+  try {
+    const save = JSON.parse(readFileSync('qa-saves/mira/boss.json', 'utf8'));
+    save.lastSeen = Date.now();
+    const page = await browser.newPage({
+      viewport: { width, height }, deviceScaleFactor: 1,
+      storageState: { cookies: [], origins: [{ origin: new URL(base).origin, localStorage: [{ name: 'gos.save', value: JSON.stringify(save) }] }] },
+    });
+    await page.goto(base + '?qa=1', { waitUntil: 'networkidle' });
+    await page.locator('.action--attack').waitFor();
+    report.sword = await page.evaluate(async () => {
+      const url = performance.getEntriesByType('resource').map(e => e.name).findLast(v => /\/src\/ui\/arena\/scene\.ts(?:\?|$)/.test(v));
+      const { ArenaScene } = await import(url ?? '/src/ui/arena/scene.ts');
+      let scene;
+      const original = ArenaScene.prototype.stats;
+      ArenaScene.prototype.stats = function () { scene = this; return original.call(this); };
+      try { window.__gosArena.stats(); } finally { ArenaScene.prototype.stats = original; }
+      const actor = [...scene.actors.values()].find(a => a.spec.boss);
+      if (!actor || actor.phase2 || actor.posePack !== actor.spec.poses) throw Error('Expected phase I pack');
+      scene.paused = true;
+      scene.setPose(actor.spec.id, 'prepare');
+      scene.time += 1;
+      const tex = scene.poseFrame(actor, 'prepare').tex;
+      const canvas = document.createElement('canvas');
+      canvas.width = tex.w; canvas.height = tex.h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(tex.source, 0, 0);
+      const rgba = ctx.getImageData(0, 0, tex.w, tex.h).data;
+      let top = -1;
+      const rows = [];
+      for (let y = 0; y < tex.h && rows.length < 3; y++) {
+        if (top >= 0 && (y - top) % 4 !== 0) continue;
+        const xs = [];
+        for (let x = 0; x < tex.w; x++) if (rgba[(y * tex.w + x) * 4 + 3] >= 128) xs.push(x);
+        if (!xs.length) continue;
+        if (top === -1) top = y;
+        rows.push([xs[Math.floor(xs.length / 2)] + 0.5, y + 0.5]);
+      }
+      if (rows.length !== 3 || top > tex.h * 0.04 || rows.at(-1)[1] > top + 10) throw Error('Expected three solid upper sword samples');
+      let d;
+      const draw = scene.backend.drawSprite;
+      scene.backend.drawSprite = function (sprite) {
+        if (sprite.mode === 0 && sprite.tex === tex && sprite.alpha > 0.95) d = sprite;
+        return draw.call(this, sprite);
+      };
+      try { scene.render(); } finally { scene.backend.drawSprite = draw; }
+      if (!d) throw Error('Expected real draw of the phase-I prepare texture');
+      const frame = scene.canvas.getBoundingClientRect(), v = scene.view();
+      const bar = document.querySelector('.boss-bar').getBoundingClientRect();
+      const smooth = (lo, hi, n) => { const k = Math.max(0, Math.min(1, (n-lo)/(hi-lo))); return k*k*(3-2*k); };
+      const t = d.time+d.phase, br = Math.sin(t*1.9);
+      const samples = rows.map(([px, py]) => {
+        const u = px/tex.w, vv = py/tex.h, hf = 1-vv;
+        let x = (u-0.5)*d.w, y = -hf*d.h;
+        if (scene.backendKind === 'canvas2d') {
+          x *= (d.flip ? -1 : 1)*d.sx; y *= d.sy*(1+d.breath*br); x -= d.lean*y;
+        } else {
+          x *= 1+d.breath*.55*br*Math.exp(-Math.pow((hf-.62)/.22, 2));
+          y *= 1+d.breath*br*smooth(.1,.9,hf);
+          x += d.sway*d.w*.035*Math.sin(t*1.35+vv*4.5+u*2.3)*smooth(.1,.48,Math.abs(u-.5))*smooth(.02,.14,hf)*(1-smooth(.42,.8,hf));
+          x += d.sway*d.w*.012*Math.sin(t*.9+vv*2)*smooth(.3,.9,hf);
+          y += d.bob*d.h*.007*Math.sin(t*1.9-.6)*smooth(.65,.95,hf);
+          x += d.lean*hf*d.h; x *= (d.flip ? -1 : 1)*d.sx; y *= d.sy;
+        }
+        const wx = Math.cos(d.rot)*x-Math.sin(d.rot)*y+d.x, wy = Math.sin(d.rot)*x+Math.cos(d.rot)*y+d.y;
+        const screenX = frame.left+((wx-v.x)*v.z+v.x)/scene.dpr, screenY = frame.top+((wy-v.y)*v.z+v.y)/scene.dpr;
+        const elements = document.elementsFromPoint(screenX, screenY);
+        const front = document.elementFromPoint(screenX, screenY);
+        return { texture: [px, py], screen: [screenX, screenY], topElement: front?.className,
+          underBossHud: elements.some(el => el.closest('.boss-bar')) };
+      });
+      return { source: 'separate scene, pinned prepare', backend: scene.backendKind, samples,
+        hud: [bar.left, bar.top, bar.right, bar.bottom], swordTipUnderHud: samples.some(p => p.underBossHud) };
+    });
+    await page.screenshot({ path: resolve(out, 'pinned-sword-and-hud.png') });
+    assert.equal(report.sword.backend, backend);
+    assert(!report.sword.swordTipUnderHud, 'Upper pixels of the raised sword fall behind the boss HUD');
+  } finally { await browser.close(); }
+}
+
+try {
+  let ready = false;
+  for (let i = 0; i < 100; i++) {
+    if (server.exitCode !== null) throw Error('Vite exited before startup');
+    try { if ((await fetch(base)).ok) { ready = true; break; } } catch {}
+    await delay(150);
+  }
+  assert(ready, 'Vite failed to start');
+  for (const [name, check] of [['static', checkStatic], ['live', checkLive], ['HUD', checkBossHud]]) {
+    try { await check(); }
+    catch (error) { report.errors.push(name + ': ' + (error.stack ?? error.message)); }
+  }
+} catch (error) {
+  report.errors.push(error.stack ?? error.message);
+} finally {
+  server.kill('SIGTERM');
+  report.ok = report.errors.length === 0;
+  writeFileSync(resolve(out, 'rehearsal.json'), JSON.stringify(report, null, 2) + '\n');
+  console.log(JSON.stringify({ ok: report.ok, backend, width, height, errors: report.errors, sword: report.sword, live: report.live }));
+  if (!report.ok) process.exitCode = 1;
+}

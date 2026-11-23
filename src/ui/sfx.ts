@@ -21,7 +21,7 @@ function audio(): AudioContext | null {
     if (!Ctor) return null;
     ctx = new Ctor();
   }
-  if (ctx.state === 'suspended') void ctx.resume();
+  if (ctx.state === 'suspended') void ctx.resume().catch(() => {});
   return ctx;
 }
 
@@ -74,7 +74,10 @@ export const sfx = {
   },
   setPaused(p: boolean): void {
     paused = p;
-    if (p && ctx) void ctx.suspend();
+    if (ctx) {
+      if (p) void ctx.suspend().catch(() => {});
+      else if (enabled) void ctx.resume().catch(() => {});
+    }
   },
   hit(strong: boolean): void {
     noise(0.12, strong ? 0.5 : 0.3, 1800);

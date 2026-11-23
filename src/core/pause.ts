@@ -16,9 +16,9 @@ export class PauseController {
     if (before !== this.active) for (const listener of [...this.listeners]) listener(this.active);
   }
 
-  subscribe(listener: (paused: boolean) => void): () => void {
+  subscribe(listener: (paused: boolean) => void, emitCurrent = true): () => void {
     this.listeners.add(listener);
-    listener(this.active);
+    if (emitCurrent) listener(this.active);
     return () => { this.listeners.delete(listener); };
   }
 

@@ -14,6 +14,7 @@ function readStorage(): string | null {
 /** Локальная разработка и запуск вне Яндекса: сохранения в localStorage, реклама — заглушка. */
 export class LocalPlatform implements Platform {
   readonly name = 'local' as const;
+  readonly savesLocallyOnly = true;
   private readonly pause = new PauseController();
   private pending: string | null = null;
   private debug = false;
@@ -64,7 +65,7 @@ export class LocalPlatform implements Platform {
   gameplayStop(): void {}
 
   onPauseChange(cb: (paused: boolean) => void): void {
-    this.pause.subscribe(cb);
+    this.pause.subscribe(cb, false);
   }
 
   isPaused(): boolean {
