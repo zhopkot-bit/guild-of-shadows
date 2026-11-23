@@ -1,0 +1,57 @@
+name: R01 artwork handoff
+
+on:
+  push:
+    branches: [integration/r01-rehearsal]
+    paths: ['.github/workflows/r01-handoff.yml']
+
+permissions:
+  contents: read
+
+env:
+  CANDIDATE_SHA: 6bcf4f95fd8beff9d94f79101513404b4955ec57
+  ART_BASE_SHA: a7a2d86dafa913ac755b48143339615bf5c96cad
+  MAIN_SHA: 17d707071767b24e963a0014b2721a330bbec544
+  VERIFIED_TREE: 4f4a8ea33a65f1f0da396fd17070df9196009b63
+
+jobs:
+  handoff:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CANDIDATE_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify candidate scope and reproduce the tested Git tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          git merge-base --is-ancestor "$ART_BASE_SHA" HEAD
+          git diff --check "$ART_BASE_SHA" HEAD
+          printf '%s\n' src/ui/arena/canvas2d.ts src/ui/arena/scene.ts src/ui/battleView.ts src/ui/style.css > "$RUNNER_TEMP/expected-paths"
+          git diff --name-only --no-renames "$ART_BASE_SHA" HEAD | LC_ALL=C sort > "$RUNNER_TEMP/actual-paths"
+          diff -u "$RUNNER_TEMP/expected-paths" "$RUNNER_TEMP/actual-paths"
+          git diff --name-status --no-renames "$ART_BASE_SHA" HEAD
+          if ! git merge-tree --write-tree "$MAIN_SHA" "$CANDIDATE_SHA" > "$RUNNER_TEMP/merge-result"; then
+            cat "$RUNNER_TEMP/merge-result"
+            exit 1
+          fi
+          tree=$(head -n 1 "$RUNNER_TEMP/merge-result")
+          printf 'Artwork base %s\nCandidate %s\nMain %s\nTrial tree %s\nExpected tree %s\n' "$ART_BASE_SHA" "$CANDIDATE_SHA" "$MAIN_SHA" "$tree" "$VERIFIED_TREE"
+          test "$tree" = "$VERIFIED_TREE"
+          printf 'Candidate `%s` merges cleanly with `%s` and reproduces the four-file handoff and tested tree `%s`.\n' "$CANDIDATE_SHA" "$MAIN_SHA" "$tree" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Strict art registry in both source and built output
+        run: |
+          node tools/art/validate_pack.mjs public/art/v17/art-pack.json --strict
+          node tools/art/validate_pack.mjs dist/art/v17/art-pack.json --strict
