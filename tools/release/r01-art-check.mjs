@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { once } from 'node:events';
 import { closeSync, mkdirSync, openSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -7,20 +8,45 @@ import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 
 const testedSha = '8307ef7910f3bd80fc05a51939a034aa8bd3fbd2';
-const [backend, widthText, heightText] = process.argv.slice(2);
+const [backend, widthText, heightText, mode] = process.argv.slice(2);
+const baseline = mode === '--baseline-preview';
 assert(['webgl', 'canvas2d'].includes(backend));
 const width = Number(widthText), height = Number(heightText);
 assert([[1920, 1080], [667, 375]].some(([w, h]) => w === width && h === height));
 const chromium = createRequire(resolve('package.json'))('playwright-core').chromium;
-const out = resolve('qa-out/u01');
+const out = resolve('qa-out/u01', baseline ? 'unchanged-reference' : 'candidate');
 const base = 'http://127.0.0.1:5173/';
 mkdirSync(out, { recursive: true });
 const actualSha = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
 assert.equal(actualSha, testedSha);
-const report = { testedSha, harnessSha: process.env.GITHUB_SHA, backend, width, height, errors: [] };
+const sourceTree = execFileSync('git', ['rev-parse', 'HEAD^{tree}'], { encoding: 'utf8' }).trim();
+const testedTree = execFileSync('git', ['write-tree'], { encoding: 'utf8' }).trim();
+assert.equal(baseline, sourceTree === testedTree, 'Expected the reference tree or the patched candidate');
+const patches = baseline ? [] : ['boss-hud.patch', 'boss-phase.patch'].map(file => ({
+  file, sha256: createHash('sha256').update(readFileSync(new URL('./rehearsal/' + file, import.meta.url))).digest('hex'),
+}));
+const report = { testedSha, testedTree, patches, baseline, harnessSha: process.env.GITHUB_SHA, backend, width, height, errors: [] };
 const serverLog = openSync(resolve(out, 'vite.log'), 'w');
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', '5173', '--strictPort'], { stdio: ['ignore', serverLog, serverLog] });
 closeSync(serverLog);
+
+async function emitPreview(browser, file, label) {
+  const page = await browser.newPage();
+  try {
+    const jpeg = await page.evaluate(async raw => {
+      const im = new Image();
+      im.src = 'data:image/png;base64,' + raw;
+      await im.decode();
+      const c = document.createElement('canvas');
+      c.width = Math.min(560, im.naturalWidth);
+      c.height = Math.round(im.naturalHeight * c.width / im.naturalWidth);
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      return c.toDataURL('image/jpeg', 0.72).split(',')[1];
+    }, readFileSync(file).toString('base64'));
+    const chunks = jpeg.match(/.{1,1800}/g);
+    chunks.forEach((data, i) => console.log(['U01_PREVIEW', label, i, chunks.length, data].join('|')));
+  } finally { await page.close(); }
+}
 
 async function checkStatic() {
   const env = { ...process.env, CHROME: chromium.executablePath(), VIEWPORTS: width + 'x' + height };
@@ -55,7 +81,12 @@ async function observeBattle() {
   const actor = scene.actors.get(boss.id);
   const canvas = scene.canvas.getBoundingClientRect();
   const bar = document.querySelector('.boss-bar').getBoundingClientRect();
+  const poseState = () => ({
+    idle: { breath: actor.spec.idle.breath, sway: actor.spec.idle.sway, hover: actor.spec.idle.hover },
+    idleArt: actor.posePack.poses.idle, activePose: scene.shownPose(actor), secondPack: actor.posePack === actor.spec.poses2,
+  });
   const trace = {
+    phaseSwitches: [], initialVisual: poseState(),
     backend: scene.backendKind, initialPhase: boss.bossPhase,
     startsWithFirstPack: actor.posePack === actor.spec.poses,
     heroIds: battle.units.filter(unit => unit.side === 'hero').map(unit => unit.id),
@@ -66,12 +97,17 @@ async function observeBattle() {
   };
   window.__r01ArtTrace = trace;
   // Observe the completion of the game's own animation independently from the model/HUD switch.
+  const switchPack = scene.enterPhase2Visuals;
+  scene.enterPhase2Visuals = function (unit, instant) {
+    trace.phaseSwitches.push({ ms: Math.round(performance.now()), instant, phaseBefore: unit.phase2 });
+    return switchPack.call(this, unit, instant);
+  };
   const animatePhase = scene.bossPhase2;
   scene.bossPhase2 = async function (id) {
-    trace.animationStart = { id, ms: Math.round(performance.now()) };
+    trace.animationStart = { id, ms: Math.round(performance.now()), visual: poseState() };
     try {
       const result = await animatePhase.call(this, id);
-      trace.animationEnd = { id, ms: Math.round(performance.now()) };
+      trace.animationEnd = { id, ms: Math.round(performance.now()), visual: poseState() };
       return result;
     } finally {
       delete this.bossPhase2;
@@ -137,15 +173,63 @@ async function checkLive() {
     await page.screenshot({ path: resolve(out, 'live-after-hit.png') });
     await page.waitForFunction(() => window.__r01ArtTrace.transition && window.__r01ArtTrace.animationEnd && window.__r01ArtTrace.secondPackFrames > 1, null, { timeout: 150000 });
     await page.screenshot({ path: resolve(out, 'live-phase-II.png') });
+    await emitPreview(browser, resolve(out, 'live-phase-II.png'), 'live-phase-II');
     const trace = await page.evaluate(() => window.__r01ArtTrace);
     assert(trace.firstPackFrames > 0 && trace.secondPackFrames > 0 && trace.framesWithMotion > 0);
     assert(trace.hits.length && trace.transition.hp < trace.hpStart);
     assert(trace.animationStart.id === trace.bossId && trace.animationEnd.id === trace.bossId && trace.animationEnd.ms > trace.animationStart.ms);
+    assert(!trace.animationStart.visual.secondPack, 'Phase I art must last until the transformation starts');
+    assert(trace.animationEnd.visual.secondPack, 'Phase II art must appear by the end of the animation');
+    assert.equal(trace.phaseSwitches.length, 1, 'The live encounter must activate phase-II visuals once');
+    assert(!trace.phaseSwitches[0].instant && trace.phaseSwitches[0].ms > trace.animationStart.ms, 'The change of art belongs to the animated transition');
   } finally {
     report.live = await page.evaluate(() => window.__r01ArtTrace ?? null).catch(() => null);
     if (!report.live?.transition) await page.screenshot({ path: resolve(out, 'live-failure.png') }).catch(() => {});
     await browser.close();
   }
+}
+
+async function checkRestoredPhase() {
+  const save = JSON.parse(readFileSync('qa-saves/mira/boss-phase2.json', 'utf8'));
+  save.lastSeen = Date.now();
+  const browser = await chromium.launch({
+    args: backend === 'canvas2d' ? ['--disable-webgl', '--disable-3d-apis'] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+  });
+  try {
+    const page = await browser.newPage({
+      viewport: { width, height }, deviceScaleFactor: 1,
+      storageState: { cookies: [], origins: [{ origin: new URL(base).origin, localStorage: [{ name: 'gos.save', value: JSON.stringify(save) }] }] },
+    });
+    await page.goto(base + '?qa=1', { waitUntil: 'networkidle' });
+    await page.locator('.action--attack').waitFor();
+    report.restored = await page.evaluate(async () => {
+      const url = performance.getEntriesByType('resource').map(e => e.name).findLast(v => /\/src\/ui\/arena\/scene\.ts(?:\?|$)/.test(v));
+      const { ArenaScene } = await import(url ?? '/src/ui/arena/scene.ts');
+      let scene;
+      const original = ArenaScene.prototype.stats;
+      ArenaScene.prototype.stats = function () { scene = this; return original.call(this); };
+      try { window.__gosArena.stats(); } finally { ArenaScene.prototype.stats = original; }
+      const actor = [...scene.actors.values()].find(a => a.spec.boss);
+      const state = () => ({
+        secondPack: actor.phase2 && actor.posePack === actor.spec.poses2, idleArt: actor.posePack.poses.idle,
+        activePose: scene.shownPose(actor), idle: { breath: actor.spec.idle.breath, sway: actor.spec.idle.sway, hover: actor.spec.idle.hover },
+      });
+      const before = state();
+      const shards = scene.shards;
+      // This explicit duplicate notification is a separate idempotence test in a restored scene.
+      await scene.bossPhase2(actor.spec.id);
+      return { backend: scene.backendKind, before, afterDuplicate: state(), sameShards: shards === scene.shards };
+    });
+    await page.screenshot({ path: resolve(out, 'restored-phase-II.png') });
+    assert.equal(report.restored.backend, backend);
+    assert(report.restored.before.secondPack && report.restored.sameShards, 'Restoring/replaying a phase must reuse its visuals');
+    assert.deepEqual(report.restored.before, report.restored.afterDuplicate, 'A duplicate phase notification must preserve the restored visuals');
+    const live = report.live?.animationEnd?.visual;
+    assert(live?.secondPack && live.activePose && report.restored.before.activePose);
+    assert.deepEqual(live.idleArt, report.restored.before.idleArt, 'Both paths must select the same phase-II idle artwork');
+    assert.deepEqual(live.idle, report.restored.before.idle, 'Live and restored idle motion must match');
+    assert(Math.abs(live.idle.breath - 0.013) < 1e-8 && Math.abs(live.idle.sway - 1.44) < 1e-8 && live.idle.hover === 6, 'Apply phase-II motion multipliers exactly once');
+  } finally { await browser.close(); }
 }
 
 // In a separate scene, pin the phase-I overhead pose and inspect three points on the blade.
@@ -155,7 +239,7 @@ async function checkBossHud() {
     args: backend === 'canvas2d' ? ['--disable-webgl', '--disable-3d-apis'] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
   });
   try {
-    const save = JSON.parse(readFileSync('qa-saves/mira/boss.json', 'utf8'));
+    const save = JSON.parse(readFileSync('qa-saves/mira/boss-telegraph.json', 'utf8'));
     save.lastSeen = Date.now();
     const page = await browser.newPage({
       viewport: { width, height }, deviceScaleFactor: 1,
@@ -163,6 +247,8 @@ async function checkBossHud() {
     });
     await page.goto(base + '?qa=1', { waitUntil: 'networkidle' });
     await page.locator('.action--attack').waitFor();
+    const coach = page.locator('.coach:not([hidden]) button');
+    if (await coach.count()) await coach.first().click();
     report.sword = await page.evaluate(async () => {
       const url = performance.getEntriesByType('resource').map(e => e.name).findLast(v => /\/src\/ui\/arena\/scene\.ts(?:\?|$)/.test(v));
       const { ArenaScene } = await import(url ?? '/src/ui/arena/scene.ts');
@@ -204,6 +290,18 @@ async function checkBossHud() {
       const bar = document.querySelector('.boss-bar').getBoundingClientRect();
       const smooth = (lo, hi, n) => { const k = Math.max(0, Math.min(1, (n-lo)/(hi-lo))); return k*k*(3-2*k); };
       const t = d.time+d.phase, br = Math.sin(t*1.9);
+      const rect = el => { const r = el.getBoundingClientRect(); return [r.left,r.top,r.right,r.bottom]; };
+      const box = selector => rect(document.querySelector(selector));
+      const panels = Object.fromEntries(['.boss-bar','.turns','.intent--armed'].map(sel => [sel, box(sel)]));
+      const portraits = [...document.querySelectorAll('.turns__chip .portrait')].map(rect);
+      const labels = ['.boss-bar__name','.boss-bar__phase','.boss-bar__hp'].map(selector => {
+        const e = document.querySelector(selector);
+        return { selector, text: e.textContent, overflowX: e.scrollWidth - e.clientWidth };
+      });
+      const controls = [...document.querySelectorAll('.action--attack,.hero-card')].map(e => {
+        const r = e.getBoundingClientRect(), top = document.elementFromPoint((r.left+r.right)/2,(r.top+r.bottom)/2);
+        return { box: rect(e), accessible: e.contains(top) };
+      });
       const samples = rows.map(([px, py]) => {
         const u = px/tex.w, vv = py/tex.h, hf = 1-vv;
         let x = (u-0.5)*d.w, y = -hf*d.h;
@@ -222,14 +320,33 @@ async function checkBossHud() {
         const elements = document.elementsFromPoint(screenX, screenY);
         const front = document.elementFromPoint(screenX, screenY);
         return { texture: [px, py], screen: [screenX, screenY], topElement: front?.className,
-          underBossHud: elements.some(el => el.closest('.boss-bar')) };
+          underBossHud: elements.some(el => el.closest('.boss-bar')), underPanel: elements.some(el => el.closest('.boss-bar,.turns,.intent--armed')) };
       });
-      return { source: 'separate scene, pinned prepare', backend: scene.backendKind, samples,
+      return { source: 'separate phase-I telegraph scene, pinned prepare', backend: scene.backendKind, samples, arena: rect(scene.canvas), panels, portraits, labels, controls,
+        feet: actor.y / scene.dpr, figureHeight: actor.h / scene.dpr,
         hud: [bar.left, bar.top, bar.right, bar.bottom], swordTipUnderHud: samples.some(p => p.underBossHud) };
     });
     await page.screenshot({ path: resolve(out, 'pinned-sword-and-hud.png') });
+    await emitPreview(browser, resolve(out, 'pinned-sword-and-hud.png'), baseline ? 'baseline-sword' : 'candidate-sword');
     assert.equal(report.sword.backend, backend);
-    assert(!report.sword.swordTipUnderHud, 'Upper pixels of the raised sword fall behind the boss HUD');
+    if (!baseline) assert(!report.sword.samples.some(p => p.underPanel), 'Upper pixels of the raised sword fall behind a tactical HUD panel');
+    if (!baseline && width === 667) {
+      const reference = JSON.parse(readFileSync(resolve('qa-out/u01/unchanged-reference/rehearsal.json'), 'utf8')).sword;
+      const result = report.sword;
+      const within = (a, b) => a[2] > a[0] && a[3] > a[1] && a[0] >= b[0]-1 && a[1] >= b[1]-1 && a[2] <= b[2]+1 && a[3] <= b[3]+1;
+      const overlap = (a, b) => Math.min(a[2], b[2])-Math.max(a[0], b[0]) > 1 && Math.min(a[3], b[3])-Math.max(a[1], b[1]) > 1;
+      assert.deepEqual(result.arena, reference.arena, 'Preserve mobile canvas');
+      assert.equal(result.feet, reference.feet, 'Preserve floor position');
+      assert.equal(result.figureHeight, reference.figureHeight, 'Preserve boss scale');
+      const panels = Object.values(result.panels);
+      for (let i = 0; i < panels.length; i++) {
+        assert(within(panels[i], result.arena), 'A tactical panel is outside the mobile arena');
+        for (const other of panels.slice(i+1)) assert(!overlap(panels[i], other), 'Tactical panels overlap each other');
+      }
+      assert(result.portraits.length && result.portraits.every(p => within(p, result.panels['.turns'])), 'Turn order portraits must fit');
+      assert(result.labels.every(l => l.text.trim() && l.overflowX <= 1), 'Boss name, phase and HP must fit');
+      assert(result.controls.length >= 4 && result.controls.every(c => c.accessible), 'Manual attack and party cards must be reachable');
+    }
   } finally { await browser.close(); }
 }
 
@@ -241,7 +358,8 @@ try {
     await delay(150);
   }
   assert(ready, 'Vite failed to start');
-  for (const [name, check] of [['static', checkStatic], ['live', checkLive], ['HUD', checkBossHud]]) {
+  const checks = baseline ? [['reference HUD', checkBossHud]] : [['static', checkStatic], ['live', checkLive], ['restored phase II', checkRestoredPhase], ['HUD', checkBossHud]];
+  for (const [name, check] of checks) {
     try { await check(); }
     catch (error) { report.errors.push(name + ': ' + (error.stack ?? error.message)); }
   }
@@ -251,6 +369,6 @@ try {
   server.kill('SIGTERM');
   report.ok = report.errors.length === 0;
   writeFileSync(resolve(out, 'rehearsal.json'), JSON.stringify(report, null, 2) + '\n');
-  console.log(JSON.stringify({ ok: report.ok, backend, width, height, errors: report.errors, sword: report.sword, live: report.live }));
+  console.log(JSON.stringify({ ok: report.ok, testedSha, testedTree, baseline, patches, backend, width, height, errors: report.errors, sword: report.sword, live: report.live, restored: report.restored }));
   if (!report.ok) process.exitCode = 1;
 }
