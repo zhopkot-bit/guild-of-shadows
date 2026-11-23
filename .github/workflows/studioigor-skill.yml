@@ -1,0 +1,23 @@
+name: Studioigor agent skill
+
+on:
+  push:
+    branches: [studioigor]
+    paths: ['.agents/skills/studioigor/**', '.studioigor/**', '.github/workflows/studioigor-skill.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  status:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify the installed upstream skill and open the project
+        run: |
+          test "$(git rev-parse HEAD:.agents/skills/studioigor)" = 5b4644ed69e7bed4c60b3f749b6e8afa47febc52
+          python3 .agents/skills/studioigor/scripts/studio.py init . --name "Гильдия Теней"
+          python3 .agents/skills/studioigor/scripts/studio.py status
