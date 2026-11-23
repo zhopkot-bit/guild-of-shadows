@@ -67,7 +67,7 @@ try {
   mkdirSync(folder);
   copyFileSync(html, entry);
   let page = await openBrowser();
-  await page.getByRole('heading', { name: 'Гильдия Теней', exact: true }).waitFor();
+  await page.getByRole('heading', { name: 'Три удара', exact: true }).waitFor();
   const art = await page.locator('.guild-hero__art').evaluate(async img => {
     await img.decode();
     return [img.naturalWidth, img.naturalHeight];

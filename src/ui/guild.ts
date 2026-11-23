@@ -20,20 +20,28 @@ function effectText(ctx: Ctx, def: PostDef): string {
 export function guildScreen(ctx: Ctx): HTMLElement {
   const chapter = ctx.state.rescue;
   const scene = guildRescue(chapter);
-  const resume = ctx.run !== null;
-  const action = h('button', { class: 'btn rescue-cta', type: 'button' }, resume ? 'Вернуться к отряду' : scene.action);
+  const run = ctx.run;
+  let line = scene.line;
+  let label = scene.action;
+  if (run) {
+    label = run.stage === 'ended' ? 'Вернуться к итогам' : 'Вернуться к отряду';
+    if (run.stage !== 'ended' && run.rescue?.stage === 'search' && run.rescue.outcome) {
+      line = 'Каменщики выходят во двор. У матери Лиды один вопрос: «В какой стороне вы в последний раз её видели?» Отряд всё ещё внизу.';
+    }
+  }
+  const action = h('button', { class: 'btn rescue-cta', type: 'button' }, label);
   action.addEventListener('click', () => {
-    if (!resume && chapter.stage === 'search') sfx.knock();
+    if (!run && chapter.stage === 'search') sfx.knock();
     ctx.navigate('expedition');
   });
   const root = h('section', { class: 'screen screen--guild' },
     h('div', { class: 'guild-hero', 'data-rescue-stage': chapter.stage },
-      h('img', { class: 'guild-hero__art', src: './art/v17/guild/citadel.webp', alt: 'Готическая цитадель гильдии', draggable: 'false', fetchpriority: 'high' }),
+      h('img', { class: 'guild-hero__art', src: scene.art.src, alt: scene.art.alt, draggable: 'false', fetchpriority: 'high' }),
       h('div', { class: 'guild-hero__shade', 'aria-hidden': 'true' }),
       h('div', { class: 'guild-hero__content' },
-        h('span', { class: 'eyebrow' }, scene.title),
-        h('h1', null, 'Гильдия Теней'),
-        h('p', null, scene.line),
+        h('span', { class: 'eyebrow' }, chapter.stage === 'search' ? 'Гильдия Теней' : 'Три удара'),
+        h('h1', null, scene.title),
+        h('p', null, line),
         chapter.stage === 'trail' ? h('p', { class: 'rescue-gift' }, routeGift(chapter.route)) : null,
         action,
       ),
