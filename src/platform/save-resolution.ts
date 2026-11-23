@@ -5,6 +5,8 @@
  * local because it is written synchronously before the cloud request.
  * This is a conservative tie-breaker, not a merge of individual save fields.
  */
+import { isRescueRoute } from '../core/types';
+
 type Raw = Record<string, unknown>;
 
 interface SaveMeta {
@@ -40,10 +42,12 @@ function meta(json: string | null): SaveMeta | null {
   const heroLevels = heroes.reduce<number>((sum, hero) => {
     return sum + (hero.status === 'lost' ? 0 : Math.max(0, finite(hero.level, 1)));
   }, 0);
+  const rescue = version >= 3 && record(value.rescue) && isRescueRoute(value.rescue.route) ? value.rescue.stage : null;
   const progress = [
     Math.max(0, finite(value.expeditionsCompleted)),
     Math.max(0, finite(value.maxTier, 1)),
     Math.max(0, finite(stats.expeditionsWon)),
+    rescue === 'home' ? 2 : rescue === 'trail' ? 1 : 0,
     postLevels,
     heroLevels,
     Math.max(0, finite(value.gold)),

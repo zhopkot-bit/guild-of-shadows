@@ -1,5 +1,6 @@
 import { HP_SCALE } from '../core/config';
 import type { RNG } from '../core/rng';
+import type { RescueRoute } from '../core/types';
 
 /**
  * Временные модули экспедиции — Content Bible v1.1, лист Modules (MOD01–MOD08).
@@ -14,6 +15,8 @@ export type ModuleId =
   | 'pathfinderMap'
   | 'swiftFeather'
   | 'relicPouch';
+
+export const RESCUE_MODULE: Record<RescueRoute, ModuleId> = { stairs: 'wardenShield', winch: 'pathfinderMap' };
 
 export interface ModuleDef {
   id: ModuleId;

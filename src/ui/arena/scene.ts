@@ -1,3 +1,4 @@
+import { assetUrl } from '../../content/asset-url';
 import type { AnimClip, AnimPack, ArenaLayer, ClipName, LoadedRig, PoseName, PosePack, VfxId, VfxPack } from '../../content/artpack';
 import { resolvePose } from '../../content/artpack';
 import type { Backend, QuadDraw, RenderTarget, Rgb, SpriteDraw, Tex } from './backend';
@@ -249,7 +250,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     img.decoding = 'async';
     img.onload = () => resolve(img);
     img.onerror = () => reject(new Error(`Не загрузилось изображение: ${src}`));
-    img.src = src;
+    img.src = assetUrl(src);
   });
 }
 

@@ -1,10 +1,10 @@
 import { MAX_HERO_LEVEL, MAX_TIER, PARTY_SIZE } from '../core/config';
 import { RNG } from '../core/rng';
-import { HERO_CLASSES, HERO_IDENTITIES, RARITIES } from '../core/types';
+import { HERO_CLASSES, HERO_IDENTITIES, RARITIES, isRescueRoute } from '../core/types';
 import { ENEMIES } from '../combat/data';
 import { eventDef } from './events';
 import { LAYERS } from './map';
-import { isModuleId } from './modules';
+import { RESCUE_MODULE, isModuleId } from './modules';
 import type { Run } from './run';
 
 type Raw = Record<string, unknown>;
@@ -158,6 +158,17 @@ export function validRun(value: unknown): value is Run {
       r.completedNodes.length !== r.nodesCleared || !r.completedNodes.every((id, i) => visited[i] === id))) return false;
   if (!visited.every((id, i) => byId.has(id) && (i === 0 ? byId.get(id)!.layer === 1 :
       (byId.get(visited[i - 1] as string)!.next as string[]).includes(id)))) return false;
+  if (r.rescue !== undefined) {
+    const chapter = r.rescue;
+    if (!record(chapter) || !Array.isArray(r.completedNodes)) return false;
+    if (chapter.stage === 'search') {
+      const first = byId.get(r.completedNodes[0] as string)?.type;
+      const route = first === 'battle' ? 'stairs' : first === 'event' ? 'winch' : undefined;
+      if ((r.completedNodes.length > 0 && !route) || chapter.outcome !== route) return false;
+    } else if (chapter.stage !== 'trail' || !isRescueRoute(chapter.route) || !r.relics.includes(RESCUE_MODULE[chapter.route])) {
+      return false;
+    }
+  }
   if (r.currentNodeId !== (r.visited.at(-1) ?? null)) return false;
   if (r.stage === 'map' && r.currentNodeId !== null && !(byId.get(r.currentNodeId as string)!.next as string[]).length) return false;
   if (r.stage !== 'map' && r.stage !== 'ended' && r.currentNodeId === null) return false;

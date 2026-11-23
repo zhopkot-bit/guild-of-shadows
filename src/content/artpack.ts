@@ -1,3 +1,4 @@
+import { assetUrl } from './asset-url';
 import { Rig, type DbAtlas, type DbSkeleton } from '../ui/arena/rig';
 
 /**
@@ -196,7 +197,7 @@ async function fetchJson(url: string, timeoutMs: number): Promise<unknown> {
   const ctl = new AbortController();
   const t = window.setTimeout(() => ctl.abort(), timeoutMs);
   try {
-    const r = await fetch(url, { signal: ctl.signal, cache: 'no-cache' });
+    const r = await fetch(assetUrl(url), { signal: ctl.signal, cache: 'no-cache' });
     return r.ok ? await r.json() : null;
   } catch {
     return null;

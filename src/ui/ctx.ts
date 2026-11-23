@@ -11,6 +11,8 @@ export interface ModalButton {
 }
 
 /** Всё, что экраны получают от приложения. Экраны ничего не знают друг о друге. */
+export type Tab = 'guild' | 'squad' | 'expedition';
+
 export interface Ctx {
   state: GameState;
   platform: Platform;
@@ -19,6 +21,7 @@ export interface Ctx {
   now(): number;
   /** Полная перерисовка текущего экрана (после структурных изменений). */
   render(): void;
+  navigate(tab: Tab): void;
   /** Регистрирует функцию, которая обновляет живые значения (таймеры, доступность кнопок) каждые 250 мс. */
   live(fn: () => void): void;
   /** Сохранить прогресс (в очередь платформы). */

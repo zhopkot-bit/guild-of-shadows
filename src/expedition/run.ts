@@ -18,10 +18,10 @@ import {
 import { postEffect, refreshHeroes, totalIncome } from '../core/economy';
 import { RNG } from '../core/rng';
 import { nextSeed } from '../core/state';
-import type { GameState, Hero, HeroIdentity } from '../core/types';
+import type { GameState, Hero, HeroIdentity, RescueRoute } from '../core/types';
 import { eventDef, outcomesFor, pickEvent, type Choice, type Effect, type EventDef } from './events';
 import { generateMap, type MapNode } from './map';
-import { moduleDef, moduleEffects, normalizeModules, rollModules, type ModuleId } from './modules';
+import { RESCUE_MODULE, moduleDef, moduleEffects, normalizeModules, rollModules, type ModuleId } from './modules';
 import { validRun } from './validate';
 
 export type RunStage = 'map' | 'battle' | 'event' | 'eventResult' | 'chest' | 'camp' | 'prep' | 'ended';
@@ -40,6 +40,8 @@ export type ChestOffer =
   | { id: string; kind: 'essence'; amount: number };
 
 export interface Run {
+  /** Глава на момент выхода из гильдии; у исторических походов отсутствует. */
+  rescue?: { stage: 'search'; outcome?: RescueRoute } | { stage: 'trail'; route: RescueRoute };
   seed: number;
   tier: number;
   rng: RNG;
@@ -179,7 +181,7 @@ export function canStartRun(state: GameState, nowMs: number, tier: number): { ok
   return { ok: true };
 }
 
-export function startRun(state: GameState, nowMs: number, tier: number): Run {
+export function startRun(state: GameState, nowMs: number, tier: number, options: { rescue?: boolean } = {}): Run {
   const check = canStartRun(state, nowMs, tier);
   if (!check.ok) throw new Error(check.reason);
   // Старые поля tickets остаются в сейве для обратной совместимости, но больше не списываются.
@@ -188,16 +190,29 @@ export function startRun(state: GameState, nowMs: number, tier: number): Run {
   const first = state.expeditionsCompleted === 0 && tier === 1;
   const seed = first ? FIRST_RUN_SEED : nextSeed(state);
   const party = partyHeroes(state);
+  const map = generateMap(seed);
+  const chapter = options.rescue ? state.rescue : undefined;
+  let rescue: Run['rescue'];
+  if (chapter?.stage === 'search') {
+    rescue = { stage: 'search' };
+    const entrance = map.filter(node => node.layer === 1);
+    // Если все входы одного типа, меняется один узел. Геометрия, связи и сид остаются прежними.
+    if (!entrance.some(node => node.type === 'battle')) entrance[0]!.type = 'battle';
+    if (!entrance.some(node => node.type === 'event')) entrance[entrance.length - 1]!.type = 'event';
+  } else if (chapter?.stage === 'trail') {
+    rescue = { stage: 'trail', route: chapter.route };
+  }
   return {
+    ...(rescue ? { rescue } : {}),
     seed,
     tier,
     rng: new RNG(seed ^ 0x5bd1e995),
-    map: generateMap(seed),
+    map,
     currentNodeId: null,
     visited: [],
     heroes: Object.fromEntries(party.map((h) => [h.id, { ...h }])),
     members: party.map((h) => ({ heroId: h.id, frac: 1, alive: true })),
-    relics: [],
+    relics: rescue?.stage === 'trail' ? [RESCUE_MODULE[rescue.route]] : [],
     atkBuff: 0,
     postBonus: {
       hpPct: postEffect(state, 'hpPct'),
@@ -391,7 +406,8 @@ export function enterNode(run: Run, nodeId: string): void {
       run.stage = 'prep';
       break;
     case 'event': {
-      const ev = pickEvent(run.rng, run.eventsSeen);
+      const rolled = pickEvent(run.rng, run.eventsSeen);
+      const ev = run.rescue?.stage === 'search' && node.layer === 1 ? eventDef('EV06') : rolled;
       run.eventsSeen.push(ev.id);
       run.event = ev;
       run.stage = 'event';
@@ -414,6 +430,11 @@ function completeCurrentNode(run: Run): void {
   if (run.currentNodeId === null) return;
   run.completedNodes = [...run.visited];
   run.nodesCleared = run.completedNodes.length;
+  if (run.rescue?.stage === 'search' && run.nodesCleared === 1) {
+    const entrance = nodeById(run, run.currentNodeId);
+    if (entrance.type === 'battle') run.rescue.outcome = 'stairs';
+    if (entrance.type === 'event') run.rescue.outcome = 'winch';
+  }
 }
 
 /** Вызывать, когда battle.result != 'ongoing': переносит итоги боя в забег и двигает его дальше. */
@@ -665,6 +686,12 @@ export function finishRun(run: Run, state: GameState, nowMs: number): RunSummary
   // Не удаляем героев из коллекции или отряда; раненые временно недоступны до восстановления.
   state.party = state.party.filter((id) => state.heroes.some((h) => h.id === id));
 
+  // Выбор переносится в гильдию один раз вместе с итогом. Отход после спасения сохраняет след.
+  if (run.rescue?.stage === 'search' && run.rescue.outcome && state.rescue.stage === 'search') {
+    state.rescue = { stage: 'trail', route: run.rescue.outcome };
+  } else if (victory && run.rescue?.stage === 'trail' && state.rescue.stage === 'trail' && state.rescue.route === run.rescue.route) {
+    state.rescue = { stage: 'home', route: run.rescue.route };
+  }
   state.expeditionsCompleted += 1;
   if (victory) state.stats.expeditionsWon += 1;
   let unlockedTier: number | null = null;

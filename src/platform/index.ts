@@ -35,6 +35,7 @@ function loadScript(src: string, timeoutMs: number): Promise<boolean> {
  * к нему игра требуют SDK, чтобы ошибка сети не запускала новую локальную игру.
  */
 export async function createPlatform(): Promise<Platform> {
+  if (import.meta.env.MODE === 'offline') return createLocalPlatform();
   let requireSdk = import.meta.env.VITE_REQUIRE_YANDEX_SDK === 'true';
   try { requireSdk ||= window.localStorage.getItem(PLATFORM_KEY) === 'yandex'; } catch { /* storage unavailable */ }
   if (!window.YaGames) await loadScript('/sdk.js', 3000);
@@ -50,6 +51,10 @@ export async function createPlatform(): Promise<Platform> {
     }
   }
   if (requireSdk) throw new SaveLoadError();
+  return createLocalPlatform();
+}
+
+async function createLocalPlatform(): Promise<LocalPlatform> {
   const local = new LocalPlatform();
   await local.init();
   return local;

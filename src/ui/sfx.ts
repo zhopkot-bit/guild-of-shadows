@@ -79,6 +79,12 @@ export const sfx = {
       else if (enabled) void ctx.resume().catch(() => {});
     }
   },
+  knock(): void {
+    for (const delay of [0, 0.18, 0.39]) {
+      tone('triangle', 235, 85, 0.08, 0.12, delay);
+      noise(0.035, 0.10, 940, delay);
+    }
+  },
   hit(strong: boolean): void {
     noise(0.12, strong ? 0.5 : 0.3, 1800);
     tone('sine', strong ? 170 : 130, 40, 0.16, strong ? 0.6 : 0.4);

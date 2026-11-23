@@ -1,0 +1,108 @@
+name: Play Three Knocks
+
+on:
+  push:
+    branches: [studioigor]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    outputs:
+      html-sha: ${{ steps.hash.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node node_modules/vite/bin/vite.js build --mode offline --outDir dist-offline
+      - run: node tools/release/build-offline.mjs dist-offline offline/Guild-of-Shadows.html
+      - name: Record standalone HTML digest
+        id: hash
+        run: |
+          digest=$(sha256sum offline/Guild-of-Shadows.html | cut -d' ' -f1)
+          echo "sha=$digest" >> "$GITHUB_OUTPUT"
+          echo "$digest  Guild-of-Shadows.html"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: guild-of-shadows-offline
+          path: offline/Guild-of-Shadows.html
+          if-no-files-found: error
+          retention-days: 90
+
+  play-on-windows:
+    runs-on: windows-2022
+    timeout-minutes: 16
+    needs: package
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/download-artifact@v4
+        with:
+          name: guild-of-shadows-offline
+          path: 'Локальная игра/Проверка с пробелами'
+      - name: Compare the downloaded HTML to the packaged file
+        shell: pwsh
+        env:
+          EXPECTED_SHA: ${{ needs.package.outputs.html-sha }}
+        run: |
+          $file = 'Локальная игра/Проверка с пробелами/Guild-of-Shadows.html'
+          if ((Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant() -ne $env:EXPECTED_SHA) {
+            throw 'Standalone HTML digest mismatch'
+          }
+      - run: npm ci
+      - name: Ensure a browser is installed
+        shell: pwsh
+        run: |
+          $edge = Join-Path ${env:ProgramFiles(x86)} 'Microsoft/Edge/Application/msedge.exe'
+          if (-not (Test-Path -LiteralPath $edge)) {
+            node node_modules/playwright-core/cli.js install chromium
+          }
+      - run: npm run qa:saves
+      - name: Open the game as a local file and play offline
+        run: node tools/release/check-offline.mjs "Локальная игра/Проверка с пробелами/Guild-of-Shadows.html" qa-saves
+
+  play-the-chapter:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 22
+    needs: package
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/download-artifact@v4
+        with:
+          name: guild-of-shadows-offline
+          path: offline
+      - name: Verify the downloaded chapter
+        env:
+          EXPECTED_SHA: ${{ needs.package.outputs.html-sha }}
+        run: echo "$EXPECTED_SHA  offline/Guild-of-Shadows.html" | sha256sum --check
+      - run: npm ci
+      - run: node node_modules/playwright-core/cli.js install --with-deps chromium
+      - name: Play both entrances and return to the guild
+        run: node tools/release/check-story.mjs offline/Guild-of-Shadows.html qa-out/story
+      - name: Save the player views and chapter results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: three-knocks-playthrough
+          path: qa-out/story/
+          if-no-files-found: warn

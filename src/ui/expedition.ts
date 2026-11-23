@@ -1,6 +1,6 @@
 import { HP_SCALE, MAX_TIER, PARTY_SIZE } from '../core/config';
 import { fmt } from '../core/num';
-import type { Hero } from '../core/types';
+import type { Hero, RescueRoute } from '../core/types';
 import { moduleDef } from '../expedition/modules';
 import { ENEMIES } from '../combat/data';
 import { shards } from '../content/text';
@@ -34,6 +34,7 @@ import { NODE_NAME, nodeIcon } from './icons';
 import { enemyPortrait, heroPortrait } from './portrait';
 import { glyph } from './glyphs';
 import { roleName } from '../content/roster';
+import { mapRescue, rescueDebrief, rescueRoutes, routeGift } from './rescueStory';
 
 let selectedTier = 1;
 let summary: RunSummary | null = null;
@@ -82,21 +83,27 @@ export function expeditionScreen(ctx: Ctx): HTMLElement {
 
 function lobby(ctx: Ctx): HTMLElement {
   const { state } = ctx;
+  const chapter = state.rescue;
+  const briefing = chapter.stage === 'search'
+    ? 'Под лестницей зажаты каменщики. К ним ведут старый караульный ход и шахта грузовой клети.'
+    : chapter.stage === 'trail'
+      ? `Смена вывела вас на след Лиды. Дойдите до Тронного склепа и победите короля. ${routeGift(chapter.route)}`
+      : 'Выберите глубину и соберите отряд для следующей экспедиции.';
+  const dispatch = h('div', { class: 'rescue-dispatch' });
   const root = h('section', { class: 'screen screen--expedition-lobby' },
     h('div', { class: 'expedition-hero' },
       h('img', { class: 'expedition-hero__art', src: './art/scenes/ruins_dusk.webp', alt: 'Забытые готические руины', draggable: 'false', fetchpriority: 'high' }),
       h('div', { class: 'expedition-hero__shade', 'aria-hidden': 'true' }),
       h('div', { class: 'expedition-hero__content' },
-        h('span', { class: 'eyebrow' }, 'ЗА ПРЕДЕЛАМИ СТЕН'),
-        h('h2', null, 'Экспедиция'),
-        h('p', null, 'Там, где гаснут факелы, начинаются истории, за которые платят золотом.'),
+        h('span', { class: 'eyebrow' }, chapter.stage === 'home' ? 'За пределами стен' : 'Три удара'),
+        h('h2', null, chapter.stage === 'search' ? 'Нижняя смена' : chapter.stage === 'trail' ? 'За Лидой' : 'Экспедиция'),
+        h('p', null, briefing),
+        dispatch,
       ),
     ),
   );
   const maxOpen = Math.min(state.maxTier, MAX_TIER);
   if (selectedTier > maxOpen) selectedTier = maxOpen;
-
-  root.append(h('p', { class: 'hint' }, 'Выберите, куда идти дальше на карте. Бой можно вести самим или доверить его отряду.'));
 
   const slots = h('div', { class: 'slots' });
   const party = partyHeroes(state);
@@ -120,7 +127,7 @@ function lobby(ctx: Ctx): HTMLElement {
       });
       seg.append(b);
     }
-    root.append(h('div', { style: 'margin:12px 0' }, seg));
+    dispatch.append(seg);
   }
 
   const reason = h('p', { class: 'hint' });
@@ -131,7 +138,7 @@ function lobby(ctx: Ctx): HTMLElement {
       ctx.toast(check.reason);
       return;
     }
-    ctx.run = startRun(state, ctx.now(), selectedTier);
+    ctx.run = startRun(state, ctx.now(), selectedTier, { rescue: true });
     summary = null;
     ctx.platform.track('run_start', { tier: selectedTier });
     ctx.save();
@@ -146,7 +153,7 @@ function lobby(ctx: Ctx): HTMLElement {
   update();
   ctx.live(update);
 
-  root.append(h('div', { class: 'lobby' }, reason, startBtn));
+  dispatch.append(reason, startBtn);
   return root;
 }
 
@@ -201,7 +208,14 @@ function runHead(ctx: Ctx, run: Run): HTMLElement {
 // ---------- Карта ----------
 
 function mapView(ctx: Ctx, run: Run): HTMLElement {
-  const reachable = new Set(availableNodes(run).map((n) => n.id));
+  const available = availableNodes(run);
+  const reachable = new Set(available.map((n) => n.id));
+  const firstFork = run.rescue?.stage === 'search' && run.visited.length === 0;
+  const enter = (node: MapNode) => {
+    enterNode(run, node.id);
+    ctx.save();
+    ctx.render();
+  };
   const reveal = run.relics.includes('pathfinderMap');
   const visited = new Set(run.visited);
   const layers = new Map<number, MapNode[]>();
@@ -225,11 +239,7 @@ function mapView(ctx: Ctx, run: Run): HTMLElement {
       if (run.currentNodeId === node.id) classes.push('is-current');
       const b = h('button', { class: classes.join(' '), 'aria-label': NODE_NAME[node.type] }, nodeIcon(node.type));
       (b as HTMLButtonElement).disabled = !canGo;
-      b.addEventListener('click', () => {
-        enterNode(run, node.id);
-        ctx.save();
-        ctx.render();
-      });
+      b.addEventListener('click', () => enter(node));
       nodeEls.set(node.id, b);
       const label = h('span', { class: 'node-label' }, node.type === 'boss' ? 'Костяной король' : NODE_NAME[node.type]);
       // Карта следопыта (MOD06): состав противников доступных боёв виден заранее.
@@ -273,19 +283,42 @@ function mapView(ctx: Ctx, run: Run): HTMLElement {
   window.requestAnimationFrame(drawLines);
   window.addEventListener('resize', drawLines, { once: true });
 
+  const fork = h('div', { class: 'rescue-fork' });
+  if (firstFork) {
+    const routes: Array<[RescueRoute, MapNode['type']]> = [['stairs', 'battle'], ['winch', 'event']];
+    for (const [route, type] of routes) {
+      const target = available.find(node => node.type === type);
+      if (!target) continue;
+      const copy = rescueRoutes[route];
+      fork.append(h('button', { class: 'offer rescue-route', type: 'button', 'data-rescue-route': route,
+        onclick: () => enter(target) },
+        glyph(route === 'stairs' ? 'sword' : 'ember', 22), h('strong', null, copy.title),
+        h('span', { class: 'offer__text' }, copy.cost)));
+    }
+  }
+
+  const leave = h('div', { class: 'btn-row', style: 'margin-top:8px' }, btn('Покинуть подземелье', () => abandon(ctx, run), 'btn btn--ghost btn--small'));
+  const shiftIsSafe = run.rescue?.stage === 'search' && Boolean(run.rescue.outcome);
   const stage = h(
     'div',
     { class: 'stage' },
-    h('h3', null, `Подземелье ${run.tier}`),
-    h('p', { class: 'hint' }, run.currentNodeId === null ? 'Выберите, с чего начать путь.' : 'Выберите следующий узел.'),
+    h('h3', null, firstFork ? 'Как вывести смену?' : `Подземелье ${run.tier}`),
+    firstFork ? fork : mapRescue(run),
+    shiftIsSafe ? h('p', { class: 'hint' }, 'В гильдии вас ждут со снаряжением для поисков Лиды. Можно вернуться сейчас или продолжить поход за добычей.') :
+      firstFork ? null : h('p', { class: 'hint' }, run.currentNodeId === null ? 'Выберите, с чего начать путь.' : 'Выберите следующий узел.'),
+    shiftIsSafe ? leave : null,
     map,
-    h('div', { class: 'btn-row', style: 'margin-top:8px' }, btn('Покинуть подземелье', () => abandon(ctx, run), 'btn btn--ghost btn--small')),
+    shiftIsSafe ? null : leave,
   );
   return stage;
 }
 
 function abandon(ctx: Ctx, run: Run): void {
-  ctx.modal('Покинуть подземелье?', ['Экспедиция завершится поражением: награда будет меньше, павшие герои получат временную травму.'], [
+  const body = [run.safe
+    ? 'Награда за экспедицию будет меньше. На этом спуске благословение сбережёт павших от травм.'
+    : 'Награда за экспедицию будет меньше. Павшим героям потребуется время на восстановление.'];
+  if (run.rescue?.stage === 'search' && run.rescue.outcome) body.push('Смена уже поднялась. Каменщики будут ждать вас в гильдии.');
+  ctx.modal('Покинуть подземелье?', body, [
     { label: 'Остаться', ghost: true },
     {
       label: 'Уйти',
@@ -300,12 +333,20 @@ function abandon(ctx: Ctx, run: Run): void {
 
 // ---------- События, сундуки, лагерь ----------
 
+function atRescueWinch(run: Run): boolean {
+  return run.rescue?.stage === 'search' && !run.rescue.outcome && run.visited.length === 1 && run.event?.id === 'EV06';
+}
+
 function eventView(ctx: Ctx, run: Run): HTMLElement {
   const ev = run.event;
   if (!ev) return h('div');
+  const winch = atRescueWinch(run);
   const list = h('div', { class: 'choice-list' });
   for (const { choice, hint, available } of eventChoices(run)) {
-    const b = h('button', { class: 'btn btn--ghost' }, choice.label, hint ? h('small', null, hint) : null);
+    const label = winch && choice.id === 'B'
+      ? `Разобрать ядро (+10 золота, +3 осколка, до −${Math.round(10 * HP_SCALE)} HP каждому)`
+      : choice.label;
+    const b = h('button', { class: 'btn btn--ghost' }, label, hint ? h('small', null, hint) : null);
     if (!available) (b as HTMLButtonElement).disabled = true;
     b.addEventListener('click', () => {
       if (!available) return;
@@ -315,7 +356,8 @@ function eventView(ctx: Ctx, run: Run): HTMLElement {
     });
     list.append(b);
   }
-  return h('div', { class: 'stage' }, h('h3', null, ev.title), h('p', null, ev.text), list);
+  return h('div', { class: 'stage' }, h('h3', null, winch ? 'Голем у лебёдки' : ev.title),
+    h('p', null, winch ? 'Клеть дёргается внизу. Голем вцепился в тормоз. Из шахты кричат: «Когда отпустит — крути!»' : ev.text), list);
 }
 
 function eventResultView(ctx: Ctx, run: Run): HTMLElement {
@@ -324,7 +366,8 @@ function eventResultView(ctx: Ctx, run: Run): HTMLElement {
   return h(
     'div',
     { class: 'stage' },
-    h('h3', null, run.event?.title ?? 'Событие'),
+    h('h3', null, atRescueWinch(run) ? 'Тормоз отпустил' : run.event?.title ?? 'Событие'),
+    atRescueWinch(run) ? h('p', null, 'Канат натянулся. Кто-то внизу дважды ударил по решётке. Теперь можно поднимать клеть.') : null,
     h('div', { class: 'outcome' }, h('p', null, res.text), res.lines.length > 0 ? h('ul', null, ...res.lines.map((l) => h('li', null, l))) : null),
     btn('Дальше', () => {
       continueFromEvent(run);
@@ -404,6 +447,7 @@ function prepView(ctx: Ctx, run: Run): HTMLElement {
       h('div', null,
         h('span', { class: 'eyebrow' }, 'ТРОННЫЙ СКЛЕП'),
         h('h3', null, 'Перед боем с Костяным королём'),
+        run.rescue?.stage === 'trail' ? h('p', { class: 'rescue-note' }, '«Когда домой?» — кричат за дверь. «Когда старшина сам возьмётся за лопату!» Голос Лиды. Рядом железная перчатка отбивает знакомый стук.') : null,
         h('p', null, 'За дверью — древний король в тяжёлых доспехах. Сначала он бьёт тяжёлым клинком по одной цели, а когда доспехи треснут — призрачной волной по всему отряду. Подготовьтесь к одному из ударов.'),
       ),
     ),
@@ -485,15 +529,16 @@ function summaryView(ctx: Ctx, run: Run): HTMLElement {
     summary = null;
     stopBattleView();
     ctx.save();
-    ctx.render();
+    ctx.navigate('guild');
   }, 'btn btn--primary'));
 
   return h('div', { class: `summary summary--${win ? 'win' : 'lose'}` },
     h('div', { class: 'summary__banner' },
       h('span', { class: 'eyebrow' }, `ПОДЗЕМЕЛЬЕ ${s.tier}`),
-      h('h2', null, win ? 'Экспедиция удалась' : 'Экспедиция провалена'),
+      h('h2', null, win ? 'Экспедиция удалась' : run.rescue?.stage === 'search' && run.rescue.outcome ? 'Возвращение отряда' : 'Экспедиция провалена'),
       h('p', null, win ? 'Костяной король повержен. Гильдия встречает отряд с добычей.' : 'Отряд отступил. Часть добычи удалось сохранить.'),
     ),
+    rescueDebrief(run),
     rewards,
     heroes,
     notes,

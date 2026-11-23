@@ -5,6 +5,7 @@ import { SAVE_VERSION, createCanonHero, dayKey, newGame } from './state';
 import {
   HERO_CLASSES,
   HERO_IDENTITIES,
+  isRescueRoute,
   POST_IDS,
   RARITIES,
   type GameState,
@@ -54,6 +55,8 @@ const MIGRATIONS: Record<number, (save: Raw) => Raw> = {
     heroes: Array.isArray(s.heroes) ? s.heroes.map(migrateHeroV1) : s.heroes,
     activeRun: typeof s.activeRun === 'string' ? migrateRunJsonV1(s.activeRun, migrateHeroV1) : s.activeRun,
   }),
+  // Старая победа не определяет, каким путём игрок спас смену. Активный поход продолжается без главы.
+  2: (s) => ({ ...s, version: 3, rescue: { stage: 'search' } }),
 };
 
 export function serialize(state: GameState): string {
@@ -129,6 +132,8 @@ function normalize(raw: Raw, nowMs: number): GameState {
 
   const state: GameState = {
     version: SAVE_VERSION,
+    rescue: isObject(raw.rescue) && (raw.rescue.stage === 'trail' || raw.rescue.stage === 'home') && isRescueRoute(raw.rescue.route)
+      ? { stage: raw.rescue.stage, route: raw.rescue.route } : base.rescue,
     createdAt,
     lastSeen: num(raw.lastSeen, nowMs, 0),
     gold: num(raw.gold, 0, 0),

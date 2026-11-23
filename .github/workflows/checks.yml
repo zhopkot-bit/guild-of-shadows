@@ -48,7 +48,7 @@ jobs:
           if-no-files-found: error
 
   draft-preview:
-    if: github.ref == 'refs/heads/integration/r01-rehearsal'
+    if: github.ref == 'refs/heads/integration/r01-rehearsal' || github.ref == 'refs/heads/studioigor'
     needs: checks
     permissions:
       actions: read

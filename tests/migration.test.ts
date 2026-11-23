@@ -38,9 +38,9 @@ function legacySave(extra: Record<string, unknown> = {}): Record<string, unknown
   };
 }
 
-describe('миграция сохранений v1 → v2', () => {
-  it('текущая версия схемы — 2', () => {
-    expect(SAVE_VERSION).toBe(2);
+describe('миграция сохранений v1 в текущую схему', () => {
+  it('текущая версия схемы — 3', () => {
+    expect(SAVE_VERSION).toBe(3);
   });
 
   it('канонические герои получают личность и роль по Content Bible; прогресс сохраняется', () => {
@@ -58,7 +58,7 @@ describe('миграция сохранений v1 → v2', () => {
     expect(r.state.essence).toBe(12);
     expect(r.state.posts.barracks).toBe(14);
     expect(r.state.party).toEqual(['h1', 'h3', 'h4']);
-    expect(r.state.version).toBe(2);
+    expect(r.state.version).toBe(SAVE_VERSION);
   });
 
   it('повторная загрузка мигрированного сейва ничего не меняет (идемпотентность)', () => {

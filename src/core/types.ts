@@ -48,7 +48,19 @@ export interface Stats {
   heroesLost: number;
 }
 
+export type RescueRoute = 'stairs' | 'winch';
+
+export type RescueChapter =
+  | { stage: 'search' }
+  | { stage: 'trail' | 'home'; route: RescueRoute };
+
+export function isRescueRoute(value: unknown): value is RescueRoute {
+  return value === 'stairs' || value === 'winch';
+}
+
 export interface GameState {
+  /** Постоянный результат главы «Три удара». */
+  rescue: RescueChapter;
   version: number;
   createdAt: number;
   lastSeen: number;

@@ -3,7 +3,7 @@ name: Release verification
 on:
   pull_request:
   push:
-    branches: [main, 'release/**', 'integration/**']
+    branches: [main, studioigor, 'release/**', 'integration/**']
   workflow_dispatch:
 
 permissions:

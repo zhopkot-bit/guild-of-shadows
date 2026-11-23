@@ -8,7 +8,7 @@ import type { Platform } from '../platform';
 import { serializeRun, type Run } from '../expedition/run';
 import { restoreActiveRun } from '../expedition/restore';
 import { stopBattleView } from './battleView';
-import type { Ctx, ModalButton } from './ctx';
+import type { Ctx, ModalButton, Tab } from './ctx';
 import { clear, h, type Child } from './dom';
 import { glyph } from './glyphs';
 import { loadArtPack } from '../content/artpack';
@@ -21,7 +21,6 @@ import T from '../content/ui-text.json';
 import { PauseController } from '../core/pause';
 import { sfx } from './sfx';
 
-type Tab = 'guild' | 'squad' | 'expedition';
 const TABS: Tab[] = ['guild', 'squad', 'expedition'];
 
 const AUTOSAVE_MS = 15_000;
@@ -102,10 +101,7 @@ export async function startApp(platform: Platform, root: HTMLElement): Promise<v
   const tabInner = tabbar.firstElementChild as HTMLElement;
   for (const id of TABS) {
     const b = h('button', { class: 'tab' }, T.tabs[id]);
-    b.addEventListener('click', () => {
-      tab = id;
-      render();
-    });
+    b.addEventListener('click', () => navigate(id));
     tabButtons.set(id, b);
     tabInner.append(b);
   }
@@ -124,6 +120,7 @@ export async function startApp(platform: Platform, root: HTMLElement): Promise<v
     },
     now: () => platform.now(),
     render,
+    navigate,
     live: (fn) => {
       live.push(fn);
     },
@@ -173,6 +170,12 @@ export async function startApp(platform: Platform, root: HTMLElement): Promise<v
     rateEl.textContent = fill(T.perSecond, { n: fmt(totalIncome(state)) });
     essenceEl.textContent = String(Math.floor(state.essence));
     essencePill.style.display = state.essence > 0 || state.relicarium > 0 ? '' : 'none';
+  }
+
+  function navigate(next: Tab): void {
+    tab = next;
+    render();
+    window.scrollTo(0, 0);
   }
 
   function render(): void {

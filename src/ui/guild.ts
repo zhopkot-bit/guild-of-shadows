@@ -5,6 +5,8 @@ import { POST_IDS } from '../core/types';
 import type { Ctx } from './ctx';
 import { h } from './dom';
 import { shards } from '../content/text';
+import { guildRescue, routeGift } from './rescueStory';
+import { sfx } from './sfx';
 
 const MONO: Record<string, string> = { barracks: 'Ка', forge: 'Ку', library: 'Б', tavern: 'Т', alchemy: 'А' };
 const POST_ART: Record<string, string> = { barracks: 'barracks', forge: 'forge', library: 'library', tavern: 'tavern', alchemy: 'alchemy' };
@@ -16,15 +18,24 @@ function effectText(ctx: Ctx, def: PostDef): string {
 }
 
 export function guildScreen(ctx: Ctx): HTMLElement {
+  const chapter = ctx.state.rescue;
+  const scene = guildRescue(chapter);
+  const resume = ctx.run !== null;
+  const action = h('button', { class: 'btn rescue-cta', type: 'button' }, resume ? 'Вернуться к отряду' : scene.action);
+  action.addEventListener('click', () => {
+    if (!resume && chapter.stage === 'search') sfx.knock();
+    ctx.navigate('expedition');
+  });
   const root = h('section', { class: 'screen screen--guild' },
-    h('div', { class: 'guild-hero' },
+    h('div', { class: 'guild-hero', 'data-rescue-stage': chapter.stage },
       h('img', { class: 'guild-hero__art', src: './art/v17/guild/citadel.webp', alt: 'Готическая цитадель гильдии', draggable: 'false', fetchpriority: 'high' }),
       h('div', { class: 'guild-hero__shade', 'aria-hidden': 'true' }),
       h('div', { class: 'guild-hero__content' },
-        h('span', { class: 'eyebrow' }, 'ЦИТАДЕЛЬ НА КРАЮ ИЗВЕСТНОГО МИРА'),
+        h('span', { class: 'eyebrow' }, scene.title),
         h('h1', null, 'Гильдия Теней'),
-        h('p', null, 'Собирайте героев. Возвращайте свет в забытые земли.'),
-        h('span', { class: 'guild-hero__rule' }, '✦  Укрепляйте убежище  ✦'),
+        h('p', null, scene.line),
+        chapter.stage === 'trail' ? h('p', { class: 'rescue-gift' }, routeGift(chapter.route)) : null,
+        action,
       ),
     ),
     h('div', { class: 'section-heading' }, h('div', null, h('h2', null, 'Постройки гильдии'), h('p', { class: 'hint' }, 'Каждый зал открывает новые возможности. Доход продолжается, пока вас нет.'))),

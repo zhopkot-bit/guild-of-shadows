@@ -5,8 +5,9 @@ import type { GameState, Hero, HeroIdentity } from './types';
 /**
  * v1 — исходный формат (роли warrior/mage/rogue/priest, без identity).
  * v2 — канонические роли и личности героев (миграция в save.ts).
+ * v3 — постоянный выбор и завершение главы «Три удара».
  */
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export function dayKey(nowMs: number): string {
   return new Date(nowMs).toISOString().slice(0, 10);
@@ -41,6 +42,7 @@ export function createCanonHero(state: GameState, identity: HeroIdentity): Hero 
 export function newGame(nowMs: number): GameState {
   const state: GameState = {
     version: SAVE_VERSION,
+    rescue: { stage: 'search' },
     createdAt: nowMs,
     lastSeen: nowMs,
     gold: 0,
