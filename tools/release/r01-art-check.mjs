@@ -7,8 +7,10 @@ import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 
-const testedSha = '8307ef7910f3bd80fc05a51939a034aa8bd3fbd2';
 const [backend, widthText, heightText, mode] = process.argv.slice(2);
+assert([undefined, '--baseline-preview', '--integration'].includes(mode), 'Unknown artwork test mode');
+const integrated = mode === '--integration';
+const testedSha = integrated ? process.env.GITHUB_SHA : '8307ef7910f3bd80fc05a51939a034aa8bd3fbd2';
 const baseline = mode === '--baseline-preview';
 assert(['webgl', 'canvas2d'].includes(backend));
 const width = Number(widthText), height = Number(heightText);
@@ -21,11 +23,11 @@ const actualSha = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' 
 assert.equal(actualSha, testedSha);
 const sourceTree = execFileSync('git', ['rev-parse', 'HEAD^{tree}'], { encoding: 'utf8' }).trim();
 const testedTree = execFileSync('git', ['write-tree'], { encoding: 'utf8' }).trim();
-assert.equal(baseline, sourceTree === testedTree, 'Expected the reference tree or the patched candidate');
-const patches = baseline ? [] : ['boss-hud.patch', 'boss-phase.patch', 'canvas-emissive.patch'].map(file => ({
+assert.equal(baseline || integrated, sourceTree === testedTree, 'Unexpected changes to the tested Git tree');
+const patches = baseline || integrated ? [] : ['boss-hud.patch', 'boss-phase.patch', 'canvas-emissive.patch'].map(file => ({
   file, sha256: createHash('sha256').update(readFileSync(new URL('./rehearsal/' + file, import.meta.url))).digest('hex'),
 }));
-const report = { testedSha, testedTree, patches, baseline, harnessSha: process.env.GITHUB_SHA, backend, width, height, errors: [] };
+const report = { testedSha, testedTree, patches, baseline, integrated, harnessSha: process.env.GITHUB_SHA, backend, width, height, errors: [] };
 const serverLog = openSync(resolve(out, 'vite.log'), 'w');
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', '5173', '--strictPort'], { stdio: ['ignore', serverLog, serverLog] });
 closeSync(serverLog);
@@ -461,13 +463,17 @@ async function checkBossHud() {
     assert.equal(report.sword.backend, backend);
     if (!baseline) assert(!report.sword.samples.some(p => p.underPanel), 'Upper pixels of the raised sword fall behind a tactical HUD panel');
     if (!baseline && width === 667) {
-      const reference = JSON.parse(readFileSync(resolve('qa-out/u01/unchanged-reference/rehearsal.json'), 'utf8')).sword;
       const result = report.sword;
       const within = (a, b) => a[2] > a[0] && a[3] > a[1] && a[0] >= b[0]-1 && a[1] >= b[1]-1 && a[2] <= b[2]+1 && a[3] <= b[3]+1;
       const overlap = (a, b) => Math.min(a[2], b[2])-Math.max(a[0], b[0]) > 1 && Math.min(a[3], b[3])-Math.max(a[1], b[1]) > 1;
-      assert.deepEqual(result.arena, reference.arena, 'Preserve mobile canvas');
-      assert.equal(result.feet, reference.feet, 'Preserve floor position');
-      assert.equal(result.figureHeight, reference.figureHeight, 'Preserve boss scale');
+      if (integrated) {
+        assert(result.figureHeight > 0 && within(result.arena, [0, 0, width, height]), 'Visible mobile arena and boss');
+      } else {
+        const reference = JSON.parse(readFileSync(resolve('qa-out/u01/unchanged-reference/rehearsal.json'), 'utf8')).sword;
+        assert.deepEqual(result.arena, reference.arena, 'Preserve mobile canvas');
+        assert.equal(result.feet, reference.feet, 'Preserve floor position');
+        assert.equal(result.figureHeight, reference.figureHeight, 'Preserve boss scale');
+      }
       const panels = Object.values(result.panels);
       for (let i = 0; i < panels.length; i++) {
         assert(within(panels[i], result.arena), 'A tactical panel is outside the mobile arena');
@@ -500,6 +506,6 @@ try {
   server.kill('SIGTERM');
   report.ok = report.errors.length === 0;
   writeFileSync(resolve(out, 'rehearsal.json'), JSON.stringify(report, null, 2) + '\n');
-  console.log(JSON.stringify({ ok: report.ok, testedSha, testedTree, baseline, patches, backend, width, height, errors: report.errors, sword: report.sword, live: report.live, restored: report.restored, phaseHud: report.phaseHud, emission: report.emission }));
+  console.log(JSON.stringify({ ok: report.ok, testedSha, testedTree, baseline, integrated, patches, backend, width, height, errors: report.errors, sword: report.sword, live: report.live, restored: report.restored, phaseHud: report.phaseHud, emission: report.emission }));
   if (!report.ok) process.exitCode = 1;
 }

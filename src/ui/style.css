@@ -765,6 +765,22 @@ body.is-battle .topbar__motto { display: none; }
   .action__label { font-size: 11px; }
   .coach { width: min(300px, 78%); }
   .coach p { font-size: 12px; }
+
+  /* Королю нужен свободный верх арены для замаха. Оставляем сведения о бое
+     слева, а шкалу очерёдности выстраиваем вдоль правого края. */
+  .arena--boss .hud {
+    display: grid; grid-template-columns: minmax(0, 54%) 1fr;
+    align-content: start; align-items: start; gap: 4px; padding: 8px;
+  }
+  .arena--boss .hud__top, .arena--boss .intents {
+    position: static; grid-column: 1; width: 100%;
+  }
+  .arena--boss .boss-bar__row { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .arena--boss .boss-bar__name, .arena--boss .boss-bar__phase {
+    white-space: normal; overflow: visible; overflow-wrap: anywhere;
+  }
+  .arena--boss .turns { left: auto; right: 8px; flex-direction: column; max-height: calc(100% - 16px); }
+  .arena--boss .turns__sep { width: auto; height: 1px; margin: 2px 4px; }
 }
 
 /* Портретная ориентация на телефоне и планшете не поддерживается — просим повернуть устройство. */

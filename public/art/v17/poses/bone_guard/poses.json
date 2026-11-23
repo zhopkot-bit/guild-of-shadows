@@ -1,0 +1,20 @@
+{
+ "version": 1,
+ "frameWidth": 643,
+ "frameHeight": 768,
+ "pivot": [
+  0.5325,
+  0.98
+ ],
+ "figureHeight": 0.8,
+ "figureWidth": 0.7683,
+ "poses": {
+  "idle": "idle.webp",
+  "windup": "windup.webp",
+  "strike": "strike.webp",
+  "prepare": "prepare.webp",
+  "hit": "hit.webp",
+  "down": "down.webp"
+ },
+ "fps": 12
+}

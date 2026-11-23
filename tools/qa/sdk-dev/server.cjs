@@ -1,7 +1,7 @@
 /** Official @yandex-games/sdk-dev-proxy@0.0.2, with local TLS and no browser opener.
  * Based on the T1 QA launcher at 3f897cde; SDK and proxy responses are unmodified.
  * Install: npm install --prefix work/yandex-sdk --cache ./work/npm-cache --no-save @yandex-games/sdk-dev-proxy@0.0.2
- * Run: node --use-env-proxy tools/qa/sdk-dev/server.cjs [port] [build-directory]
+ * Run: node --use-env-proxy tools/qa/sdk-dev/server.cjs [port] [served-directory] [game-subdirectory]
  */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -13,7 +13,7 @@ const work = path.join(root, 'work/yandex-sdk');
 const proxy = path.join(work, 'node_modules/@yandex-games/sdk-dev-proxy/bin/index.js');
 const build = path.resolve(root, process.argv[3] ?? 'dist-yandex');
 if (!fs.existsSync(proxy)) throw new Error('Install @yandex-games/sdk-dev-proxy@0.0.2 into work/yandex-sdk first');
-if (!fs.existsSync(path.join(build, 'index.html'))) throw new Error('Run npm run build:yandex first');
+if (!fs.existsSync(path.join(build, process.argv[4] ?? '', 'index.html'))) throw new Error('Run npm run build:yandex first');
 const keyPath = path.join(work, 'localhost.key');
 const certPath = path.join(work, 'localhost.crt');
 execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', keyPath,

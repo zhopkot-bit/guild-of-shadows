@@ -3,7 +3,7 @@ import { resolvePose } from '../../content/artpack';
 import type { Backend, QuadDraw, RenderTarget, Rgb, SpriteDraw, Tex } from './backend';
 import { coverTransform } from './backend';
 import { Canvas2DBackend } from './canvas2d';
-import { computeLayout, type Slot } from './layout';
+import { bossPoseHeightLimit, computeLayout, type Slot } from './layout';
 import { buildAtlas, buildNoise, type Atlas, type FxRegion } from './textures';
 import { WebGLBackend } from './webgl';
 
@@ -138,11 +138,12 @@ class Actor {
   flashColor: Rgb = [1, 1, 1];
   dead = false;
   fallen = false;
-  phase2 = false;
+  bossPhase: 1 | 'awakening' | 'restoring' | 2;
+  get phase2(): boolean { return this.bossPhase === 2 || this.bossPhase === 'restoring'; }
   status: ActorStatus = { active: false, targetable: null, hovered: false, cover: false, threatened: null, charging: null };
   constructor(public spec: ActorSpec) {
     this.dead = !!spec.dead;
-    this.phase2 = !!spec.phase2;
+    this.bossPhase = spec.phase2 ? 'restoring' : 1;
     if (this.dead && spec.side === 'enemy') this.p.dissolve = 1;
     if (this.dead && spec.side === 'hero') this.setFallenPose();
     if (this.phase2) this.p.emissive = 1;
@@ -415,7 +416,7 @@ export class ArenaScene {
     this.layerTex = await Promise.all(layerJobs);
     await Promise.all(vfxJobs);
     this.layout();
-    const boss = [...this.actors.values()].find((a) => a.spec.boss && a.phase2);
+    const boss = [...this.actors.values()].find((a) => a.spec.boss && a.spec.phase2);
     if (boss) this.enterPhase2Visuals(boss, true);
   }
 
@@ -448,6 +449,11 @@ export class ArenaScene {
     const L = computeLayout({ width: this.cssW, height: this.cssH, heroes: heroes.length, enemies: foes.map((f) => ({ boss: f.spec.boss, wide: f.spec.wide })) });
     const W = this.cssW * this.dpr;
     const H = this.cssH * this.dpr;
+    const posedBoss = !this.setup.showcase ? foes.find((a) => a.spec.boss && a.posePack && !a.rig && !a.anim) : undefined;
+    // Both phases share the stricter limit: changing phase must not change the
+    // king's apparent size. The group retains the intended boss/hero ratio.
+    const bossPacks = [posedBoss?.spec.poses, posedBoss?.spec.poses2].filter((p): p is PosePack => !!p);
+    const bossHeightLimit = bossPoseHeightLimit(H, bossPacks.map((p) => p.figureHeight));
     const place = (a: Actor, s: Slot | undefined) => {
       if (!s) return;
       a.slot = s;
@@ -455,6 +461,12 @@ export class ArenaScene {
       a.y = s.y * H;
       const v = a.spec.variant ?? 0;
       a.h = s.h * H * (v === 1 ? 0.93 : v === 2 ? 0.97 : 1);
+      if (posedBoss && a === posedBoss) a.h = Math.min(a.h, bossHeightLimit);
+      else if (posedBoss && a.spec.side === 'hero') a.h = Math.min(a.h, bossHeightLimit / 1.33);
+      if (a === posedBoss && bossPacks.length) {
+        const belowFeet = Math.max(...bossPacks.map((p) => (1 - p.pivot[1]) / p.figureHeight));
+        a.y = Math.min(a.y, H - 6 * this.dpr - belowFeet * a.h);
+      }
       const box = a.rig?.rig.aabb;
       a.w = box ? (a.h * box.width) / box.height : a.anim ? (a.h * a.anim.frameWidth) / a.anim.frameHeight : a.tex ? (a.h * a.tex.w) / a.tex.h : a.h * 0.45;
       const pp = a.posePack;
@@ -1676,7 +1688,8 @@ export class ArenaScene {
   }
 
   private enterPhase2Visuals(a: Actor, instant: boolean): void {
-    a.phase2 = true;
+    if (a.bossPhase === 2) return;
+    a.bossPhase = 2;
     // Финальный арт II фазы от художника заменяет модель; процедурное свечение тогда не накладывается.
     if (a.spec.anim2 && a.animTex2.length) {
       a.anim = a.spec.anim2;
@@ -1714,6 +1727,8 @@ export class ArenaScene {
   /** Пробуждение короля: доспехи трескаются, проявляется призрачное ядро, свет меняется. */
   async bossPhase2(actorId: string): Promise<void> {
     const a = this.actor(actorId);
+    if (a.bossPhase !== 1) return;
+    a.bossPhase = 'awakening';
     a.status.charging = null;
     this.shake(20);
     this.flashScreen([0.8, 0.9, 1], 0.9);
@@ -1802,11 +1817,6 @@ export class ArenaScene {
       else a.setFallenPose();
     }
     if (alive && a.pose === 'down') a.pose = 'idle';
-  }
-
-  setPhase2(id: string): void {
-    const a = this.actors.get(id);
-    if (a && !a.phase2) this.enterPhase2Visuals(a, true);
   }
 
   stats(): { backend: string; actors: number; particles: number; errors: string[]; units: Array<{ id: string; x: number; offX: number; alpha: number; dissolve: number; clip: string | null; pose: PoseName | null; anim: boolean }> } {

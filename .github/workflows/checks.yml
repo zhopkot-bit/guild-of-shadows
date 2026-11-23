@@ -11,6 +11,9 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      artifact-id: ${{ steps.draft.outputs.artifact-id }}
+      artifact-digest: ${{ steps.draft.outputs.artifact-digest }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,11 +27,36 @@ jobs:
       - run: npm run build:yandex
       - run: node tools/art/validate_pack.mjs public/art/v17/art-pack.json --strict
       - run: npm run sim
-      - uses: actions/upload-artifact@v4
+      - name: Validate the strict Yandex build and record its source
+        run: |
+          mkdir -p qa-out/yandex-draft
+          node tools/art/validate_pack.mjs dist-yandex/art/v17/art-pack.json --strict > qa-out/yandex-draft/registry.json
+          node tools/release/verify-dist.mjs dist-yandex public qa-out/yandex-draft/inventory.json
+          git rev-parse HEAD > qa-out/yandex-draft/commit.txt
+          git rev-parse 'HEAD^{tree}' > qa-out/yandex-draft/tree.txt
+      - name: Save build evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: yandex-draft-inventory
+          path: qa-out/yandex-draft/
+          if-no-files-found: error
+      - id: draft
+        uses: actions/upload-artifact@v4
         with:
           name: yandex-draft
           path: dist-yandex/
           if-no-files-found: error
+
+  draft-preview:
+    if: github.ref == 'refs/heads/integration/r01-rehearsal'
+    needs: checks
+    permissions:
+      actions: read
+      contents: read
+    uses: ./.github/workflows/yandex-draft.yml
+    with:
+      artifact-id: ${{ needs.checks.outputs.artifact-id }}
+      artifact-digest: ${{ needs.checks.outputs.artifact-digest }}
 
   browser:
     runs-on: ubuntu-latest

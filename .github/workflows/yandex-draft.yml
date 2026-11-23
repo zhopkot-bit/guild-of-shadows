@@ -1,0 +1,74 @@
+name: Yandex draft package
+
+on:
+  workflow_call:
+    inputs:
+      artifact-id:
+        required: true
+        type: string
+      artifact-digest:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  preview:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/download-artifact@v4
+        with:
+          name: yandex-draft-inventory
+          path: qa-out/yandex-draft/build
+      - name: Verify the downloadable ZIP and its complete file list
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ inputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ inputs.artifact-digest }}
+        run: |
+          evidence=qa-out/yandex-draft/build
+          archive="$RUNNER_TEMP/yandex-draft.zip"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$ARTIFACT_ID/zip" > "$archive"
+          sha256sum "$archive" | cut -d' ' -f1 > qa-out/yandex-draft/archive-sha256.txt
+          test "$(cat qa-out/yandex-draft/archive-sha256.txt)" = "$ARTIFACT_DIGEST"
+          test "$(cat "$evidence/commit.txt")" = "$GITHUB_SHA"
+          test "$(cat "$evidence/tree.txt")" = "$(git rev-parse 'HEAD^{tree}')"
+          jq -r '.files[].path' "$evidence/inventory.json" | LC_ALL=C sort > "$RUNNER_TEMP/expected-files"
+          zipinfo -1 "$archive" | sed '/\/$/d' | LC_ALL=C sort > "$RUNNER_TEMP/archive-files"
+          diff -u "$RUNNER_TEMP/expected-files" "$RUNNER_TEMP/archive-files"
+          grep -Fxq index.html "$RUNNER_TEMP/archive-files"
+          mkdir -p "$RUNNER_TEMP/yandex-site/draft"
+          unzip -q "$archive" -d "$RUNNER_TEMP/yandex-site/draft"
+          node tools/release/verify-dist.mjs "$RUNNER_TEMP/yandex-site/draft" public qa-out/yandex-draft/downloaded.json "$evidence/inventory.json"
+      - run: npm ci
+      - run: node node_modules/playwright-core/cli.js install --with-deps chromium
+      - run: npm install --prefix work/yandex-sdk --no-save --package-lock=false @yandex-games/sdk-dev-proxy@0.0.2
+      - name: Exercise the downloaded game under /draft/ with the official development SDK
+        run: |
+          npm run qa:saves
+          node --use-env-proxy tools/qa/sdk-dev/server.cjs 8080 "$RUNNER_TEMP/yandex-site" draft > "$RUNNER_TEMP/yandex-proxy.log" 2>&1 &
+          proxy_pid=$!
+          trap 'kill "$proxy_pid" 2>/dev/null || true' EXIT
+          curl -kfSs --retry 20 --retry-delay 1 --retry-connrefused https://localhost:8080/draft/index.html > "$RUNNER_TEMP/served-index.html" || { cat "$RUNNER_TEMP/yandex-proxy.log"; exit 1; }
+          cmp "$RUNNER_TEMP/served-index.html" "$RUNNER_TEMP/yandex-site/draft/index.html"
+          CHROME=$(node -p "require('playwright-core').chromium.executablePath()")
+          export CHROME
+          npm run qa:sdk-dev -- https://localhost:8080/draft/ qa-saves qa-out/yandex-draft/sdk.json
+          node tools/qa/bran-flow.mjs https://localhost:8080/draft/ qa-saves qa-out/yandex-draft/bran.json
+      - name: Save package and SDK verification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yandex-draft-preview
+          path: qa-out/yandex-draft/
+          if-no-files-found: warn
