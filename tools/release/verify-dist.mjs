@@ -58,7 +58,7 @@ export function verifyDist(distDir, publicDir) {
       if (/\.js$/.test(name)) {
         // Literal game asset URLs are relative to the document, not the JS chunk.
         // Dynamic paths are covered by the strict registry and browser requests.
-        for (const match of data.toString('utf8').matchAll(/["'`]((?:\.\/|\/)?art\/[^"'`\s${}]+\.(?:webp|png|jpg|svg|json|mp3|ogg|wav))["'`]/g)) {
+        for (const match of data.toString('utf8').matchAll(/["'`]((?:\.\/|\/)?art\/[^"'`\s${}?#]+\.(?:webp|png|jpg|svg|json|mp3|ogg|wav)(?:[?#][^"'`\s${}]*)?)["'`]/g)) {
           reference(match[1], path, root);
         }
       }

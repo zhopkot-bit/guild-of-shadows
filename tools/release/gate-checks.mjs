@@ -46,6 +46,19 @@ test('literal JS URLs must resolve even when absent from the source registry', (
   assert(verifyDist(dist, source).errors.some((error) => error.includes('missing.webp')));
 });
 
+test('JS art URLs with query strings or fragments must point to a packaged relative asset', (t) => {
+  const { dist, source } = fixture(t);
+  const app = join(dist, 'assets/app.js');
+  writeFileSync(app, 'fetch("./art/hero.webp?v=17#pose");');
+  assert.equal(verifyDist(dist, source).ok, true);
+  for (const ref of ['./art/missing.webp?v=17', './art/missing.webp#pose']) {
+    writeFileSync(app, `fetch(${JSON.stringify(ref)});`);
+    assert(verifyDist(dist, source).errors.some((error) => error.includes(`Missing asset ${ref}`)));
+  }
+  writeFileSync(app, 'fetch("/art/hero.webp?v=17");');
+  assert(verifyDist(dist, source).errors.some((error) => error.includes('must be relative')));
+});
+
 test('HTML, CSS and JS asset URLs must work below a platform subdirectory', (t) => {
   const { dist, source } = fixture(t);
   writeFileSync(join(dist, 'index.html'), '<script type="module" src="/assets/app.js"></script>');
