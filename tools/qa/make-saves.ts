@@ -69,6 +69,12 @@ function walkTo(run: Run, type: string): boolean {
 // 1. Гильдия без забега.
 save('guild', game(), null);
 
+// Начальная карта для проверки возрождения через рекламное окно SDK.
+{
+  const s = game();
+  save('map', s, startRun(s, T0, 1));
+}
+
 // Итоги через настоящие правила забега: проверка rewarded и восстановления после reload.
 {
   const s = game();

@@ -68,9 +68,10 @@ async function open(name, prepare = () => {}) {
 
 try {
   // An active run makes the LoadingAPI/GameplayAPI order observable.
-  const { page: map, features } = await open('event', seed => {
+  const { page: map, features } = await open('map', seed => {
     seed.posts.barracks = 10; // make paused income observable through the real UI
     const run = JSON.parse(seed.activeRun);
+    assert.equal(run.stage, 'map');
     run.members[0].alive = false;
     run.members[0].frac = 0;
     run.fallen = [run.members[0].heroId];

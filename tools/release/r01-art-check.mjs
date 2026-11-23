@@ -140,7 +140,7 @@ async function checkStatic() {
   }));
   assert.deepEqual(fixtureReport.rows.map(row => row.scenario).sort(), ['boss', 'boss-phase2', 'mage', 'mixed']);
   for (const row of fixtureReport.rows) {
-    assert.equal(row.backend, backend, 'Actual backend of ' + row.scenario);
+    assert.equal(row.backend, backend, `Actual backend of ${row.scenario}. ${(row.errors ?? []).join(' | ')}`);
     assert.deepEqual(row.viewport, [width, height]);
     assert(row.poses?.length > 0 && row.ok, 'Static bounds or resources failed in ' + row.scenario);
   }

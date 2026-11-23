@@ -53,18 +53,26 @@ jobs:
       - run: npm ci
       - run: node node_modules/playwright-core/cli.js install --with-deps chromium
       - run: npm install --prefix work/yandex-sdk --no-save --package-lock=false @yandex-games/sdk-dev-proxy@0.0.2
-      - name: Exercise the downloaded game under /draft/ with the official development SDK
+      - name: Serve the downloaded game under /draft/ with the official development SDK
+        id: sdkserver
         run: |
           npm run qa:saves
           node --use-env-proxy tools/qa/sdk-dev/server.cjs 8080 "$RUNNER_TEMP/yandex-site" draft > "$RUNNER_TEMP/yandex-proxy.log" 2>&1 &
-          proxy_pid=$!
-          trap 'kill "$proxy_pid" 2>/dev/null || true' EXIT
+          echo "$!" > "$RUNNER_TEMP/yandex-proxy.pid"
           curl -kfSs --retry 20 --retry-delay 1 --retry-connrefused https://localhost:8080/draft/index.html > "$RUNNER_TEMP/served-index.html" || { cat "$RUNNER_TEMP/yandex-proxy.log"; exit 1; }
           cmp "$RUNNER_TEMP/served-index.html" "$RUNNER_TEMP/yandex-site/draft/index.html"
-          CHROME=$(node -p "require('playwright-core').chromium.executablePath()")
-          export CHROME
-          npm run qa:sdk-dev -- https://localhost:8080/draft/ qa-saves qa-out/yandex-draft/sdk.json
-          node tools/qa/bran-flow.mjs https://localhost:8080/draft/ qa-saves qa-out/yandex-draft/bran.json
+          echo "CHROME=$(node -p "require('playwright-core').chromium.executablePath()")" >> "$GITHUB_ENV"
+      - name: Exercise saves, readiness, test ads and pause
+        run: npm run qa:sdk-dev -- https://localhost:8080/draft/ qa-saves qa-out/yandex-draft/sdk.json
+      - name: Exercise Bran from the same downloaded game
+        if: ${{ !cancelled() && steps.sdkserver.outcome == 'success' }}
+        run: node tools/qa/bran-flow.mjs https://localhost:8080/draft/ qa-saves qa-out/yandex-draft/bran.json
+      - name: Stop the development server
+        if: always()
+        run: |
+          if test -f "$RUNNER_TEMP/yandex-proxy.pid"; then
+            kill "$(cat "$RUNNER_TEMP/yandex-proxy.pid")" 2>/dev/null || true
+          fi
       - name: Save package and SDK verification
         if: always()
         uses: actions/upload-artifact@v4
